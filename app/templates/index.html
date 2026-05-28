@@ -254,7 +254,16 @@
        Populated by SummaryPanel + AccessorySummary in app.js on the custom
        `valve-selector:resolved` and `accessories:selected-changed` events. #}
     <div class="workspace-summary" id="workspace-summary" hidden>
-      <h2 class="summary-title">Your Product Code is</h2>
+      <div class="summary-header">
+        <h2 class="summary-title">Your Product Code is</h2>
+        {# Copy-to-clipboard button — composes a plain-text snapshot of the
+           current valve + actuator + accessories selection and writes it to
+           the clipboard for pasting into emails, chat, docs. #}
+        <button type="button" id="summary-copy-btn" class="summary-copy-btn" aria-label="Copy product code selection to clipboard">
+          <span class="summary-copy-icon" aria-hidden="true">&#x29C9;</span>
+          <span class="summary-copy-label">Copy</span>
+        </button>
+      </div>
       <div class="summary-grid">
         <div class="summary-card summary-card--valve" data-summary-category="Valves" hidden>
           <div class="summary-label">Valve</div>

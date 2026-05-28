@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20260528151353" />
+  <link rel="stylesheet" href="static/styles.css?v=20260528151827" />
 </head>
 <body>
   <header>
@@ -19,7 +19,7 @@
         </h1>
         <p class="tagline">49,289 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20260528151353" alt="AVCON Controls" class="brand-logo" />
+      <img src="static/avcon-logo.png?v=20260528151827" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
@@ -726,7 +726,14 @@
 
     
     <div class="workspace-summary" id="workspace-summary" hidden>
-      <h2 class="summary-title">Your Product Code is</h2>
+      <div class="summary-header">
+        <h2 class="summary-title">Your Product Code is</h2>
+        
+        <button type="button" id="summary-copy-btn" class="summary-copy-btn" aria-label="Copy product code selection to clipboard">
+          <span class="summary-copy-icon" aria-hidden="true">&#x29C9;</span>
+          <span class="summary-copy-label">Copy</span>
+        </button>
+      </div>
       <div class="summary-grid">
         <div class="summary-card summary-card--valve" data-summary-category="Valves" hidden>
           <div class="summary-label">Valve</div>
@@ -752,7 +759,7 @@
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20260528151353"></script>
-  <script src="static/app.js?v=20260528151353"></script>
+  <script src="static/catalog-engine.js?v=20260528151827"></script>
+  <script src="static/app.js?v=20260528151827"></script>
 </body>
 </html>

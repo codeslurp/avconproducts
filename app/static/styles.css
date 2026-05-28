@@ -1257,8 +1257,16 @@ footer small { font-family: var(--c-font-sans); }
   border-radius: var(--c-radius-lg);
   padding: 18px 22px;
 }
+/* Header row: title on the left, Copy button anchored to the right. */
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
 .summary-title {
-  margin: 0 0 14px;
+  margin: 0;
   font-family: var(--c-font-serif);
   font-size: 16px;
   font-weight: 600;
@@ -1274,6 +1282,39 @@ footer small { font-family: var(--c-font-sans); }
   color: var(--c-accent);
   font-size: 18px;
 }
+/* Copy-to-clipboard pill in the summary header. Same outlined-accent
+   treatment as the global Reset on desktop. Briefly shows a confirmation
+   state when text is successfully written to the clipboard. */
+.summary-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--c-accent);
+  background: var(--c-surface);
+  color: var(--c-accent);
+  border-radius: var(--c-radius-md);
+  cursor: pointer;
+  font-family: var(--c-font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background var(--c-transition), color var(--c-transition);
+}
+.summary-copy-btn:hover {
+  background: var(--c-accent);
+  color: var(--c-surface);
+}
+.summary-copy-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.summary-copy-btn.copied {
+  background: var(--c-accent);
+  color: var(--c-surface);
+  border-color: var(--c-accent);
+}
+.summary-copy-icon { font-size: 14px; line-height: 1; }
 .summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

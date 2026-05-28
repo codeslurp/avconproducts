@@ -982,3 +982,61 @@ if (globalResetBtn) {
     document.dispatchEvent(new CustomEvent("valve-selector:reset-all"));
   });
 }
+
+/* ---------- Copy to Clipboard ----------
+   Builds a plain-text snapshot of the current Valve / Actuator / Accessories
+   selection from the summary panel DOM (no JS-side state coupling) and
+   writes it to the system clipboard via navigator.clipboard. Briefly flips
+   the button to a "Copied!" confirmation, then back. */
+function buildSummaryExportText() {
+  const lines = ["AVCON Product Selection", "======================="];
+
+  const valveCard = document.querySelector(".summary-card--valve");
+  if (valveCard && !valveCard.hidden) {
+    const code = valveCard.querySelector(".summary-code")?.textContent.trim() || "";
+    const name = valveCard.querySelector(".summary-name")?.textContent.trim() || "";
+    lines.push(`Valve:      ${code}${name && name !== "—" ? "  —  " + name : ""}`);
+  }
+
+  const actuatorCard = document.querySelector(".summary-card--actuator");
+  if (actuatorCard && !actuatorCard.hidden) {
+    const code = actuatorCard.querySelector(".summary-code")?.textContent.trim() || "";
+    const name = actuatorCard.querySelector(".summary-name")?.textContent.trim() || "";
+    lines.push(`Actuator:   ${code}${name && name !== "—" ? "  —  " + name : ""}`);
+  }
+
+  const accCard = document.getElementById("summary-accessories");
+  if (accCard && !accCard.hidden) {
+    const chips = Array.from(accCard.querySelectorAll(".summary-acc-chip"));
+    if (chips.length) {
+      lines.push(`Accessories (${chips.length}):`);
+      for (const chip of chips) {
+        const family = chip.querySelector(".summary-acc-chip-family")?.textContent.trim() || "";
+        const code = chip.querySelector(".summary-acc-chip-code")?.textContent.trim() || "";
+        lines.push(`  - ${family.padEnd(15)} ${code}`);
+      }
+    }
+  }
+
+  return lines.join("\n");
+}
+
+const summaryCopyBtn = document.getElementById("summary-copy-btn");
+if (summaryCopyBtn) {
+  const labelEl = summaryCopyBtn.querySelector(".summary-copy-label");
+  const originalLabel = labelEl ? labelEl.textContent : "Copy";
+  summaryCopyBtn.addEventListener("click", async () => {
+    const text = buildSummaryExportText();
+    try {
+      await navigator.clipboard.writeText(text);
+      if (labelEl) labelEl.textContent = "Copied!";
+      summaryCopyBtn.classList.add("copied");
+    } catch (e) {
+      if (labelEl) labelEl.textContent = "Copy failed";
+    }
+    setTimeout(() => {
+      if (labelEl) labelEl.textContent = originalLabel;
+      summaryCopyBtn.classList.remove("copied");
+    }, 1800);
+  });
+}
