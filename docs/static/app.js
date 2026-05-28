@@ -248,20 +248,18 @@ class Picker {
     header.textContent = "Recommended Actuator";
     section.appendChild(header);
 
-    let optionNum = 1;
     for (const [category, items] of groups) {
       const group = document.createElement("div");
       group.className = "paired-option-group";
 
+      // Heading is just the category name (Pneumatic / Electrical). Numbering
+      // ('Option 1', 'Option 2') was removed per user feedback — with only
+      // two groups the prefix didn't add information.
       const label = document.createElement("div");
       label.className = "paired-option-label";
-      const optionEl = document.createElement("span");
-      optionEl.className = "paired-option-num";
-      optionEl.textContent = `Option ${optionNum}`;
       const catEl = document.createElement("span");
       catEl.className = "paired-option-cat";
       catEl.textContent = category;
-      label.appendChild(optionEl);
       label.appendChild(catEl);
       group.appendChild(label);
 
@@ -274,7 +272,6 @@ class Picker {
 
       group.appendChild(chipsRow);
       section.appendChild(group);
-      optionNum++;
     }
 
     this.pairedActuatorEl.appendChild(section);

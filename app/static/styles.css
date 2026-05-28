@@ -1011,20 +1011,9 @@ footer small { font-family: var(--c-font-sans); }
   font-family: var(--c-font-sans);
   font-size: 12.5px;
 }
-.paired-option-num {
-  font-weight: 600;
-  color: var(--c-text);
-}
 .paired-option-cat {
   color: var(--c-accent);
-  font-weight: 500;
-  /* "—" separator before category */
-}
-.paired-option-cat::before {
-  content: "—";
-  margin-right: 6px;
-  color: var(--c-text-muted);
-  font-weight: 400;
+  font-weight: 600;
 }
 .paired-chips {
   display: flex;
