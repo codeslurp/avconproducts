@@ -695,9 +695,15 @@ footer small { font-family: var(--c-font-sans); }
   font-family: var(--c-font-serif);
   font-size: 16px;
   font-weight: 500;
-  color: var(--c-text);
+  /* Teal in both placeholder ('Choose valve type') and selected
+     ('Butterfly Valve (Centric)') states per user preference — matches
+     the accessories family-filter dropdown for visual sync. */
+  color: var(--c-accent);
   text-align: left;
 }
+/* Kept as a no-op for explicitness: the selection state keeps the same
+   teal color as the placeholder. If a future preference splits the two
+   states, change this rule rather than the base one. */
 .type-picker.has-selection .type-picker-trigger-label {
   color: var(--c-accent);
 }
@@ -1452,12 +1458,9 @@ footer small { font-family: var(--c-font-sans); }
   font-family: var(--c-font-serif);
   font-size: 16px;
   font-weight: 500;
-  /* Default = placeholder state ("Choose family…"): dark text, matches the
-     type-picker placeholder color. Once a real family is picked, JS adds
-     .has-selection to the parent .accessories-filter and the rule below
-     switches the text to the accent color — same pattern as the
-     .type-picker.has-selection .type-picker-trigger-label rule. */
-  color: var(--c-text);
+  /* Teal in both placeholder and selected states — matches the Valves and
+     Actuators picker triggers per user preference. */
+  color: var(--c-accent);
   cursor: pointer;
   padding-right: 24px;
   /* Custom chevron — same shape as .type-picker-chevron */
@@ -1466,10 +1469,6 @@ footer small { font-family: var(--c-font-sans); }
   background-position: right 4px center;
   background-size: 12px 8px;
 }
-/* When a real family is picked, switch text color to the accent — same
-   selection-state styling as .type-picker.has-selection on the Valves
-   and Actuators pickers. */
-.accessories-filter.has-selection select { color: var(--c-accent); }
 
 /* Search keeps its own style — small label-on-top input as it was. */
 .accessories-search {

@@ -661,12 +661,6 @@ class AccessoryBrowser {
     if (this.familyFilterEl) {
       this.familyFilterEl.addEventListener("change", () => {
         this.familyFilter = this.familyFilterEl.value;
-        // Mirror the .type-picker.has-selection pattern so the dropdown
-        // text color matches the Valves/Actuators triggers (dark on the
-        // 'Choose family…' placeholder, accent when a real family picked).
-        this.familyFilterEl.closest(".accessories-filter")?.classList.toggle(
-          "has-selection", !!this.familyFilter
-        );
         this._render();
       });
     }
@@ -684,11 +678,7 @@ class AccessoryBrowser {
     document.addEventListener("valve-selector:reset-all", () => {
       this.familyFilter = "";
       this.searchText = "";
-      if (this.familyFilterEl) {
-        this.familyFilterEl.value = "";
-        this.familyFilterEl.closest(".accessories-filter")
-          ?.classList.remove("has-selection");
-      }
+      if (this.familyFilterEl) this.familyFilterEl.value = "";
       if (this.searchInputEl) this.searchInputEl.value = "";
       this._clearAll();
       this._render();
