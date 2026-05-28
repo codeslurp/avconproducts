@@ -67,6 +67,9 @@
       </div>
     </nav>
     {% endfor %}
+    {# Global Reset — wipes type pickers, all cascade selections, accessories,
+       and the summary panel. Replaces the per-section Reset buttons. #}
+    <button type="button" id="global-reset-btn" class="global-reset-btn">Reset all</button>
   </div>
 
   <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
@@ -116,9 +119,6 @@
               {% endif %}
             </div>
             {% endfor %}
-            <div class="row actions">
-              <button type="button" class="reset-btn">Reset</button>
-            </div>
           </form>
         </section>
 

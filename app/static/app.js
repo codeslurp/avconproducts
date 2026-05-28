@@ -24,7 +24,6 @@ class Picker {
     this.pairedActuatorEl = sectionEl.querySelector(".paired-actuator");
     this.detailsWrap = sectionEl.querySelector(".details-wrap");
     this.detailsTable = sectionEl.querySelector(".details tbody");
-    this.resetBtn = sectionEl.querySelector(".reset-btn");
 
     Picker.instances.set(this.valveType, this);
     this._wire();
@@ -41,11 +40,15 @@ class Picker {
         });
       }
     }
-    this.resetBtn.addEventListener("click", async () => {
-      for (const f of this.fields) f.value = "";
-      await this.refreshOptions();
-      await this.refreshResolution();
-    });
+  }
+
+  /* Public reset: clear all cascade selections in this picker, then re-run
+     options + resolution so the UI returns to its initial state. Called by
+     the global "Reset all" handler at the bottom of this file. */
+  async reset() {
+    for (const f of this.fields) f.value = "";
+    await this.refreshOptions();
+    await this.refreshResolution();
   }
 
   _isTypeahead(field) { return field.tagName === "INPUT"; }
@@ -630,6 +633,9 @@ class AccessoryBrowser {
     if (this.clearBtnEl) {
       this.clearBtnEl.addEventListener("click", () => this._clearAll());
     }
+    // Global "Reset all" wipes accessory selections too — driven by the
+    // top-of-page button via this event.
+    document.addEventListener("valve-selector:reset-all", () => this._clearAll());
 
     this._fetch();
   }
@@ -892,3 +898,30 @@ if (accessoriesRoot && accessoriesRoot.querySelector("#accessories-list")) {
   new AccessoryBrowser(accessoriesRoot);
 }
 new AccessorySummary();
+
+/* ---------- Global Reset ----------
+   One button at the top wipes the entire configurator:
+     1. Type pickers (Valves, Actuators) — closes/deselects, hides sections
+     2. Every Picker's cascade fields — clear values, refresh options/result
+     3. Accessory selections — via the custom event listened to in
+        AccessoryBrowser._fetch wiring
+     4. The summary panel hides itself automatically once every section
+        emits a "cleared" event (Picker.reset triggers this through
+        refreshResolution when no picks are present). */
+const globalResetBtn = document.getElementById("global-reset-btn");
+if (globalResetBtn) {
+  globalResetBtn.addEventListener("click", async () => {
+    // 1. Close + deselect both type pickers, hide their sections.
+    for (const tp of TypePicker.instances) tp.reset();
+    // 2. Show the empty prompt that lives between the picker row and the
+    //    workspace (TypePicker.reset doesn't re-show it on its own).
+    const prompt = document.getElementById("empty-prompt");
+    if (prompt) prompt.hidden = false;
+    // 3. Wipe each cascade picker so its next opening starts fresh.
+    await Promise.all(
+      Array.from(Picker.instances.values()).map((p) => p.reset())
+    );
+    // 4. Tell the AccessoryBrowser to clear its selection set.
+    document.dispatchEvent(new CustomEvent("valve-selector:reset-all"));
+  });
+}
