@@ -1150,13 +1150,15 @@ footer small { font-family: var(--c-font-sans); }
 .workspace-accessories     { grid-area: access; }
 
 /* Column shell: white card with subtle border so the two halves feel like
-   parallel rails. */
+   parallel rails. Card collapses to header + picker height when nothing is
+   selected (no large empty white space); grows as soon as a valve-section
+   becomes visible, since align-items: start on the workspace grid lets each
+   card take its natural content height instead of stretching to its sibling. */
 .workspace-col {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--c-radius-lg);
   padding: 18px 22px;
-  min-height: 160px;
   display: flex;
   flex-direction: column;
   gap: 12px;
