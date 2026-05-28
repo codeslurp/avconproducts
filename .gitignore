@@ -1,0 +1,48 @@
+# Bulk / non-source assets ---------------------------------------------------
+# Bundled Python runtime (~45 MB, recreated by build_bundle.bat)
+python/
+
+# Data files (~33 MB) — too large for git; keep locally or use a data store
+data/
+
+# Screenshots — uncomment to also exclude (~2 MB of PNGs)
+# screenshots/
+
+# Slide deck — also debatable; comment out if you want it tracked
+AVCON_Product_Code_Finder_Overview.pptx
+
+# Python ---------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Environment / secrets ------------------------------------------------------
+.env
+.env.local
+.env.*.local
+
+# IDE / editor ---------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS -------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code project config (local-only by default; remove this line to share)
+.claude/
+
+# Build artifacts ------------------------------------------------------------
+*.zip
+dist/
+build/

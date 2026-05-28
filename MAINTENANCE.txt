@@ -1,0 +1,212 @@
+Valve Code Selector — Maintenance Guide
+========================================
+
+This is the reference doc for keeping the app's catalog data in sync with the
+Excel files you receive from engineering. Read README.txt first for what the
+app does and how to launch it; this doc only covers updates and edits.
+
+
+1. Layout reminder
+------------------
+valve-selector\
+  app\
+    catalog.py        ← maps Excel columns to dropdown fields. Edit when
+                        column LAYOUT changes (rename, reorder, add).
+    server.py         ← Flask server. Almost never needs edits.
+    templates\        ← HTML for the page.
+    static\           ← CSS + JS for the page.
+  data\               ← the Excel files (.xlsm / .xlsx). Drop new versions
+                        here. Anything else stays untouched.
+  tools\              ← one-off inspection scripts (read-only).
+  run.bat             ← double-click to launch.
+
+The app reads from data\ at startup ONLY. Editing an Excel file while the
+app is running has no effect until you restart the server.
+
+
+2. Routine data edits (most common — no code touch needed)
+----------------------------------------------------------
+Use this path for: adding/removing SKU rows, fixing typos, changing BTO
+values, populating empty actuator-pairing cells (cols 49-57 in ball valve
+sheet), etc.
+
+  Step 1.  Open the file in data\ in Excel.
+  Step 2.  Make your edits. Save.
+            - You can overwrite the existing file, OR
+            - Save as a new filename in the same data\ folder (e.g. add a
+              "- R02" suffix). The app picks whichever file matching the
+              expected pattern has the MOST RECENT modified-date. Keep the
+              old file there if you want a one-step rollback path.
+  Step 3.  If the app is running, close its black command window.
+  Step 4.  Double-click run.bat to relaunch. New data is loaded at startup.
+  Step 5.  Hard-refresh the browser tab (Ctrl+Shift+R) to pick up any
+            CSS/JS changes too. For data-only changes this isn't strictly
+            required but it's a good habit.
+
+Sanity check: the startup log prints "loaded N rows" for each catalog.
+Compare N against the previous run — a wild drop usually means the sheet
+name or layout changed.
+
+
+3. Structural edits (RARE — these break the app silently if you skip
+   the matching code change)
+--------------------------------------------------------------------
+The app maps each cascade dropdown and detail-table row to a specific
+1-based column number in the Excel sheet. If columns move, the app keeps
+running but starts pulling values from the wrong cells.
+
+Things that REQUIRE a matching edit to app\catalog.py:
+
+  - Renaming the sheet inside the workbook.
+      Where to fix: the sheet_marker= field in catalog.py.
+
+  - Inserting / deleting columns IN THE MIDDLE of the sheet (any column
+    before the last column the app reads from).
+      Where to fix: every numeric column index in the cascade=[ ] list
+      AND the detail_columns=[ ] list AND any of the dedicated columns
+      (primary_col, secondary_col, bto_col, paired_model_col).
+
+  - Reordering existing columns.
+      Same fix as above.
+
+Things that DO NOT require a code change:
+
+  - Adding a new column AT THE END of the sheet (after all the columns
+    the app currently reads). It's just ignored. Add it to
+    detail_columns later if you want it to show in "All attributes".
+
+  - Adding new rows. Always safe.
+
+  - Changing values inside existing cells. Always safe.
+
+  - Renaming the file (as long as it still contains the substring the
+    app searches for — e.g. "Ball Valve" must still appear in the name
+    of the ball valve workbook).
+
+
+4. How the app finds files
+--------------------------
+At startup, for each product type, the app does:
+
+    "Find every .xls* file in data\ whose name contains <substring>,
+     ignore Excel lock files starting with ~$, pick the one with the
+     most recent modified-date."
+
+The substrings (defined in catalog.py) are:
+
+    Ball Valve            → "Ball Valve"
+    Butterfly Valve       → "Butterfly Valve"
+    Rack & Pinion         → "Rack & Pinion"
+    Scotch Yoke           → "Scotch Yoke"
+    Electrical Rotary     → "Electrical Actuator"
+
+So you can keep multiple versions side-by-side and just touch the file
+date (Save) on whichever one you want active.
+
+
+5. Populating more actuator pairings (the col 49-57 columns on ball valves)
+---------------------------------------------------------------------------
+Today, the "Catalog-recommended actuator" panel only fires when col 49
+("DA Actuator 1 Model") has a value, and that's the only column we
+read from. The catalog already has columns 50-57 for additional DA, SR-FC,
+and SR-FO recommendations, but most are empty.
+
+To populate them:
+  1. Open the Ball Valve workbook, go to one of the "BV NEW CODEING"
+     sheets.
+  2. Fill cells in columns 49-57 with actuator MODEL names that exist
+     in the Rack & Pinion workbook (col 5 — values like "ACT-050D",
+     "ACT-075SR06", etc.).
+  3. Save. Restart the app.
+
+Note: the current app only reads col 49. If you also want the panel to
+suggest the additional actuators (so users get a list of 2-9 alternatives
+instead of just one), that's a small code change — let your developer
+know to extend paired_model_col into a list.
+
+
+6. Adding a new product type (e.g. a new actuator family)
+---------------------------------------------------------
+  1. Put the new Excel file in data\, with a filename containing some
+     unique substring.
+  2. Open app\catalog.py and add a new ValveTypeConfig(...) block at the
+     bottom, modeled on PNEUMATIC_RACK_PINION or BALL_VALVE depending on
+     whether it's an actuator or a valve.
+  3. Append the new config to the VALVE_TYPES list near the bottom of
+     the same file.
+  4. Restart. The picker, dropdowns, and result panel are generated
+     automatically from the config — no template or JS changes needed.
+
+
+7. Troubleshooting
+------------------
+"Address already in use" on startup
+    → Another instance is still running. Find the old command window
+      and close it, OR change PORT in app\server.py.
+
+"No file matching '*X*' in data\"
+    → You renamed the data file and the substring no longer matches.
+      Either rename it back or update the file_substring= field in
+      catalog.py.
+
+Catalog loaded but has 0 rows
+    → The sheet name in the workbook no longer contains the expected
+      marker (e.g. "BV NEW CODEING"). Either rename the sheet back or
+      update sheet_marker= in catalog.py.
+
+Dropdowns show wrong values / labels
+    → A column was inserted, deleted, or moved without updating
+      catalog.py. Compare the cascade=[ ] column indices to where the
+      data actually lives in the sheet.
+
+"Catalog-recommended actuator" button missing on a ball valve
+    → That valve's row has col 49 empty. Fill it in the workbook with a
+      valid R&P model name and restart.
+
+"Catalog-recommended actuator" button shows but clicking it puts a value
+the dropdown doesn't recognize
+    → The model name in col 49 doesn't match any value in the R&P
+      workbook's col 5 (Model). Check spelling / spacing.
+
+Page styling looks stale after a CSS edit
+    → Browser cache. Hard-refresh: Ctrl+Shift+R.
+
+
+8. Stopping the app
+-------------------
+Just close the black command-prompt window. Nothing to clean up — the app
+holds no state between runs. All data is re-read from data\ on the next
+launch.
+
+
+9. Where to find what
+---------------------
+What                                  Where
+------------------------------------- -----------------------------------------
+"What columns does Ball Valve use?"   app\catalog.py, BALL_VALVE block
+"What's the URL?"                     app\server.py, PORT = 5037
+"How is the page laid out?"           app\templates\index.html
+"How does the cross-section button    app\static\app.js, search for
+ work?"                                viewMatchingActuator
+"What colors / fonts are used?"       app\static\styles.css, :root block
+"How are file modtimes compared?"     app\catalog.py, find_catalog_file()
+
+
+10. Read-only inspection helpers
+--------------------------------
+The tools\ folder has small Python scripts you can run any time to inspect
+the current data without launching the app. They are read-only — safe to
+run repeatedly.
+
+  py tools\inspect_pairing.py
+      Reports the first 6 ball-valve rows and shows what's in their
+      col 49-57 pairing cells.
+
+  py tools\inspect_pairing2.py
+      Scans the WHOLE ball-valve catalog and reports the 20 most common
+      pairing values, whether each matches a Model in any actuator
+      catalog, and how many total cells are populated. Useful after
+      updating pairings to sanity-check coverage.
+
+Add more inspection scripts here over time — anything that just READS
+data and prints findings.
