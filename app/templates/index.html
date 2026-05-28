@@ -23,63 +23,64 @@
     </div>
   </header>
 
-  <!-- One picker widget per category. Independent selections. -->
-  <div class="picker-row">
-    {% for cat in category_blocks %}
-    <nav class="type-picker" data-category="{{ cat.name }}">
-      <button type="button" class="type-picker-trigger"
-              aria-haspopup="true" aria-expanded="false">
-        <span class="type-picker-trigger-prefix">{{ cat.name }}</span>
-        <span class="type-picker-trigger-label">Choose {{ cat.name|lower|trim('s') }} type</span>
-        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
-          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+  {# Picker macro — used once per workspace column (Valves, Actuators) so each
+     column shows the type-picker right inside its own card instead of a
+     separate row at the top. JS picks them up via `class="type-picker"`
+     regardless of where they live in the DOM. #}
+  {% macro render_type_picker(cat) %}
+  <nav class="type-picker" data-category="{{ cat.name }}">
+    <button type="button" class="type-picker-trigger"
+            aria-haspopup="true" aria-expanded="false">
+      <span class="type-picker-trigger-prefix">{{ cat.name }}</span>
+      <span class="type-picker-trigger-label">Choose {{ cat.name|lower|trim('s') }} type</span>
+      <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+        <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="type-picker-menu" role="menu" hidden>
+      {% for sg in cat.subgroups %}
+      {% if sg.name %}
+      <div class="type-picker-subheader">{{ sg.name }}</div>
+      {% endif %}
+      {% for item in sg.members %}
+      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="{{ item.key }}">
+        <span class="option-icon" aria-hidden="true">
+          {% if item.key == "ball" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+          {% elif item.key == "butterfly" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+          {% elif item.key == "pneumatic_rp" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
+          {% elif item.key == "pneumatic_sy" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
+          {% elif item.key == "electrical_rotary" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
+          {% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+          {% endif %}
+        </span>
+        <span class="option-text">
+          <span class="option-title">{{ item.label }}</span>
+          <span class="option-meta">{{ "{:,}".format(item.row_count) }} SKUs</span>
+        </span>
       </button>
-      <div class="type-picker-menu" role="menu" hidden>
-        {% for sg in cat.subgroups %}
-        {% if sg.name %}
-        <div class="type-picker-subheader">{{ sg.name }}</div>
-        {% endif %}
-        {% for item in sg.members %}
-        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="{{ item.key }}">
-          <span class="option-icon" aria-hidden="true">
-            {% if item.key == "ball" %}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
-            {% elif item.key == "butterfly" %}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-            {% elif item.key == "pneumatic_rp" %}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
-            {% elif item.key == "pneumatic_sy" %}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
-            {% elif item.key == "electrical_rotary" %}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
-            {% else %}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
-            {% endif %}
-          </span>
-          <span class="option-text">
-            <span class="option-title">{{ item.label }}</span>
-            <span class="option-meta">{{ "{:,}".format(item.row_count) }} SKUs</span>
-          </span>
-        </button>
-        {% endfor %}
-        {% endfor %}
-      </div>
-    </nav>
-    {% endfor %}
+      {% endfor %}
+      {% endfor %}
+    </div>
+  </nav>
+  {% endmacro %}
+
+  {# Top toolbar row — used to also hold the type pickers; now slim and only
+     hosts the global Reset (right-aligned on desktop, floating FAB on mobile). #}
+  <div class="picker-row">
     {# Global Reset — wipes type pickers, all cascade selections, accessories,
-       and the summary panel. Renders as a labeled button in the picker row on
-       desktop (>=860px) and as a circular floating-action button anchored to
-       bottom-right on mobile. Both spans are always in the DOM; CSS toggles
-       which one is visible per breakpoint. `aria-label` is the screen-reader
-       fallback regardless of which span is shown. #}
+       and the summary panel. Renders as a labeled button on desktop and as a
+       circular FAB anchored to bottom-right on mobile (see styles.css). #}
     <button type="button" id="global-reset-btn" class="global-reset-btn" aria-label="Reset all">
       <span class="global-reset-label">Reset all</span>
       <span class="global-reset-icon" aria-hidden="true">&#x21BB;</span>
     </button>
   </div>
-
-  <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
 
   {#
     Layout: a 4-cell grid. Top row holds Valves (left) and Actuators (right)
@@ -178,9 +179,11 @@
         <span class="workspace-col-icon" aria-hidden="true">◐</span>
         Valves
       </h2>
-      <p class="column-placeholder">
-        Pick a <strong>valve type</strong> from the menu above.
-      </p>
+      {# Type picker now lives in the card itself — replaces the old placeholder
+         prompt. Iterate just to find the matching category block. #}
+      {% for cat in category_blocks if cat.name == 'Valves' %}
+        {{ render_type_picker(cat) }}
+      {% endfor %}
       {% for section in sections if section.category == 'Valves' %}
         {{ render_section(section) }}
       {% endfor %}
@@ -191,9 +194,9 @@
         <span class="workspace-col-icon" aria-hidden="true">◑</span>
         Actuators
       </h2>
-      <p class="column-placeholder">
-        Pick an <strong>actuator type</strong>, or use a valve's recommendation.
-      </p>
+      {% for cat in category_blocks if cat.name == 'Actuators' %}
+        {{ render_type_picker(cat) }}
+      {% endfor %}
       {% for section in sections if section.category == 'Actuators' %}
         {{ render_section(section) }}
       {% endfor %}

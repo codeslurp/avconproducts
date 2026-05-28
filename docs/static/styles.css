@@ -609,11 +609,15 @@ footer small { font-family: var(--c-font-sans); }
 /* ---------- Type picker row (one picker per category, side-by-side) ---------- */
 .picker-row {
   max-width: 1280px;
-  margin: 18px auto 12px;
+  margin: 12px auto 4px;
   padding: 0 40px;
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+  /* The picker-row now only holds the Reset button — pickers moved into their
+     respective workspace columns. Right-align Reset so it sits at the top-right
+     of the page, leaving the rest of the row empty. */
+  justify-content: flex-end;
 }
 
 /* ---------- Type picker (popover button) ---------- */
@@ -621,6 +625,29 @@ footer small { font-family: var(--c-font-sans); }
   position: relative;
   flex: 1 1 360px;
   min-width: 320px;
+}
+
+/* Type picker when placed inside a workspace column card (its new home — see
+   index.html). Overrides the picker-row flex sizing so the trigger button
+   stretches to the full card width and stacks vertically with the cascade
+   sections below. */
+.workspace-col .type-picker {
+  flex: none;
+  min-width: 0;
+  width: 100%;
+  margin: 4px 0 14px;
+}
+.workspace-col .type-picker-trigger {
+  width: 100%;
+  min-width: 0;
+}
+.workspace-col .type-picker-menu {
+  left: 0;
+  right: 0;
+  min-width: 0;
+  /* Sit above the cascade form panel that may render right below this picker
+     once a type is selected. */
+  z-index: 20;
 }
 
 .type-picker-trigger {
