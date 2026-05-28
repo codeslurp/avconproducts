@@ -661,6 +661,12 @@ class AccessoryBrowser {
     if (this.familyFilterEl) {
       this.familyFilterEl.addEventListener("change", () => {
         this.familyFilter = this.familyFilterEl.value;
+        // Mirror the .type-picker.has-selection pattern so the dropdown
+        // text color matches the Valves/Actuators triggers (dark on the
+        // 'Choose family…' placeholder, accent when a real family picked).
+        this.familyFilterEl.closest(".accessories-filter")?.classList.toggle(
+          "has-selection", !!this.familyFilter
+        );
         this._render();
       });
     }
@@ -673,9 +679,20 @@ class AccessoryBrowser {
     if (this.clearBtnEl) {
       this.clearBtnEl.addEventListener("click", () => this._clearAll());
     }
-    // Global "Reset all" wipes accessory selections too — driven by the
-    // top-of-page button via this event.
-    document.addEventListener("valve-selector:reset-all", () => this._clearAll());
+    // Global "Reset all" wipes accessory selections AND the family / search
+    // state, so the panel returns to its initial 'Choose family…' prompt.
+    document.addEventListener("valve-selector:reset-all", () => {
+      this.familyFilter = "";
+      this.searchText = "";
+      if (this.familyFilterEl) {
+        this.familyFilterEl.value = "";
+        this.familyFilterEl.closest(".accessories-filter")
+          ?.classList.remove("has-selection");
+      }
+      if (this.searchInputEl) this.searchInputEl.value = "";
+      this._clearAll();
+      this._render();
+    });
 
     this._fetch();
   }
