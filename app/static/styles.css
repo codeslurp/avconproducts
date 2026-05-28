@@ -135,21 +135,21 @@ header .tagline {
 }
 
 @media (max-width: 720px) {
-  /* On narrow screens, stack title and logo vertically, both left-aligned.
-     The desktop logo uses `margin-left: auto` to push right of the title in a
-     row; that same rule pushes the logo to the right of empty space in a
-     column. Reset it here so the logo lines up with the title's left edge. */
-  .brand { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .brand-logo { margin-left: 0; height: 44px; }
-  header h1 { font-size: 22px; }
+  /* Keep the desktop "title left, logo right" layout on tablets/phones.
+     The text block shrinks to fit; logo stays anchored to the right edge via
+     the inherited `margin-left: auto`. Smaller logo + title so both fit one
+     row without the title wrapping under the logo. */
+  .brand { gap: 12px; }
+  .brand-logo { height: 40px; }
+  header h1 { font-size: 20px; }
 }
 
 @media (max-width: 480px) {
-  /* Very narrow phones: tighten typography so the title doesn't dominate. */
+  /* Very narrow phones: tighten further, keep logo on the right. */
   header { padding: 18px 14px 14px; }
-  header h1 { font-size: 19px; line-height: 1.22; }
-  header .tagline { font-size: 12px; }
-  .brand-logo { height: 38px; }
+  header h1 { font-size: 17px; line-height: 1.22; }
+  header .tagline { font-size: 11.5px; }
+  .brand-logo { height: 34px; }
   .section-head .section-title { font-size: 19px; }
   .picker-row { padding: 0 14px; gap: 10px; }
   main { padding: 8px 14px 24px; }
