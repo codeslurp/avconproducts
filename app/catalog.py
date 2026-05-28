@@ -510,6 +510,10 @@ ELECTRICAL_ROTARY = ValveTypeConfig(
         (11, "Power Consumption (W)"), (12, "Open-to-Close Time (s)"),
         (13, "Enclosure Protection"), (14, "Actuator Orientation"),
         (15, "Application"), (16, "Painting"), (17, "Certification"),
+        # Col 18 is mislabeled "Additional Sp 1" in the source header, but
+        # carries a real feature flag for all 96 rows (values: ONF or
+        # 'with Potentiometer'). Surfacing it as Additional Specification.
+        (18, "Additional Specification"),
         (21, "Shaft Female"), (22, "PCD"),
         (23, "Torque (N·m)"), (24, "Weight (kg)"),
     ],
