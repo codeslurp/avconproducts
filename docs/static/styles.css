@@ -1,0 +1,1561 @@
+/* ============================================================
+   Valve Code Selector — AVCON Controls brand theme
+   Teal #017E80 primary, Roboto + Roboto Slab. Tokens applied via
+   the existing --c-* variable names so all downstream styling
+   works unchanged. Source: ~/.claude/skills/avcon-style/SKILL.md
+   ============================================================ */
+
+:root {
+  /* Surfaces — clean industrial whites */
+  --c-bg:         #fcfcfc;   /* page background — off-white */
+  --c-surface:    #FFFFFF;   /* cards / panels */
+  --c-surface-2:  #F5F5F5;   /* subtle alt surface, input bg on hover */
+  --c-surface-3:  #EFEFEF;   /* code / nested surface */
+
+  /* Borders — neutral gray */
+  --c-border:        #E5E5E5;
+  --c-border-strong: #D2D2D2;
+
+  /* Text — near-black headings, slate body */
+  --c-text:         #3a3a3a;
+  --c-text-soft:    #4B4F58;
+  --c-text-muted:   #7A7A7A;
+  --c-text-subtle:  #9B9A93;
+
+  /* Brand — AVCON teal */
+  --c-accent:        #017E80;
+  --c-accent-hover:  #016668;
+  --c-accent-soft:   rgba(1, 126, 128, 0.10);
+  --c-accent-ring:   rgba(1, 126, 128, 0.22);
+
+  /* Secondary brand — AVCON corporate blue (used for sub-accents) */
+  --c-accent-2:      #0170B9;
+
+  /* Semantic — industrial-safe (not neon) */
+  --c-warning:  #C97A00;
+  --c-warning-bg: rgba(201, 122, 0, 0.10);
+  --c-danger:   #B23A2E;
+
+  /* Fonts — AVCON brand */
+  --c-font-sans:  "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --c-font-serif: "Roboto Slab", Georgia, "Times New Roman", serif;
+  --c-font-mono:  "Roboto Mono", "SF Mono", Consolas, monospace;
+
+  /* Shape & motion — squared-off, utilitarian */
+  --c-radius-sm:  2px;
+  --c-radius-md:  4px;
+  --c-radius-lg:  6px;
+  --c-radius-xl:  8px;
+  --c-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.04);
+  --c-shadow-md:  0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --c-shadow-lg:  0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --c-transition: 180ms ease-out;
+}
+
+* { box-sizing: border-box; }
+
+/* The HTML `hidden` attribute must always win over class-based display rules
+   (e.g. `.codes { display: grid }` would otherwise override the UA stylesheet's
+   `[hidden] { display: none }` and leave stale result tiles visible). */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--c-font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--c-accent-soft); color: var(--c-text); }
+
+/* ---------- Header (AVCON brand) ---------- */
+header {
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  padding: 14px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+  box-shadow: var(--c-shadow-sm);
+}
+/* Header layout: logo + title stacked to the LEFT edge of the header. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.brand-logo {
+  height: 52px;
+  width: auto;
+  flex-shrink: 0;
+  /* Push the logo to the right edge of the header so the title/tagline sit
+     on the left, separated by white space. Makes the header less cluttered. */
+  margin-left: auto;
+}
+.brand-text {
+  min-width: 0;
+  text-align: left;
+}
+.brand-spacer {
+  /* Old centering helper — no longer needed in left-aligned layout. */
+  display: none;
+}
+header h1 {
+  margin: 0;
+  font-family: var(--c-font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.005em;
+  line-height: 1.18;
+}
+.title-line {
+  display: block;
+}
+.title-line:first-child {
+  color: var(--c-accent);
+  letter-spacing: 0.02em;
+  font-size: 0.78em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+header .tagline {
+  margin: 6px 0 0;
+  color: var(--c-text-muted);
+  font-size: 13px;
+  font-family: var(--c-font-sans);
+  font-style: italic;
+  font-weight: 400;
+}
+
+@media (max-width: 720px) {
+  /* On narrow screens, stack title under logo, still left-aligned. */
+  .brand { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+header code {
+  background: var(--c-surface-3);
+  padding: 2px 8px;
+  border-radius: var(--c-radius-sm);
+  font-family: var(--c-font-mono);
+  font-size: 12px;
+  color: var(--c-text-soft);
+  border: 1px solid var(--c-border);
+}
+
+/* ---------- Layout ---------- */
+main {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  padding: 8px 40px 24px;
+  align-items: start;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+section {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-lg);
+  padding: 24px 26px;
+  box-shadow: var(--c-shadow-sm);
+}
+
+section h2 {
+  margin: 0 0 18px;
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* ---------- Form rows ---------- */
+.row { margin-bottom: 14px; }
+.row label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-soft);
+  margin-bottom: 6px;
+  letter-spacing: 0;
+}
+.row select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-md);
+  background: var(--c-surface);
+  font-family: var(--c-font-sans);
+  font-size: 14px;
+  color: var(--c-text);
+  transition: border-color var(--c-transition), box-shadow var(--c-transition), background var(--c-transition);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='none' stroke='%2371706B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+.row select:hover {
+  background-color: var(--c-surface-2);
+  border-color: var(--c-text-subtle);
+}
+.row select:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+  background-color: var(--c-surface);
+}
+.row select:disabled {
+  background-color: var(--c-surface-3);
+  color: var(--c-text-muted);
+  cursor: not-allowed;
+}
+
+/* ---------- Actions / buttons ---------- */
+.actions {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  justify-content: flex-end;
+}
+.actions button {
+  padding: 9px 18px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text-soft);
+  border-radius: var(--c-radius-md);
+  cursor: pointer;
+  font-family: var(--c-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  transition: all var(--c-transition);
+}
+.actions button:hover {
+  background: var(--c-surface-2);
+  border-color: var(--c-text-subtle);
+  color: var(--c-text);
+}
+.actions button:active {
+  background: var(--c-surface-3);
+}
+
+/* ---------- Status line ---------- */
+.status {
+  color: var(--c-text-muted);
+  font-size: 14px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-md);
+  line-height: 1.5;
+}
+
+/* ---------- Code cards (result tiles) ---------- */
+.codes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.code-card {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-md);
+  padding: 14px 16px;
+  transition: background var(--c-transition), border-color var(--c-transition);
+}
+.code-card:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-border-strong);
+}
+.code-label {
+  font-family: var(--c-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  margin-bottom: 6px;
+  letter-spacing: 0;
+}
+.code-value {
+  font-family: var(--c-font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* ---------- Alt-match warning note ---------- */
+.alt-note {
+  background: var(--c-warning-bg);
+  color: var(--c-warning);
+  border: 1px solid rgba(201, 122, 0, 0.25);
+  font-size: 13px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--c-radius-md);
+  line-height: 1.5;
+}
+
+/* ---------- Details / disclosure ---------- */
+details {
+  margin-top: 8px;
+}
+details summary {
+  cursor: pointer;
+  font-family: var(--c-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--c-text-soft);
+  user-select: none;
+  padding: 10px 14px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-md);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background var(--c-transition);
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::before {
+  content: "";
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-right: 1.5px solid var(--c-text-muted);
+  border-bottom: 1.5px solid var(--c-text-muted);
+  transform: rotate(-45deg) translate(2px, -2px);
+  transition: transform var(--c-transition);
+}
+details[open] summary::before {
+  transform: rotate(45deg) translate(0px, -2px);
+}
+details summary:hover {
+  background: var(--c-surface-3);
+  color: var(--c-text);
+}
+details[open] summary {
+  border-radius: var(--c-radius-md) var(--c-radius-md) 0 0;
+  border-bottom: none;
+}
+
+/* ---------- Details table ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13.5px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 0 0 var(--c-radius-md) var(--c-radius-md);
+  overflow: hidden;
+}
+table th, table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--c-border);
+  vertical-align: top;
+}
+table th {
+  font-family: var(--c-font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--c-text-muted);
+  width: 240px;
+  background: var(--c-surface-2);
+}
+table td {
+  font-family: var(--c-font-mono);
+  font-size: 13px;
+  color: var(--c-text);
+  word-break: break-word;
+}
+table tbody tr:hover td,
+table tbody tr:hover th {
+  background: var(--c-surface-2);
+}
+table tbody tr:last-child th,
+table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---------- Footer ---------- */
+footer {
+  text-align: center;
+  padding: 14px 24px 18px;
+  color: var(--c-text-subtle);
+  font-size: 12.5px;
+  max-width: 1280px;
+  margin: 0 auto;
+  border-top: 1px solid var(--c-border);
+  margin-top: 16px;
+}
+footer small { font-family: var(--c-font-sans); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  main {
+    grid-template-columns: 1fr;
+    padding: 8px 16px 24px;
+  }
+  header { padding: 24px 16px 16px; }
+  .codes { grid-template-columns: 1fr; }
+}
+
+/* ---------- Typeahead inputs (e.g. Series) ----------
+   Mirrors .row select styling but swaps the dropdown caret for a search icon
+   and uses a text cursor. Browser-native <datalist> handles the suggestions. */
+.row input[list] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-md);
+  background: var(--c-surface);
+  font-family: var(--c-font-sans);
+  font-size: 14px;
+  color: var(--c-text);
+  transition: border-color var(--c-transition), box-shadow var(--c-transition), background var(--c-transition);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16'><circle cx='7' cy='7' r='5' fill='none' stroke='%2371706B' stroke-width='1.5'/><path d='M14 14l-3-3' stroke='%2371706B' stroke-width='1.5' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.row input[list]:hover {
+  background-color: var(--c-surface-2);
+  border-color: var(--c-text-subtle);
+}
+.row input[list]:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+  background-color: var(--c-surface);
+}
+.row input[list]::placeholder {
+  color: var(--c-text-subtle);
+  font-style: italic;
+}
+/* Strip the IE/Edge "x" clear button — datalist already provides UI for it */
+.row input[list]::-webkit-search-cancel-button { display: none; }
+.row input[list]::-ms-clear { display: none; }
+
+/* ---------- Multi-valve section ----------
+   Each .valve-section wraps a complete picker for one valve type so several
+   can stack on the page (Ball Valve, Butterfly Valve, ...). */
+.valve-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-top: 8px;
+}
+/* Sections stack one at a time via the type-picker, so no inter-section
+   divider is needed. The selector below is kept defensively (in case both
+   are ever shown simultaneously) but adds no visual separator. */
+.valve-section + .valve-section:not([hidden]) {
+  margin-top: 8px;
+}
+.section-head {
+  padding: 0 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.section-head .section-title {
+  margin: 0;
+  font-family: var(--c-font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-head .section-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 22px;
+  background: var(--c-accent);
+  border-radius: 2px;
+}
+.section-head .section-meta {
+  margin: 6px 0 0;
+  color: var(--c-text-muted);
+  font-size: 12.5px;
+}
+.section-head code {
+  background: var(--c-surface-3);
+  padding: 2px 8px;
+  border-radius: var(--c-radius-sm);
+  font-family: var(--c-font-mono);
+  font-size: 12px;
+  color: var(--c-text-soft);
+  border: 1px solid var(--c-border);
+}
+.valve-section main {
+  /* Remove the top padding since the section head already provides spacing. */
+  padding-top: 12px;
+}
+
+@media (max-width: 860px) {
+  .section-head { padding: 0 16px; }
+}
+
+/* ---------- Type picker row (one picker per category, side-by-side) ---------- */
+.picker-row {
+  max-width: 1280px;
+  margin: 18px auto 12px;
+  padding: 0 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* ---------- Type picker (popover button) ---------- */
+.type-picker {
+  position: relative;
+  flex: 1 1 360px;
+  min-width: 320px;
+}
+
+.type-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-lg);
+  cursor: pointer;
+  font-family: var(--c-font-sans);
+  font-size: 14px;
+  color: var(--c-text);
+  box-shadow: var(--c-shadow-sm);
+  transition: all var(--c-transition);
+  min-width: 320px;
+}
+.type-picker-trigger:hover {
+  background: var(--c-surface-2);
+  border-color: var(--c-text-subtle);
+  box-shadow: var(--c-shadow-md);
+}
+.type-picker-trigger:focus-visible {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.type-picker.open .type-picker-trigger {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+
+.type-picker-trigger-prefix {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-right: 12px;
+  border-right: 1px solid var(--c-border);
+}
+.type-picker-trigger-label {
+  flex: 1;
+  font-family: var(--c-font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--c-text);
+  text-align: left;
+}
+.type-picker.has-selection .type-picker-trigger-label {
+  color: var(--c-accent);
+}
+
+.type-picker-chevron {
+  width: 12px;
+  height: 8px;
+  color: var(--c-text-muted);
+  transition: transform var(--c-transition), color var(--c-transition);
+}
+.type-picker.open .type-picker-chevron {
+  transform: rotate(180deg);
+  color: var(--c-accent);
+}
+
+/* Popover menu */
+.type-picker-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+  padding: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-lg);
+  box-shadow: var(--c-shadow-lg);
+  animation: menu-pop 160ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  transform-origin: top left;
+}
+
+/* Subgroup header inside the menu (e.g. "Pneumatic", "Electrical") */
+.type-picker-subheader {
+  font-family: var(--c-font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  padding: 10px 12px 4px;
+  margin-top: 4px;
+  border-top: 1px solid var(--c-border);
+}
+.type-picker-subheader:first-child {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 6px;
+}
+@keyframes menu-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.type-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--c-radius-md);
+  cursor: pointer;
+  font-family: var(--c-font-sans);
+  text-align: left;
+  color: var(--c-text);
+  transition: all var(--c-transition);
+}
+.type-picker-option:hover {
+  background: var(--c-surface-2);
+  border-color: var(--c-border);
+  transform: translateX(2px);
+}
+.type-picker-option:focus-visible {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 2px var(--c-accent-ring);
+}
+.type-picker-option.active {
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent);
+}
+.type-picker-option.active .option-icon {
+  background: var(--c-accent);
+  color: var(--c-surface);
+  border-color: var(--c-accent);
+}
+.type-picker-option.active .option-title {
+  color: var(--c-accent);
+}
+
+.option-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-md);
+  background: var(--c-surface-2);
+  color: var(--c-text-soft);
+  transition: all var(--c-transition);
+}
+.option-icon svg { width: 22px; height: 22px; }
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.option-title {
+  font-family: var(--c-font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text);
+  letter-spacing: -0.005em;
+}
+.option-meta {
+  font-size: 11.5px;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+/* Empty state before a type is picked */
+.empty-prompt {
+  max-width: 1280px;
+  margin: 24px auto 0;
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--c-text-muted);
+  font-style: italic;
+  font-size: 14px;
+}
+
+@media (max-width: 860px) {
+  .picker-row { padding: 0 16px; gap: 12px; flex-direction: column; }
+  .type-picker { flex: 1 1 auto; min-width: 0; }
+  .type-picker-menu { left: 0; right: 0; min-width: 0; }
+  .type-picker-trigger { min-width: 0; width: 100%; }
+  .empty-prompt { padding: 40px 16px; }
+}
+
+/* ---------- Paired actuator panel ----------
+   Wrapper around one or more recommendation cards. Ball valves resolve to a
+   pneumatic R&P model AND an electric rotary model, so each pairing renders
+   as its own .paired-card with its own type heading + jump button. */
+.paired-actuator {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.paired-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--c-radius-md);
+}
+.paired-label {
+  font-family: var(--c-font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+.view-actuator-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--c-radius-md);
+  cursor: pointer;
+  font-family: var(--c-font-sans);
+  font-size: 13.5px;
+  transition: all var(--c-transition);
+  text-align: left;
+}
+.view-actuator-btn:hover {
+  background: var(--c-accent);
+  color: var(--c-surface);
+  box-shadow: var(--c-shadow-md);
+}
+.view-actuator-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.view-actuator-info {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.view-actuator-model {
+  font-family: var(--c-font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--c-accent);
+}
+.view-actuator-btn:hover .view-actuator-model {
+  color: var(--c-surface);
+}
+.view-actuator-name {
+  font-family: var(--c-font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--c-text-muted);
+  line-height: 1.3;
+}
+.view-actuator-btn:hover .view-actuator-name {
+  color: var(--c-surface);
+}
+.view-actuator-cta {
+  font-weight: 500;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+.view-actuator-btn:hover .view-actuator-cta {
+  color: var(--c-surface);
+}
+
+/* ---------- Paired-card "Not Available" state ----------
+   The valve recommends a model that isn't in our actuator catalog yet (see
+   Issue 3). Render the card with muted styling and a disabled button so the
+   user sees what's recommended without being able to click into an empty
+   picker. */
+.paired-card--unavailable {
+  background: var(--c-surface-2);
+  border-color: var(--c-border-strong);
+}
+.view-actuator-btn--disabled,
+.view-actuator-btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.85;
+  border-color: var(--c-border-strong);
+  color: var(--c-text-muted);
+}
+.view-actuator-btn--disabled:hover,
+.view-actuator-btn[disabled]:hover {
+  /* Suppress the teal hover effect for disabled cards. */
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  box-shadow: none;
+}
+.view-actuator-btn--disabled .view-actuator-model {
+  color: var(--c-text-muted);
+}
+.view-actuator-name--unavailable {
+  font-style: italic;
+  color: #B45309;  /* warm amber — signals "missing data" without alarming red */
+  font-weight: 500;
+}
+.view-actuator-cta--unavailable {
+  font-style: italic;
+  color: var(--c-text-subtle);
+}
+
+/* ---------- Paired actuator section (chip-grouped, single header) ----------
+   Replaces the previous card-per-recommendation layout. One section heading
+   "Recommended Actuator" at the top, then groups (Option 1 — Pneumatic,
+   Option 2 — Electric) with small clickable model chips. Hover a chip for
+   movement-type + friendly name; disabled chips show "Data Not Available". */
+.paired-section {
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--c-radius-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.paired-section-header {
+  margin: 0 0 12px;
+  font-family: var(--c-font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+.paired-option-group + .paired-option-group {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--c-accent);
+  opacity: 0.95;
+}
+.paired-option-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-family: var(--c-font-sans);
+  font-size: 12.5px;
+}
+.paired-option-num {
+  font-weight: 600;
+  color: var(--c-text);
+}
+.paired-option-cat {
+  color: var(--c-accent);
+  font-weight: 500;
+  /* "—" separator before category */
+}
+.paired-option-cat::before {
+  content: "—";
+  margin-right: 6px;
+  color: var(--c-text-muted);
+  font-weight: 400;
+}
+.paired-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.paired-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 7px 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--c-radius-md);
+  cursor: pointer;
+  transition: all var(--c-transition);
+  text-align: left;
+  /* Keep chips a reasonable max width so labels can wrap to 2 lines instead
+     of blowing out horizontally. */
+  max-width: 240px;
+  min-width: 0;
+}
+.paired-chip-code {
+  font-family: var(--c-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-accent);
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+.paired-chip-label {
+  font-family: var(--c-font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--c-text-muted);
+  line-height: 1.3;
+  /* Allow wrapping for long labels like "Spring Return Fail-Close @ 3.5 bar" */
+}
+.paired-chip:hover {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(1, 126, 128, 0.25);
+}
+.paired-chip:hover .paired-chip-code,
+.paired-chip:hover .paired-chip-label {
+  color: var(--c-surface);
+}
+.paired-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.paired-chip--unavailable,
+.paired-chip[disabled] {
+  background: var(--c-surface-2);
+  border-color: var(--c-border-strong);
+  cursor: not-allowed;
+}
+.paired-chip--unavailable .paired-chip-code,
+.paired-chip[disabled] .paired-chip-code {
+  color: #B45309;
+  font-style: italic;
+}
+.paired-chip--unavailable .paired-chip-label,
+.paired-chip[disabled] .paired-chip-label {
+  color: var(--c-text-subtle);
+}
+.paired-chip--unavailable:hover,
+.paired-chip[disabled]:hover {
+  background: var(--c-surface-2);
+  transform: none;
+  box-shadow: none;
+}
+.paired-chip--unavailable:hover .paired-chip-code,
+.paired-chip[disabled]:hover .paired-chip-code {
+  color: #B45309;
+}
+.paired-chip--unavailable:hover .paired-chip-label,
+.paired-chip[disabled]:hover .paired-chip-label {
+  color: var(--c-text-subtle);
+}
+
+/* ---------- Section title subgroup label (e.g. "Pneumatic" tag) ---------- */
+.section-subgroup {
+  display: inline-block;
+  margin-right: 10px;
+  padding: 2px 10px;
+  font-family: var(--c-font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   Workspace layout — 2 columns top (valves | actuators),
+   centered summary band, bottom accessories row.
+        ┌─────────────┬─────────────┐
+        │  valves     │ actuators   │
+        ├─────────────┴─────────────┤
+        │   summary (both codes)    │
+        ├───────────────────────────┤
+        │      accessories          │
+        └───────────────────────────┘
+   On narrow screens collapses to a single column.
+   ============================================================ */
+.workspace {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "valves     actuators"
+    "access     access"
+    "summary    summary";
+  gap: 24px;
+  align-items: start;
+}
+.workspace-col--valves     { grid-area: valves; }
+.workspace-col--actuators  { grid-area: actuators; }
+.workspace-summary         { grid-area: summary; }
+.workspace-accessories     { grid-area: access; }
+
+/* Column shell: white card with subtle border so the two halves feel like
+   parallel rails. */
+.workspace-col {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-lg);
+  padding: 18px 22px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Standardized section header used by Valves and Actuators columns.
+   Matches `.accessories-title` so all three workspace cards (Valves /
+   Actuators / Accessories) share one consistent header treatment. */
+.workspace-col-header {
+  margin: 0 0 4px;
+  font-family: var(--c-font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--c-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.workspace-col-header::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 18px;
+  background: var(--c-accent);
+  border-radius: 2px;
+}
+.workspace-col-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* "Pick a type" hint shown inside an empty column. No more dashed box —
+   just a plain centered line of text, kept minimal so the column header
+   does most of the visual work. Hidden via :has() when a section appears. */
+.column-placeholder {
+  margin: 0;
+  padding: 28px 12px;
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  color: var(--c-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+.column-placeholder strong {
+  color: var(--c-text);
+  font-weight: 600;
+}
+.workspace-col:has(.valve-section:not([hidden])) .column-placeholder {
+  display: none;
+}
+
+/* Inside a column, the section drops its full-width chrome — it now fills
+   the column instead of centering at 1280px. */
+.workspace-col .valve-section {
+  max-width: none;
+  margin: 0;
+  padding-top: 0;
+}
+.workspace-col .section-head {
+  padding: 0 4px;
+  max-width: none;
+  margin: 0;
+}
+.workspace-col .section-head .section-title {
+  font-size: 18px;
+}
+.workspace-col .valve-section main {
+  /* Stack form + result vertically — half-width columns aren't wide enough
+     for the original 360px + 1fr side-by-side grid. */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 4px 4px;
+  grid-template-columns: none;
+}
+.workspace-col .form-panel,
+.workspace-col .result-panel {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-md);
+  padding: 14px 16px;
+}
+
+/* ---------- Summary panel (center row) ---------- */
+.workspace-summary {
+  background: linear-gradient(180deg, var(--c-accent-soft) 0%, var(--c-surface) 100%);
+  border: 1.5px solid var(--c-accent);
+  border-radius: var(--c-radius-lg);
+  padding: 18px 22px;
+}
+.summary-title {
+  margin: 0 0 14px;
+  font-family: var(--c-font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-accent);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.summary-title::before {
+  content: "★";
+  color: var(--c-accent);
+  font-size: 18px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.summary-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--c-radius-md);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.summary-label {
+  font-family: var(--c-font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+.summary-code {
+  font-family: var(--c-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--c-accent);
+  letter-spacing: -0.005em;
+}
+.summary-name {
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  color: var(--c-text-soft);
+  line-height: 1.35;
+}
+
+/* ---------- Accessories placeholder (bottom row) ---------- */
+.workspace-accessories {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-lg);
+  padding: 18px 22px;
+}
+.accessories-title {
+  margin: 0 0 12px;
+  font-family: var(--c-font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--c-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.accessories-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 18px;
+  background: var(--c-accent);
+  border-radius: 2px;
+}
+.accessories-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+.accessories-placeholder {
+  border: 1.5px dashed var(--c-border-strong);
+  border-radius: var(--c-radius-md);
+  background: var(--c-surface-2);
+  padding: 26px 24px;
+  text-align: center;
+}
+.accessories-placeholder-headline {
+  margin: 0 0 6px;
+  font-family: var(--c-font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+  color: #B45309;  /* warm amber, matching "Data Not Available" treatment */
+}
+.accessories-placeholder-sub {
+  margin: 0;
+  font-family: var(--c-font-sans);
+  font-size: 12.5px;
+  color: var(--c-text-muted);
+  line-height: 1.5;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.accessories-placeholder-sub code {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-sm);
+  padding: 1px 6px;
+  font-family: var(--c-font-mono);
+  font-size: 11.5px;
+  color: var(--c-text-soft);
+}
+
+/* ---------- Accessories browse + multi-select ---------- */
+.accessories-count {
+  margin-left: auto;
+  font-family: var(--c-font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--c-text-muted);
+}
+.accessories-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--c-border);
+}
+/* The Family filter is styled as a "picker box" — same shape as the
+   VALVES / ACTUATORS type-pickers at the top of the page, so all three
+   category selectors feel consistent. Prefix + vertical separator + native
+   select (with its arrow hidden in favor of a custom chevron). */
+.accessories-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-lg);
+  box-shadow: var(--c-shadow-sm);
+  cursor: pointer;
+  transition: all var(--c-transition);
+  min-width: 280px;
+}
+.accessories-filter:hover {
+  background: var(--c-surface-2);
+  border-color: var(--c-text-subtle);
+  box-shadow: var(--c-shadow-md);
+}
+.accessories-filter:focus-within {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.accessories-filter-label {
+  font-family: var(--c-font-sans);
+  color: var(--c-text-muted);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11.5px;
+  padding-right: 12px;
+  border-right: 1px solid var(--c-border);
+}
+.accessories-filter select {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--c-font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--c-accent);
+  cursor: pointer;
+  padding-right: 24px;
+  /* Custom chevron — same shape as .type-picker-chevron */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1.5l5 5 5-5' fill='none' stroke='%237A7A7A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 12px 8px;
+}
+
+/* Search keeps its own style — small label-on-top input as it was. */
+.accessories-search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--c-font-sans);
+  font-size: 12px;
+}
+.accessories-search-label {
+  color: var(--c-text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+.accessories-search input {
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-sm);
+  background: var(--c-surface);
+  color: var(--c-text);
+  min-width: 280px;
+}
+.accessories-search input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.accessories-selected-summary {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.selected-count {
+  font-family: var(--c-font-sans);
+  font-size: 12.5px;
+  color: var(--c-text-soft);
+  font-weight: 500;
+}
+.accessories-clear-btn {
+  font-family: var(--c-font-sans);
+  font-size: 12px;
+  padding: 6px 12px;
+  background: var(--c-surface);
+  color: var(--c-text-soft);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-sm);
+  cursor: pointer;
+  transition: all var(--c-transition);
+}
+.accessories-clear-btn:hover {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border-color: var(--c-accent);
+}
+
+.accessories-list {
+  max-height: 480px;
+  overflow-y: auto;
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-md);
+  background: var(--c-bg);
+}
+.accessories-loading,
+.accessories-empty {
+  padding: 24px;
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  color: var(--c-text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+.acc-group + .acc-group {
+  margin-top: 4px;
+}
+.acc-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--c-surface-2);
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.acc-group:first-child .acc-group-head {
+  border-top: none;
+}
+.acc-group-name {
+  font-family: var(--c-font-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  letter-spacing: 0.01em;
+}
+.acc-group-count {
+  font-family: var(--c-font-sans);
+  font-size: 11px;
+  color: var(--c-text-muted);
+  font-weight: 500;
+}
+
+.acc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  cursor: pointer;
+  transition: background var(--c-transition);
+}
+.acc-item:last-child { border-bottom: none; }
+.acc-item:hover {
+  background: var(--c-surface-2);
+}
+.acc-item--selected {
+  background: var(--c-accent-soft);
+}
+.acc-item--selected:hover {
+  background: var(--c-accent-soft);
+}
+.acc-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  cursor: pointer;
+  accent-color: var(--c-accent);
+}
+.acc-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.acc-item-code {
+  font-family: var(--c-font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-accent);
+}
+.acc-item-attrs {
+  font-family: var(--c-font-sans);
+  font-size: 12px;
+  color: var(--c-text-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* ---------- Summary panel: accessories card ---------- */
+.summary-card--accessories {
+  margin-top: 14px;
+}
+.summary-acc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.summary-acc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.summary-acc-chip-family {
+  display: inline-block;
+  padding: 2px 7px;
+  font-family: var(--c-font-sans);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-surface);
+  background: var(--c-accent);
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.summary-acc-chip-code {
+  font-family: var(--c-font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--c-accent);
+}
+
+/* ---------- Responsive: stack columns on narrow screens ---------- */
+@media (max-width: 980px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "valves"
+      "actuators"
+      "access"
+      "summary";
+    padding: 0 16px;
+  }
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .accessories-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .accessories-selected-summary {
+    margin-left: 0;
+    justify-content: space-between;
+  }
+  .accessories-filter select,
+  .accessories-search input {
+    min-width: 0;
+    width: 100%;
+  }
+}

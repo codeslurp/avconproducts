@@ -2,8 +2,9 @@
 # Bundled Python runtime (~45 MB, recreated by build_bundle.bat)
 python/
 
-# Data files (~33 MB) — too large for git; keep locally or use a data store
-data/
+# Data files (~33 MB) — too large for git; keep locally or use a data store.
+# Anchored to repo root so docs/data/ (the static-site JSON bundle) isn't matched.
+/data/
 
 # Screenshots — uncomment to also exclude (~2 MB of PNGs)
 # screenshots/

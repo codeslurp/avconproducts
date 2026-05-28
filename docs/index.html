@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Valve & Actuator Code Selector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="static/styles.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-text">
+        <h1>
+          <span class="title-line">BV&ndash;BFV&ndash;Actuator&ndash;Accessory</span>
+          <span class="title-line">Product Code Finder</span>
+        </h1>
+        <p class="tagline">49,289 AVCON SKUs. Infinite Specs. One Click.</p>
+      </div>
+      <img src="static/avcon-logo.png" alt="AVCON Controls" class="brand-logo" />
+    </div>
+  </header>
+
+  <!-- One picker widget per category. Independent selections. -->
+  <div class="picker-row">
+    
+    <nav class="type-picker" data-category="Valves">
+      <button type="button" class="type-picker-trigger"
+              aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">Valves</span>
+        <span class="type-picker-trigger-label">Choose valve type</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu" role="menu" hidden>
+        
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="ball">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Ball Valve</span>
+            <span class="option-meta">3,892 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="butterfly">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Butterfly Valve (Centric)</span>
+            <span class="option-meta">43,200 SKUs</span>
+          </span>
+        </button>
+        
+        
+      </div>
+    </nav>
+    
+    <nav class="type-picker" data-category="Actuators">
+      <button type="button" class="type-picker-trigger"
+              aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">Actuators</span>
+        <span class="type-picker-trigger-label">Choose actuator type</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu" role="menu" hidden>
+        
+        
+        <div class="type-picker-subheader">Pneumatic</div>
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_rp">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Rack &amp; Pinion</span>
+            <span class="option-meta">1,620 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_sy">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Scotch Yoke</span>
+            <span class="option-meta">481 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+        <div class="type-picker-subheader">Electrical</div>
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="electrical_rotary">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Rotary</span>
+            <span class="option-meta">96 SKUs</span>
+          </span>
+        </button>
+        
+        
+      </div>
+    </nav>
+    
+  </div>
+
+  <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
+
+  
+  <div class="workspace">
+
+    
+
+    <div class="workspace-col workspace-col--valves">
+      <h2 class="workspace-col-header">
+        <span class="workspace-col-icon" aria-hidden="true">◐</span>
+        Valves
+      </h2>
+      <p class="column-placeholder">
+        Pick a <strong>valve type</strong> from the menu above.
+      </p>
+      
+        
+    <article class="valve-section" data-valve-type="ball" data-category="Valves" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          
+          Ball Valve
+        </h2>
+        <p class="section-meta">
+          3,892 valve SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="series">
+              <label for="f-ball-series">Series</label>
+              
+              <input id="f-ball-series" name="series" data-key="series"
+                     list="ball-series-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="ball-series-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="size">
+              <label for="f-ball-size">Valve Size</label>
+              
+              <select id="f-ball-size" name="size" data-key="size">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-ball-body_material">Body Material</label>
+              
+              <select id="f-ball-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="ball_material">
+              <label for="f-ball-ball_material">Ball Material</label>
+              
+              <select id="f-ball-ball_material" name="ball_material" data-key="ball_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="seat_material">
+              <label for="f-ball-seat_material">Seat Material</label>
+              
+              <select id="f-ball-seat_material" name="seat_material" data-key="seat_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="characteristics">
+              <label for="f-ball-characteristics">Characteristics</label>
+              
+              <select id="f-ball-characteristics" name="characteristics" data-key="characteristics">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="end_connection">
+              <label for="f-ball-end_connection">End Connections</label>
+              
+              <select id="f-ball-end_connection" name="end_connection" data-key="end_connection">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="ball_type">
+              <label for="f-ball-ball_type">Ball Type</label>
+              
+              <select id="f-ball-ball_type" name="ball_type" data-key="ball_type">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Series to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Bare Valve Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Catalogue Code</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+            <div class="code-card">
+              <div class="code-label">BTO (N·m)</div>
+              <div class="code-value bto">—</div>
+            </div>
+            <div class="code-card">
+              <div class="code-label">FOS = BTO × 1.5</div>
+              <div class="code-value fos">—</div>
+            </div>
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="butterfly" data-category="Valves" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          
+          Butterfly Valve (Centric)
+        </h2>
+        <p class="section-meta">
+          43,200 valve SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="series">
+              <label for="f-butterfly-series">Series</label>
+              
+              <input id="f-butterfly-series" name="series" data-key="series"
+                     list="butterfly-series-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="butterfly-series-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="size">
+              <label for="f-butterfly-size">Valve Size</label>
+              
+              <select id="f-butterfly-size" name="size" data-key="size">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-butterfly-body_material">Body Material</label>
+              
+              <select id="f-butterfly-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="disc_material">
+              <label for="f-butterfly-disc_material">Disc Material</label>
+              
+              <select id="f-butterfly-disc_material" name="disc_material" data-key="disc_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="seat_material">
+              <label for="f-butterfly-seat_material">Seat Material</label>
+              
+              <select id="f-butterfly-seat_material" name="seat_material" data-key="seat_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="characteristics">
+              <label for="f-butterfly-characteristics">Characteristics</label>
+              
+              <select id="f-butterfly-characteristics" name="characteristics" data-key="characteristics">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="end_connection">
+              <label for="f-butterfly-end_connection">End Connections</label>
+              
+              <select id="f-butterfly-end_connection" name="end_connection" data-key="end_connection">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Series to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Bare Valve Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Catalogue Code</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+            <div class="code-card">
+              <div class="code-label">BTO (N·m)</div>
+              <div class="code-value bto">—</div>
+            </div>
+            <div class="code-card">
+              <div class="code-label">FOS = BTO × 1.5</div>
+              <div class="code-value fos">—</div>
+            </div>
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+    </div>
+
+    <div class="workspace-col workspace-col--actuators">
+      <h2 class="workspace-col-header">
+        <span class="workspace-col-icon" aria-hidden="true">◑</span>
+        Actuators
+      </h2>
+      <p class="column-placeholder">
+        Pick an <strong>actuator type</strong>, or use a valve's recommendation.
+      </p>
+      
+        
+    <article class="valve-section" data-valve-type="pneumatic_rp" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pneumatic</span>
+          Rack &amp; Pinion
+        </h2>
+        <p class="section-meta">
+          1,620 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-pneumatic_rp-model">Model</label>
+              
+              <input id="f-pneumatic_rp-model" name="model" data-key="model"
+                     list="pneumatic_rp-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pneumatic_rp-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-pneumatic_rp-body_material">Body Material</label>
+              
+              <select id="f-pneumatic_rp-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="shaft_female">
+              <label for="f-pneumatic_rp-shaft_female">Shaft Female</label>
+              
+              <select id="f-pneumatic_rp-shaft_female" name="shaft_female" data-key="shaft_female">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="oring_material">
+              <label for="f-pneumatic_rp-oring_material">O-Ring Material</label>
+              
+              <select id="f-pneumatic_rp-oring_material" name="oring_material" data-key="oring_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="pneumatic_sy" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pneumatic</span>
+          Scotch Yoke
+        </h2>
+        <p class="section-meta">
+          481 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-pneumatic_sy-model">Model</label>
+              
+              <input id="f-pneumatic_sy-model" name="model" data-key="model"
+                     list="pneumatic_sy-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pneumatic_sy-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-pneumatic_sy-body_material">Body Material</label>
+              
+              <select id="f-pneumatic_sy-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="shaft_female">
+              <label for="f-pneumatic_sy-shaft_female">Shaft Female</label>
+              
+              <select id="f-pneumatic_sy-shaft_female" name="shaft_female" data-key="shaft_female">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="oring_material">
+              <label for="f-pneumatic_sy-oring_material">O-Ring Material</label>
+              
+              <select id="f-pneumatic_sy-oring_material" name="oring_material" data-key="oring_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="electrical_rotary" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Electrical</span>
+          Rotary
+        </h2>
+        <p class="section-meta">
+          96 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-electrical_rotary-model">Model</label>
+              
+              <input id="f-electrical_rotary-model" name="model" data-key="model"
+                     list="electrical_rotary-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="electrical_rotary-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="voltage">
+              <label for="f-electrical_rotary-voltage">Voltage</label>
+              
+              <select id="f-electrical_rotary-voltage" name="voltage" data-key="voltage">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+    </div>
+
+    
+    <div class="workspace-accessories" id="workspace-accessories">
+      <h2 class="accessories-title">
+        <span class="accessories-icon" aria-hidden="true">+</span>
+        Accessories
+        
+        <span class="accessories-count">162 items · 13 families</span>
+        
+      </h2>
+
+      
+      <div class="accessories-toolbar">
+        <label class="accessories-filter">
+          <span class="accessories-filter-label">ACCESSORIES</span>
+          <select id="accessories-family-filter">
+            <option value="">All families</option>
+          </select>
+        </label>
+        <label class="accessories-search">
+          <span class="accessories-search-label">Search</span>
+          <input type="search" id="accessories-search-input"
+                 placeholder="Filter by code or attribute…" autocomplete="off" />
+        </label>
+        <div class="accessories-selected-summary" id="accessories-selected-summary">
+          <span class="selected-count" id="accessories-selected-count">0 selected</span>
+          <button type="button" class="accessories-clear-btn" id="accessories-clear-btn" hidden>
+            Clear all
+          </button>
+        </div>
+      </div>
+
+      <div class="accessories-list" id="accessories-list" role="list">
+        <div class="accessories-loading">Loading accessories…</div>
+      </div>
+      
+    </div>
+
+    
+    <div class="workspace-summary" id="workspace-summary" hidden>
+      <h2 class="summary-title">Your Product Code is</h2>
+      <div class="summary-grid">
+        <div class="summary-card summary-card--valve" data-summary-category="Valves" hidden>
+          <div class="summary-label">Valve</div>
+          <div class="summary-code">—</div>
+          <div class="summary-name">—</div>
+        </div>
+        <div class="summary-card summary-card--actuator" data-summary-category="Actuators" hidden>
+          <div class="summary-label">Actuator</div>
+          <div class="summary-code">—</div>
+          <div class="summary-name">—</div>
+        </div>
+      </div>
+      
+      <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
+        <div class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</div>
+        <div class="summary-acc-list">—</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <small>Local-only tool · no data leaves this machine</small>
+  </footer>
+
+  <script src="static/catalog-engine.js"></script>
+  <script src="static/app.js"></script>
+</body>
+</html>
