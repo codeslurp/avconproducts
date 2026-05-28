@@ -160,10 +160,14 @@ def main() -> None:
     )
     print(f"[build]   wrote accessories.json — {len(accessories.get('rows', []))} rows")
 
-    # 3. Static assets (copy unchanged, except app.js which is the static variant)
+    # 3. Static assets. app.js works in BOTH Flask and static modes because
+    #    the dataAPI shim at the top of the file detects window.CatalogEngine
+    #    at runtime (defined here by catalog-engine.js, undefined under Flask).
+    #    So we can copy it straight — same source for both deployments.
     shutil.copy(APP_STATIC / "styles.css", DOCS_DIR / "static" / "styles.css")
+    shutil.copy(APP_STATIC / "app.js", DOCS_DIR / "static" / "app.js")
     shutil.copy(APP_STATIC / "avcon-logo.png", DOCS_DIR / "static" / "avcon-logo.png")
-    print("[build]   copied styles.css, avcon-logo.png")
+    print("[build]   copied styles.css, app.js, avcon-logo.png")
 
     # 4. Render index.html
     sections = [_section_summary(k, c) for k, c in catalogs.items()]
