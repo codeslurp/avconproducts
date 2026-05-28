@@ -1207,9 +1207,13 @@ footer small { font-family: var(--c-font-sans); }
 }
 .workspace-col .valve-section main {
   /* Stack form + result vertically — half-width columns aren't wide enough
-     for the original 360px + 1fr side-by-side grid. */
+     for the original 360px + 1fr side-by-side grid. `align-items: stretch`
+     is explicit here so the panels span the full column width; the parent
+     `main` rule sets `align-items: start` which, once display flips to flex
+     column, would otherwise shrink each panel to its content width. */
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 16px;
   padding: 12px 4px 4px;
   grid-template-columns: none;
