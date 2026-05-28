@@ -621,30 +621,6 @@ class SummaryPanel {
 const summaryRoot = document.getElementById("workspace-summary");
 if (summaryRoot) new SummaryPanel(summaryRoot);
 
-/* Human-readable names for the family codes that appear in the source
-   spreadsheet. The data only carries codes (ALR, BKT, etc.); these labels
-   make the family picker and group headings legible to users who don't
-   already know the abbreviations. UPDATE these if any name is wrong —
-   it's the single source of truth for accessory family names. */
-const FAMILY_LABELS = {
-  "ALR":            "Air Lock Regulator",
-  "BKT":            "Bracket",
-  "CFLG":           "Companion Flange",
-  "FCV":            "Flow Control Valve",
-  "FRG":            "Filter Regulator",
-  "Gland":          "Cable Gland",
-  "LSB":            "Limit Switch Box",
-  "MOR":            "Manual Override Rotary",
-  "QEV":            "Quick Exhaust Valve",
-  "Silencer":       "Silencer",
-  "THW FOR MSD":    "Top Hand Wheel for MSD",
-  "FITTING":        "Tube Fitting",
-  "Volume Booster": "Volume Booster",
-};
-function familyLabel(code) {
-  return FAMILY_LABELS[code] || code;
-}
-
 /* ---------- Accessory browser ----------
    Multi-select list of all accessories — NO recommendation, no cascade. The
    user explicitly browses, ticks the items they want, and the summary panel
@@ -725,9 +701,7 @@ class AccessoryBrowser {
     for (const fam of this.families) {
       const opt = document.createElement("option");
       opt.value = fam.name;
-      // Show full name as primary so non-experts know what each family is.
-      // Code is preserved on the in-list group heading once the user picks.
-      opt.textContent = `${familyLabel(fam.name)} (${fam.count})`;
+      opt.textContent = `${fam.name} (${fam.count})`;
       this.familyFilterEl.appendChild(opt);
     }
   }
@@ -787,12 +761,7 @@ class AccessoryBrowser {
       groupHead.className = "acc-group-head";
       const groupName = document.createElement("span");
       groupName.className = "acc-group-name";
-      // Full name in heading; keep code in parens so users still know how
-      // it maps to the abbreviation they may see on other AVCON paperwork.
-      const fullName = familyLabel(familyName);
-      groupName.textContent = fullName === familyName
-        ? familyName
-        : `${fullName} (${familyName})`;
+      groupName.textContent = familyName;
       const groupCount = document.createElement("span");
       groupCount.className = "acc-group-count";
       groupCount.textContent = `${rows.length} item${rows.length === 1 ? "" : "s"}`;
