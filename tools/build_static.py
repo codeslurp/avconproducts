@@ -16,8 +16,15 @@ from __future__ import annotations
 import json
 import shutil
 import sys
+import time
 from collections import OrderedDict
 from pathlib import Path
+
+# Build timestamp used to cache-bust asset URLs. GitHub Pages serves CSS/JS
+# with long Cache-Control headers we can't override, so old assets linger in
+# the browser even after a deploy. Appending ?v=<this> forces a fresh fetch.
+# Format YYYYMMDDhhmmss — sorts nicely in DevTools and is one second per build.
+BUILD_VERSION = time.strftime("%Y%m%d%H%M%S")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 APP_DIR = REPO_ROOT / "app"
@@ -38,9 +45,11 @@ def _url_for_stub(endpoint: str, **kwargs) -> str:
 
     Pages serves project sites under /<repo>/ so asset URLs must be RELATIVE
     (no leading slash) to resolve correctly. The browser will join them against
-    the current page URL, landing on .../avconproducts/static/styles.css."""
+    the current page URL, landing on .../avconproducts/static/styles.css.
+    The ?v=BUILD_VERSION query string cache-busts on every build so users
+    don't need to hard-refresh after each CSS/JS change."""
     if endpoint == "static":
-        return f"static/{kwargs['filename']}"
+        return f"static/{kwargs['filename']}?v={BUILD_VERSION}"
     return "#"
 
 
@@ -194,10 +203,16 @@ def main() -> None:
     # The static build needs catalog-engine.js loaded BEFORE app.js so the
     # engine is in scope when app.js runs. Cheapest seam: inject the engine
     # script tag right before the existing app.js tag.
-    needle = '<script src="static/app.js">'
-    inject = '<script src="static/catalog-engine.js"></script>\n  '
+    # app.js is rendered via url_for so it already carries ?v=BUILD_VERSION;
+    # catalog-engine.js is injected here so we need to add the cache-bust
+    # query string explicitly.
+    needle = f'<script src="static/app.js?v={BUILD_VERSION}">'
+    inject = f'<script src="static/catalog-engine.js?v={BUILD_VERSION}"></script>\n  '
     if needle not in html:
-        raise RuntimeError("template missing expected app.js script tag — update inject anchor.")
+        raise RuntimeError(
+            "template missing expected app.js script tag — update inject anchor "
+            "(remember Jinja url_for stub now appends ?v=BUILD_VERSION)."
+        )
     html = html.replace(needle, inject + needle)
 
     (DOCS_DIR / "index.html").write_text(html, encoding="utf-8")
