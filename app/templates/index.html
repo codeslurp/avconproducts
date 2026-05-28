@@ -68,8 +68,15 @@
     </nav>
     {% endfor %}
     {# Global Reset — wipes type pickers, all cascade selections, accessories,
-       and the summary panel. Replaces the per-section Reset buttons. #}
-    <button type="button" id="global-reset-btn" class="global-reset-btn">Reset all</button>
+       and the summary panel. Renders as a labeled button in the picker row on
+       desktop (>=860px) and as a circular floating-action button anchored to
+       bottom-right on mobile. Both spans are always in the DOM; CSS toggles
+       which one is visible per breakpoint. `aria-label` is the screen-reader
+       fallback regardless of which span is shown. #}
+    <button type="button" id="global-reset-btn" class="global-reset-btn" aria-label="Reset all">
+      <span class="global-reset-label">Reset all</span>
+      <span class="global-reset-icon" aria-hidden="true">&#x21BB;</span>
+    </button>
   </div>
 
   <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>

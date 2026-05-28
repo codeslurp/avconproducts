@@ -530,9 +530,11 @@ footer small { font-family: var(--c-font-sans); }
 }
 
 /* ---------- Global Reset button ----------
-   Sits at the right end of .picker-row, vertically centered against the type
-   pickers. Secondary visual weight (outlined, no fill) so it doesn't compete
-   with the primary picker triggers. */
+   Desktop (default): sits at the right end of .picker-row, vertically centered
+   against the type pickers. Outlined secondary weight so it doesn't compete
+   with the primary picker triggers. Icon is hidden; label is visible.
+   Mobile (<860px, see further down): re-positioned as a circular FAB at
+   bottom-right; label is hidden, icon takes over. */
 .global-reset-btn {
   flex: 0 0 auto;
   align-self: center;
@@ -557,6 +559,51 @@ footer small { font-family: var(--c-font-sans); }
   outline: none;
   border-color: var(--c-accent);
   box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+.global-reset-btn .global-reset-icon { display: none; }
+
+/* Mobile: turn the button into a circular floating action button anchored to
+   the bottom-right. `position: fixed` removes it from the .picker-row flex
+   flow so the two type pickers stack normally above. */
+@media (max-width: 860px) {
+  .global-reset-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--c-accent);
+    color: var(--c-surface);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), 0 2px 4px rgba(0, 0, 0, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .global-reset-btn:hover,
+  .global-reset-btn:focus-visible {
+    background: var(--c-accent);
+    color: var(--c-surface);
+    border: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22), 0 3px 6px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+  .global-reset-btn:active {
+    transform: translateY(0);
+  }
+  .global-reset-btn .global-reset-label { display: none; }
+  .global-reset-btn .global-reset-icon {
+    display: inline-block;
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 600;
+    /* Reset glyph (↻) sits slightly above baseline; nudge for visual centering. */
+    transform: translateY(-1px);
+  }
 }
 
 /* ---------- Type picker row (one picker per category, side-by-side) ---------- */
