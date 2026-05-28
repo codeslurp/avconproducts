@@ -761,9 +761,12 @@ class Catalog:
             if paired_val in (None, ""):
                 continue
             model = _normalize_paired_model(str(paired_val).strip())
-            # `#N/A` is an Excel error string from broken VLOOKUP cells in the
-            # source — treat as no recommendation (see 2026-05-27 report).
-            if model in ("", "#N/A"):
+            # The ball-valve actuator-combination sheet uses TWO sentinels for
+            # "no actuator available at this pressure": empty cells AND literal
+            # 0 (~1,176 rows in cols 51 and 57 at 5.5 bar). Source also leaves
+            # broken VLOOKUPs as #N/A/#REF!/#VALUE!. All sentinels filtered
+            # here so the chip never renders with a junk model name.
+            if model in ("", "0", "#N/A", "#REF!", "#VALUE!"):
                 continue
             target_type = p.resolve_target_type(model)
             key = (target_type, model)
