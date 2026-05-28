@@ -151,13 +151,14 @@ BALL_VALVE = ValveTypeConfig(
                        label="Pneumatic — Spring Return Fail-Open @ 4 bar"),
         PairedActuator(model_col=108, target_type="pneumatic_rp", target_field="model",
                        label="Pneumatic — Spring Return Fail-Open @ 5.5 bar"),
-        # Electric — no sub-text on chips (user's choice which to pick).
-        # Plain "Electric" labels are stripped to empty by the JS prefix
-        # regex, so each chip shows just the model code with no sub-line.
+        # Electrical — same label on both chips so the JS group heading reads
+        # "Option N — Electrical" and each chip's sub-line shows "Electrical".
+        # (Stripping only happens when the label has an em dash like
+        # "Pneumatic — Double Acting"; plain "Electrical" passes through.)
         PairedActuator(model_col=109, target_type="electrical_rotary", target_field="model",
-                       label="Electric"),
+                       label="Electrical"),
         PairedActuator(model_col=110, target_type="electrical_rotary", target_field="model",
-                       label="Electric"),
+                       label="Electrical"),
     ),
     cascade=[
         ("series",          4,  "Series"),
@@ -298,16 +299,17 @@ BUTTERFLY_VALVE = ValveTypeConfig(
             label="Pneumatic — Spring Return Fail-Open (alt 2)",
             target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
         ),
-        # Electric — single-target (all values are EA-* or QM-*, both in
-        # electrical_rotary catalog). Plain "Electric" label so each chip
-        # shows only the model code (no sub-text — user picks freely).
+        # Electrical — single-target (all values are EA-* or QM-*, both in
+        # electrical_rotary catalog). Plain "Electrical" label reaches the
+        # chip's sub-line unchanged since there's no em dash for the JS
+        # prefix regex to strip.
         PairedActuator(
             model_col=109, target_type="electrical_rotary", target_field="model",
-            label="Electric",
+            label="Electrical",
         ),
         PairedActuator(
             model_col=110, target_type="electrical_rotary", target_field="model",
-            label="Electric",
+            label="Electrical",
         ),
     ),
     cascade=[

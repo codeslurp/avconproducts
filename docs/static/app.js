@@ -225,13 +225,13 @@ class Picker {
       return;
     }
 
-    // Group by category — pneumatic_* → "Pneumatic", electrical_* → "Electric".
+    // Group by category — pneumatic_* → "Pneumatic", electrical_* → "Electrical".
     // Preserves the order the entries appear in (so Pneumatic Option 1 comes
-    // before Electric Option 2 when both exist).
+    // before Electrical Option 2 when both exist).
     const groups = new Map();
     for (const paired of list) {
       const category = paired.target_type === "electrical_rotary"
-        ? "Electric"
+        ? "Electrical"
         : "Pneumatic";
       if (!groups.has(category)) groups.set(category, []);
       groups.get(category).push(paired);
@@ -300,8 +300,10 @@ class Picker {
 
     // paired.label is e.g. "Pneumatic — Double Acting @ 3.5 bar".
     // Strip the category prefix since the group heading already shows it.
+    // `Electric(al)?` so future labels like "Electrical — With Potentiometer"
+    // get cleaned the same way without another code change.
     const positionLabel = (paired.label || "").replace(
-      /^(Pneumatic|Electric)\s*—\s*/, ""
+      /^(Pneumatic|Electric(?:al)?)\s*—\s*/, ""
     );
     if (positionLabel) {
       const labelEl = document.createElement("span");
