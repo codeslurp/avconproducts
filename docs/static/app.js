@@ -679,6 +679,58 @@ if (summaryRoot) new SummaryPanel(summaryRoot);
    on every change via `accessories:selected-changed`, which a dedicated
    AccessorySummary instance below listens for and renders into the
    summary panel. */
+/* ---------- Accessory family metadata ----------
+   Human-readable name + single-letter abbreviation for each accessory family.
+
+   KEYED BY THE `family` VALUE IN accessories.json (NOT the display name), so
+   the lookup in the render paths below hits directly off `row.family`. Two
+   families carry a data key that differs from the spoken name:
+     "Silencer" -> "Silencer / Bug Screen",  "FITTING" -> "Tube & Fittings".
+
+   `abbr` is the letter the accessory contributes to the final product code.
+   It is STORED here for that upcoming feature but is NOT yet wired into
+   computeFullCode() (which still joins full SKU codes). Abbreviation clashes
+   are flagged inline — they must be made unique before abbr drives the code.
+
+   Families without an entry (e.g. "THW FOR MSD", awaiting a name) fall back to
+   their raw family string via accessoryLabel(). */
+const ACCESSORY_META = {
+  // --- present in accessories.json (key === data family value) ---
+  "ALR":            { name: "Air Lock Relay",              abbr: "A" },
+  "BKT":            { name: "Bracket Mount",               abbr: "B" }, // abbr B clashes with Silencer
+  "CFLG":           { name: "Companion Flange",            abbr: "C" },
+  "FCV":            { name: "Flow Control Valve",          abbr: "F" }, // abbr F clashes with AFR, FRG
+  "FITTING":        { name: "Tube & Fittings",             abbr: "T" },
+  "FRG":            { name: "Filter Regulator with Gauge", abbr: "F" }, // abbr F clashes with AFR, FCV
+  "Gland":          { name: "Gland",                       abbr: "G" },
+  "LSB":            { name: "Limit Switch",                abbr: "L" },
+  "MOR":            { name: "Manual Override",             abbr: "M" },
+  "QEV":            { name: "Quarter Turn Electric Valve", abbr: "Q" },
+  "Silencer":       { name: "Silencer / Bug Screen",       abbr: "B" }, // abbr B clashes with BKT
+  "Volume Booster": { name: "Volume Booster",              abbr: "V" },
+  // "THW FOR MSD"  -> name pending from user
+
+  // --- not yet in the data (no rows). Recorded so they activate automatically
+  //     once rows with these family values land. ---
+  "SV":           { name: "Solenoid Valve",              abbr: "S" },
+  "EVP":          { name: "Electronic Valve Positioner", abbr: "E" },
+  "PTR":          { name: "Position Transmitter",        abbr: "P" }, // abbr P clashes with Plug
+  "MHG":          { name: "Manual Hand Gear",            abbr: "" },  // abbr pending (M is taken by MOR)
+  "AFR":          { name: "Air Filter Regulator",        abbr: "F" }, // abbr F clashes with FCV, FRG
+  "Plug":         { name: "Plug",                         abbr: "P" }, // abbr P clashes with PTR
+  "Direct Mount": { name: "Direct Mount",                abbr: "D" },
+};
+
+/* Friendly display name for a family value; falls back to the raw value so an
+   unmapped family (or future data) still renders sensibly. */
+function accessoryLabel(family) {
+  const meta = ACCESSORY_META[family];
+  return meta ? meta.name : family;
+}
+
+/* ---------- Accessories browser ----------
+   Multi-select list of all accessories — NO recommendation, no cascade.
+   See ACCESSORY_META above for the family display-name/abbr lookup. */
 class AccessoryBrowser {
   constructor(rootEl) {
     this.root = rootEl;
@@ -750,8 +802,10 @@ class AccessoryBrowser {
     if (!this.familyFilterEl) return;
     for (const fam of this.families) {
       const opt = document.createElement("option");
+      // value stays the raw family code (filtering compares against row.family);
+      // only the visible label becomes the friendly name.
       opt.value = fam.name;
-      opt.textContent = `${fam.name} (${fam.count})`;
+      opt.textContent = `${accessoryLabel(fam.name)} (${fam.count})`;
       this.familyFilterEl.appendChild(opt);
     }
   }
@@ -759,9 +813,10 @@ class AccessoryBrowser {
   _matches(row) {
     if (this.familyFilter && row.family !== this.familyFilter) return false;
     if (!this.searchText) return true;
-    // Search in code + family + any attribute value
+    // Search in code + family (raw + friendly name) + any attribute value
     if (row.code.toLowerCase().includes(this.searchText)) return true;
     if (row.family.toLowerCase().includes(this.searchText)) return true;
+    if (accessoryLabel(row.family).toLowerCase().includes(this.searchText)) return true;
     for (const a of row.attrs) {
       if (String(a.value).toLowerCase().includes(this.searchText)) return true;
     }
@@ -811,7 +866,7 @@ class AccessoryBrowser {
       groupHead.className = "acc-group-head";
       const groupName = document.createElement("span");
       groupName.className = "acc-group-name";
-      groupName.textContent = familyName;
+      groupName.textContent = accessoryLabel(familyName);
       const groupCount = document.createElement("span");
       groupCount.className = "acc-group-count";
       groupCount.textContent = `${rows.length} item${rows.length === 1 ? "" : "s"}`;
@@ -968,7 +1023,7 @@ class AccessorySummary {
 
           const familyEl = document.createElement("span");
           familyEl.className = "summary-acc-chip-family";
-          familyEl.textContent = r.family;
+          familyEl.textContent = accessoryLabel(r.family);
           chip.appendChild(familyEl);
 
           const codeEl = document.createElement("span");
@@ -976,7 +1031,7 @@ class AccessorySummary {
           codeEl.textContent = r.code;
           chip.appendChild(codeEl);
 
-          chip.title = `${r.family} — ${r.attrs.slice(0, 3).map(a => a.value).join(" · ")}`;
+          chip.title = `${accessoryLabel(r.family)} — ${r.attrs.slice(0, 3).map(a => a.value).join(" · ")}`;
           this.listEl.appendChild(chip);
         }
       }

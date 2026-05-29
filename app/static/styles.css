@@ -1680,6 +1680,11 @@ footer small { font-family: var(--c-font-sans); }
   background: var(--c-accent);
   border-radius: 999px;
   line-height: 1.2;
+  /* Friendly names vary in length; let long ones wrap inside the pill rather
+     than widening the whole capsule (parent sets white-space: nowrap). */
+  white-space: normal;
+  text-align: center;
+  max-width: 150px;
 }
 .summary-acc-chip-code {
   font-family: var(--c-font-mono);
