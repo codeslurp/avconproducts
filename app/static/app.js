@@ -374,6 +374,9 @@ class Picker {
     // "Pneumatic Rack & Pinion Actuator") if present.
     const actuatorField = (d.fields || []).find((f) => f.label === "Actuator");
     const typeField     = (d.fields || []).find((f) => f.label === "Type");
+    // The valve breakdown row shows the descriptive Catalogue Code (col 2)
+    // instead of the bare valve code; pull it from the detail fields.
+    const catalogueField = (d.fields || []).find((f) => f.label === "Catalogue Code");
 
     this.section.dispatchEvent(new CustomEvent("valve-selector:resolved", {
       bubbles: true,
@@ -383,6 +386,7 @@ class Picker {
         sectionLabel: sectionLabel,
         primary: d.primary,
         secondary: d.secondary,
+        catalogueCode: catalogueField ? catalogueField.value : null,
         actuatorName: actuatorField ? actuatorField.value : null,
         actuatorType: typeField ? typeField.value : null,
       },
@@ -580,18 +584,26 @@ class SummaryPanel {
     if (!card) return;
     this.activeKeyByCategory.set(detail.category, detail.key);
 
-    card.codeEl.textContent = detail.primary ?? "—";
+    // The hero "full product code" always uses the compact primary code (bare
+    // valve code / actuator code), regardless of what this breakdown row shows
+    // below. Stash it on the card for computeFullCode() to read.
+    card.cardEl.dataset.fullcode = detail.primary ?? "";
 
-    // Compose a short descriptive name. Different shape per category:
-    //   Valves    -> section label (e.g. "Butterfly Valve (Centric)")
-    //   Actuators -> "<Model> · <Actuator description>" when both exist
-    let name = detail.sectionLabel || "";
-    if (detail.category === "Actuators") {
-      const parts = [];
-      if (detail.secondary) parts.push(detail.secondary);
-      if (detail.actuatorName) parts.push(detail.actuatorName);
-      if (parts.length) name = parts.join(" · ");
+    // Breakdown row display differs from the hero, per category:
+    //   Valves    -> Catalogue Code (descriptive) · type name ("Ball Valve")
+    //   Actuators -> model code (e.g. ACT-075D) · actuator description
+    let displayCode, name;
+    if (detail.category === "Valves") {
+      displayCode = detail.catalogueCode || detail.primary || "—";
+      name = detail.sectionLabel || "";
+    } else if (detail.category === "Actuators") {
+      displayCode = detail.secondary || detail.primary || "—";
+      name = detail.actuatorName || detail.sectionLabel || "";
+    } else {
+      displayCode = detail.primary ?? "—";
+      name = detail.sectionLabel || "";
     }
+    card.codeEl.textContent = displayCode;
     card.nameEl.textContent = name || "—";
 
     card.cardEl.hidden = false;
@@ -983,42 +995,58 @@ if (globalResetBtn) {
   });
 }
 
-/* ---------- Copy to Clipboard ----------
-   Builds a plain-text snapshot of the current Valve / Actuator / Accessories
-   selection from the summary panel DOM (no JS-side state coupling) and
-   writes it to the system clipboard via navigator.clipboard. Briefly flips
-   the button to a "Copied!" confirmation, then back. */
-function buildSummaryExportText() {
-  const lines = ["AVCON Product Selection", "======================="];
+/* ---------- Full product code (hero line) + Copy ----------
+   The summary panel's hero line is one consolidated product code in the
+   grouped format:  <valve> - <actuator> - <acc1>+<acc2>+…
+   Missing components drop out cleanly (no dangling dashes). It is recomputed
+   from the breakdown rows by a MutationObserver on the breakdown subtree, so
+   it stays correct across every update path (resolve / clear / reset /
+   accessory change) without coupling to each one. Copy writes this one line. */
+function computeFullCode() {
+  const seg = [];
 
+  // Read the stashed compact code (data-fullcode), NOT the visible breakdown
+  // code — the breakdown shows descriptive Catalogue/model codes, but the hero
+  // product code stays the compact bare-valve / actuator code.
   const valveCard = document.querySelector(".summary-card--valve");
   if (valveCard && !valveCard.hidden) {
-    const code = valveCard.querySelector(".summary-code")?.textContent.trim() || "";
-    const name = valveCard.querySelector(".summary-name")?.textContent.trim() || "";
-    lines.push(`Valve:      ${code}${name && name !== "—" ? "  —  " + name : ""}`);
+    const code = (valveCard.dataset.fullcode || "").trim();
+    if (code && code !== "—") seg.push(code);
   }
 
   const actuatorCard = document.querySelector(".summary-card--actuator");
   if (actuatorCard && !actuatorCard.hidden) {
-    const code = actuatorCard.querySelector(".summary-code")?.textContent.trim() || "";
-    const name = actuatorCard.querySelector(".summary-name")?.textContent.trim() || "";
-    lines.push(`Actuator:   ${code}${name && name !== "—" ? "  —  " + name : ""}`);
+    const code = (actuatorCard.dataset.fullcode || "").trim();
+    if (code && code !== "—") seg.push(code);
   }
 
+  // All selected accessory codes collapse into ONE segment joined by '+'.
   const accCard = document.getElementById("summary-accessories");
   if (accCard && !accCard.hidden) {
-    const chips = Array.from(accCard.querySelectorAll(".summary-acc-chip"));
-    if (chips.length) {
-      lines.push(`Accessories (${chips.length}):`);
-      for (const chip of chips) {
-        const family = chip.querySelector(".summary-acc-chip-family")?.textContent.trim() || "";
-        const code = chip.querySelector(".summary-acc-chip-code")?.textContent.trim() || "";
-        lines.push(`  - ${family.padEnd(15)} ${code}`);
-      }
-    }
+    const codes = Array.from(accCard.querySelectorAll(".summary-acc-chip-code"))
+      .map(el => el.textContent.trim())
+      .filter(Boolean);
+    if (codes.length) seg.push(codes.join("+"));
   }
 
-  return lines.join("\n");
+  return seg.join(" - ");
+}
+
+const summaryFullCodeEl = document.getElementById("summary-fullcode");
+const summaryBreakdownEl = document.querySelector(".summary-breakdown");
+function renderFullCode() {
+  if (summaryFullCodeEl) summaryFullCodeEl.textContent = computeFullCode() || "—";
+}
+if (summaryFullCodeEl && summaryBreakdownEl) {
+  // Observe the breakdown (NOT the hero line we write to — avoids a loop).
+  new MutationObserver(renderFullCode).observe(summaryBreakdownEl, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["hidden", "data-fullcode"],
+  });
+  renderFullCode();
 }
 
 const summaryCopyBtn = document.getElementById("summary-copy-btn");
@@ -1026,7 +1054,8 @@ if (summaryCopyBtn) {
   const labelEl = summaryCopyBtn.querySelector(".summary-copy-label");
   const originalLabel = labelEl ? labelEl.textContent : "Copy";
   summaryCopyBtn.addEventListener("click", async () => {
-    const text = buildSummaryExportText();
+    const text = (summaryFullCodeEl?.textContent || "").trim();
+    if (!text || text === "—") return;
     try {
       await navigator.clipboard.writeText(text);
       if (labelEl) labelEl.textContent = "Copied!";

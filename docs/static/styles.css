@@ -140,7 +140,7 @@ header .tagline {
      the inherited `margin-left: auto`. Smaller logo + title so both fit one
      row without the title wrapping under the logo. */
   .brand { gap: 12px; }
-  .brand-logo { height: 40px; }
+  .brand-logo { height: 48px; }
   header h1 { font-size: 20px; }
 }
 
@@ -149,7 +149,7 @@ header .tagline {
   header { padding: 18px 14px 14px; }
   header h1 { font-size: 17px; line-height: 1.22; }
   header .tagline { font-size: 11.5px; }
-  .brand-logo { height: 34px; }
+  .brand-logo { height: 40px; }
   .section-head .section-title { font-size: 19px; }
   .picker-row { padding: 0 14px; gap: 10px; }
   main { padding: 8px 14px 24px; }
@@ -530,11 +530,10 @@ footer small { font-family: var(--c-font-sans); }
 }
 
 /* ---------- Global Reset button ----------
-   Desktop (default): sits at the right end of .picker-row, vertically centered
-   against the type pickers. Outlined secondary weight so it doesn't compete
-   with the primary picker triggers. Icon is hidden; label is visible.
-   Mobile (<860px, see further down): re-positioned as a circular FAB at
-   bottom-right; label is hidden, icon takes over. */
+   Sits at the right end of .picker-row at ALL widths (the row is justify-end),
+   so it stays anchored top-right on both desktop and mobile. Outlined secondary
+   weight so it doesn't compete with the primary picker triggers. Label visible,
+   icon hidden. */
 .global-reset-btn {
   flex: 0 0 auto;
   align-self: center;
@@ -561,50 +560,6 @@ footer small { font-family: var(--c-font-sans); }
   box-shadow: 0 0 0 3px var(--c-accent-ring);
 }
 .global-reset-btn .global-reset-icon { display: none; }
-
-/* Mobile: turn the button into a circular floating action button anchored to
-   the bottom-right. `position: fixed` removes it from the .picker-row flex
-   flow so the two type pickers stack normally above. */
-@media (max-width: 860px) {
-  .global-reset-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    width: 52px;
-    height: 52px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: var(--c-accent);
-    color: var(--c-surface);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), 0 2px 4px rgba(0, 0, 0, 0.08);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 150ms ease, box-shadow 150ms ease;
-  }
-  .global-reset-btn:hover,
-  .global-reset-btn:focus-visible {
-    background: var(--c-accent);
-    color: var(--c-surface);
-    border: none;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22), 0 3px 6px rgba(0, 0, 0, 0.10);
-    transform: translateY(-1px);
-  }
-  .global-reset-btn:active {
-    transform: translateY(0);
-  }
-  .global-reset-btn .global-reset-label { display: none; }
-  .global-reset-btn .global-reset-icon {
-    display: inline-block;
-    font-size: 26px;
-    line-height: 1;
-    font-weight: 600;
-    /* Reset glyph (↻) sits slightly above baseline; nudge for visual centering. */
-    transform: translateY(-1px);
-  }
-}
 
 /* ---------- Type picker row (one picker per category, side-by-side) ---------- */
 .picker-row {
@@ -846,7 +801,9 @@ footer small { font-family: var(--c-font-sans); }
 }
 
 @media (max-width: 860px) {
-  .picker-row { padding: 0 16px; gap: 12px; flex-direction: column; }
+  /* Row now holds only the Reset button; keep it horizontal so justify-end
+     anchors Reset to the top-right (the pickers live in the columns now). */
+  .picker-row { padding: 0 16px; gap: 12px; }
   .type-picker { flex: 1 1 auto; min-width: 0; }
   .type-picker-menu { left: 0; right: 0; min-width: 0; }
   .type-picker-trigger { min-width: 0; width: 100%; }
@@ -1257,16 +1214,8 @@ footer small { font-family: var(--c-font-sans); }
   border-radius: var(--c-radius-lg);
   padding: 18px 22px;
 }
-/* Header row: title on the left, Copy button anchored to the right. */
-.summary-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
 .summary-title {
-  margin: 0;
+  margin: 0 0 14px;
   font-family: var(--c-font-serif);
   font-size: 16px;
   font-weight: 600;
@@ -1315,21 +1264,50 @@ footer small { font-family: var(--c-font-sans); }
   border-color: var(--c-accent);
 }
 .summary-copy-icon { font-size: 14px; line-height: 1; }
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+
+/* Hero line: the consolidated full product code, Copy anchored to its right,
+   divider beneath separating it from the per-component breakdown. */
+.summary-fullcode-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--c-accent);
 }
-.summary-card {
-  background: var(--c-surface);
-  border: 1px solid var(--c-accent);
-  border-radius: var(--c-radius-md);
-  padding: 14px 18px;
+.summary-fullcode {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--c-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--c-accent);
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+  overflow-wrap: anywhere;   /* long codes wrap instead of overflowing */
+  word-break: break-word;
+}
+.summary-copy-btn { flex: 0 0 auto; }
+
+/* Breakdown: one plain vertical row per component (no boxes). Each row is
+   "LABEL  code · name"; label is a fixed-width leading column. */
+.summary-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 9px;
+}
+.summary-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 12px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 .summary-label {
+  flex: 0 0 92px;
   font-family: var(--c-font-sans);
   font-size: 11px;
   font-weight: 700;
@@ -1339,7 +1317,7 @@ footer small { font-family: var(--c-font-sans); }
 }
 .summary-code {
   font-family: var(--c-font-mono);
-  font-size: 22px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--c-accent);
   letter-spacing: -0.005em;
@@ -1349,6 +1327,11 @@ footer small { font-family: var(--c-font-sans); }
   font-size: 13px;
   color: var(--c-text-soft);
   line-height: 1.35;
+}
+.summary-name::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--c-text-muted);
 }
 
 /* ---------- Accessories placeholder (bottom row) ---------- */
@@ -1656,24 +1639,25 @@ footer small { font-family: var(--c-font-sans); }
   word-break: break-word;
 }
 
-/* ---------- Summary panel: accessories card ---------- */
-.summary-card--accessories {
-  margin-top: 14px;
-}
+/* ---------- Summary panel: accessories row ---------- */
+/* Keep the label centered against the (taller, stacked) capsules. */
+.summary-card--accessories { align-items: center; }
 .summary-acc-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
+  gap: 8px;
+  align-items: stretch;
 }
+/* Each capsule stacks vertically: family tag on top, code below. */
 .summary-acc-chip {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 4px;
+  gap: 4px;
+  padding: 6px 14px 7px;
   background: var(--c-accent-soft);
   border: 1px solid var(--c-accent);
-  border-radius: 999px;
+  border-radius: 12px;
   white-space: nowrap;
 }
 .summary-acc-chip-family {
@@ -1691,8 +1675,8 @@ footer small { font-family: var(--c-font-sans); }
 }
 .summary-acc-chip-code {
   font-family: var(--c-font-mono);
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--c-accent);
 }
 
@@ -1706,9 +1690,6 @@ footer small { font-family: var(--c-font-sans); }
       "access"
       "summary";
     padding: 0 16px;
-  }
-  .summary-grid {
-    grid-template-columns: 1fr;
   }
   .accessories-toolbar {
     flex-direction: column;

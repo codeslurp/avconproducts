@@ -254,32 +254,35 @@
        Populated by SummaryPanel + AccessorySummary in app.js on the custom
        `valve-selector:resolved` and `accessories:selected-changed` events. #}
     <div class="workspace-summary" id="workspace-summary" hidden>
-      <div class="summary-header">
-        <h2 class="summary-title">Your Product Code is</h2>
-        {# Copy-to-clipboard button — composes a plain-text snapshot of the
-           current valve + actuator + accessories selection and writes it to
-           the clipboard for pasting into emails, chat, docs. #}
-        <button type="button" id="summary-copy-btn" class="summary-copy-btn" aria-label="Copy product code selection to clipboard">
+      <h2 class="summary-title">Your Product Code is</h2>
+      {# Hero line: the consolidated single-line product code
+         (Valve - Actuator - Accessory1+Accessory2…), with the Copy button
+         anchored to its right. Composed in app.js by computeFullCode() from
+         the breakdown rows below and kept in sync via a MutationObserver. #}
+      <div class="summary-fullcode-row">
+        <span class="summary-fullcode" id="summary-fullcode">—</span>
+        <button type="button" id="summary-copy-btn" class="summary-copy-btn" aria-label="Copy full product code to clipboard">
           <span class="summary-copy-icon" aria-hidden="true">&#x29C9;</span>
           <span class="summary-copy-label">Copy</span>
         </button>
       </div>
-      <div class="summary-grid">
+      {# Vertical breakdown: one plain row per component (no boxes). Same
+         classes as before so SummaryPanel / AccessorySummary need no changes. #}
+      <div class="summary-breakdown">
         <div class="summary-card summary-card--valve" data-summary-category="Valves" hidden>
-          <div class="summary-label">Valve</div>
-          <div class="summary-code">—</div>
-          <div class="summary-name">—</div>
+          <span class="summary-label">Valve</span>
+          <span class="summary-code">—</span>
+          <span class="summary-name">—</span>
         </div>
         <div class="summary-card summary-card--actuator" data-summary-category="Actuators" hidden>
-          <div class="summary-label">Actuator</div>
-          <div class="summary-code">—</div>
-          <div class="summary-name">—</div>
+          <span class="summary-label">Actuator</span>
+          <span class="summary-code">—</span>
+          <span class="summary-name">—</span>
         </div>
-      </div>
-      {# Accessory card spans full width below the valve+actuator cards. #}
-      <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
-        <div class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</div>
-        <div class="summary-acc-list">—</div>
+        <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
+          <span class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</span>
+          <span class="summary-acc-list">—</span>
+        </div>
       </div>
     </div>
 
