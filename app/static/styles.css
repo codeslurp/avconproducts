@@ -1053,6 +1053,14 @@ footer small { font-family: var(--c-font-sans); }
 .paired-chip[disabled]:hover .paired-chip-label {
   color: var(--c-text-subtle);
 }
+/* Empty position (no actuator at this pressure for this valve): neutral grey
+   '—' rather than the amber 'pending' treatment used for not-in-catalog. */
+.paired-chip--empty .paired-chip-code,
+.paired-chip--empty:hover .paired-chip-code {
+  color: var(--c-text-subtle);
+  font-style: normal;
+}
+.paired-chip--empty { opacity: 0.75; }
 
 /* ---------- Section title subgroup label (e.g. "Pneumatic" tag) ---------- */
 .section-subgroup {

@@ -284,6 +284,9 @@ class Picker {
      column header (e.g. "Double Acting @ 3.5 bar"), stripped of the
      redundant category prefix since the group heading already shows it. */
   _renderPairedChip(paired) {
+    // `empty` = the valve has no actuator at this position (blank/0 in source);
+    // render it as a greyed, disabled 'not available' slot so all positions show.
+    const isEmpty = paired.empty === true;
     const isUnavailable = paired.not_in_catalog === true;
 
     const chip = document.createElement("button");
@@ -292,16 +295,12 @@ class Picker {
 
     const codeEl = document.createElement("span");
     codeEl.className = "paired-chip-code";
-    codeEl.textContent = paired.model;
+    codeEl.textContent = isEmpty ? "—" : paired.model;
     chip.appendChild(codeEl);
 
     // paired.label is e.g. "Pneumatic — Double Acting @ 3.5 bar".
     // Strip the category prefix since the group heading already shows it.
-    // `Electric(al)?` so future labels like "Electrical — With Potentiometer"
-    // get cleaned the same way without another code change.
-    const positionLabel = (paired.label || "").replace(
-      /^(Pneumatic|Electric(?:al)?)\s*—\s*/, ""
-    );
+    const positionLabel = stripPairLabelPrefix(paired.label);
     if (positionLabel) {
       const labelEl = document.createElement("span");
       labelEl.className = "paired-chip-label";
@@ -310,20 +309,26 @@ class Picker {
     }
 
     // Tooltip: friendly actuator name (from destination catalog lookup) or
-    // unavailable note. The position label is already visible, no need to
-    // repeat it.
-    if (isUnavailable) {
+    // unavailable/empty note. The position label is already visible.
+    if (isEmpty) {
+      chip.title = "Not available for this valve";
+    } else if (isUnavailable) {
       chip.title = "Data Not Available — catalog entry pending";
     } else if (paired.name) {
       chip.title = paired.name;
     }
 
-    if (isUnavailable) {
+    if (isEmpty) {
+      chip.classList.add("paired-chip--empty");
+      chip.disabled = true;
+    } else if (isUnavailable) {
       chip.classList.add("paired-chip--unavailable");
       chip.disabled = true;
     } else {
       chip.addEventListener("click", () => {
-        viewMatchingActuator(paired.target_type, paired.target_field, paired.model);
+        // Pass the position label so the actuator breakdown row can show the
+        // specific function (Fail-Close @ 3.5 bar) that isn't in actuator data.
+        viewMatchingActuator(paired.target_type, paired.target_field, paired.model, paired.label);
       });
     }
     return chip;
@@ -531,7 +536,10 @@ document.querySelectorAll(".type-picker").forEach((p) => new TypePicker(p));
         Picker.setFieldValue, which auto-fills any single-option upstream
         fields and leaves the customer-driven attrs blank for the salesperson.
      3. Scrolls the section into view. */
-async function viewMatchingActuator(targetType, targetField, value) {
+async function viewMatchingActuator(targetType, targetField, value, label = null) {
+  // Stash the pairing label (if provided) so the actuator breakdown row can
+  // show this model's specific function; null falls back to the generic name.
+  pairedActuatorContext = label ? { model: value, label } : null;
   const targetSection = document.querySelector(
     `.valve-section[data-valve-type="${targetType}"]`
   );
@@ -550,6 +558,21 @@ async function viewMatchingActuator(targetType, targetField, value) {
 
   targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+/* Strip the leading category prefix from a paired-actuator label, leaving the
+   descriptive part. "Pneumatic — Spring Return Fail-Close @ 3.5 bar" ->
+   "Spring Return Fail-Close @ 3.5 bar"; "Electrical" -> "Electrical". Shared by
+   the recommended-actuator chips and the actuator breakdown row. */
+function stripPairLabelPrefix(label) {
+  return (label || "").replace(/^(Pneumatic|Electric(?:al)?)\s*—\s*/, "");
+}
+
+/* When the user opens an actuator via a "Recommended Actuator" chip, we stash
+   the chip's {model, label} here. The summary breakdown reads it to show the
+   pairing-specific function (e.g. "Spring Return Fail-Close @ 3.5 bar") which
+   is NOT stored in the actuator's own catalog. Matched by model on resolve, so
+   a later manual actuator change cleanly falls back to the generic name. */
+let pairedActuatorContext = null;
 
 /* ---------- Summary panel ----------
    Center band that shows the resolved valve + actuator codes once at least
@@ -599,6 +622,15 @@ class SummaryPanel {
     } else if (detail.category === "Actuators") {
       displayCode = detail.secondary || detail.primary || "—";
       name = detail.actuatorName || detail.sectionLabel || "";
+      // If this actuator was opened from a recommended chip, append the
+      // pairing-specific function (e.g. "Spring Return Fail-Close @ 3.5 bar")
+      // — not stored in the actuator catalog. Matched by model so a later
+      // manual actuator change falls back to the generic name.
+      if (pairedActuatorContext && pairedActuatorContext.model &&
+          detail.secondary === pairedActuatorContext.model) {
+        const fn = stripPairLabelPrefix(pairedActuatorContext.label);
+        if (fn) name = name ? `${name} · ${fn}` : fn;
+      }
     } else {
       displayCode = detail.primary ?? "—";
       name = detail.sectionLabel || "";
