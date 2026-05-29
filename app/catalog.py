@@ -126,9 +126,9 @@ BALL_VALVE = ValveTypeConfig(
     # pressure-specific labels (3.5/4/5.5 bar) for the 9 pneumatic positions
     # AND the 2 electric positions. The enrichment below pulls source cols
     # 49-59 into master cols 100-110, and these entries read the enriched cols.
-    # Dedup is by (target_type, model), so if the same model is valid at
-    # multiple pressures (common: ACT-050D works at 3.5, 4, AND 5.5 bar), the
-    # user sees one chip with the first matching label.
+    # Dedup is by (target_type, model, label), so a model valid at multiple
+    # pressures (common: ACT-050D works at 3.5, 4, AND 5.5 bar) surfaces one
+    # chip per pressure — matching the column count in the source sheet.
     paired_actuators=(
         # Pneumatic Double Acting — 3 pressure variants
         PairedActuator(model_col=100, target_type="pneumatic_rp", target_field="model",
@@ -755,7 +755,13 @@ class Catalog:
             except (TypeError, ValueError):
                 detail["fos"] = None
         paired_list = []
-        seen_keys = set()  # (target_type, model) — dedupe same recommendation across positions
+        # Dedupe on (target_type, model, label). Keying on the LABEL too means a
+        # model recommended at several pressures (e.g. ACT-050D Double-Acting at
+        # 3.5/4/5.5 bar) surfaces one chip PER pressure — the column count the
+        # user expects — while truly identical positions (same model AND label,
+        # e.g. the two "Electrical" cols 109/110 holding the same model) still
+        # collapse to one chip so the panel never shows a pixel-identical twin.
+        seen_keys = set()
         for p in self.config.paired_actuators:
             paired_val = row.get(f"c{p.model_col}")
             if paired_val in (None, ""):
@@ -769,7 +775,7 @@ class Catalog:
             if model in ("", "0", "#N/A", "#REF!", "#VALUE!"):
                 continue
             target_type = p.resolve_target_type(model)
-            key = (target_type, model)
+            key = (target_type, model, p.label)
             if key in seen_keys:
                 continue
             seen_keys.add(key)
