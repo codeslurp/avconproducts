@@ -534,16 +534,15 @@ PHARMA_VALVE = ValveTypeConfig(
         PairedActuator(model_col=58, target_field="model",
                        label="Pneumatic — Spring Return Fail-Open (alt 2)",
                        target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
-        # Linear actuator (HA-*, 5-6 bar) — a pneumatic operation type that belongs
-        # in the SAME recommendation list as Double Acting / Spring Return (not a
-        # browsable actuator family). No standalone Linear catalog exists, so
-        # target_type="linear" names an unknown catalog → server.py marks it
-        # not_in_catalog → the front-end renders an informational, non-clickable
-        # chip showing the HA-* model under the Pneumatic group. If a Linear
-        # catalog (ValveTypeConfig key="linear") is ever added, the chip becomes
-        # clickable automatically. Data present only on the ~148 Pharma Dashboard
-        # SKUs that carry a linear model (col 122 via extra_row_sources).
-        PairedActuator(model_col=122, target_type="linear", target_field="model",
+        # Linear actuator (HA-*, 5-6 bar) — a pneumatic operation type surfaced in
+        # the SAME recommendation list as Double Acting / Spring Return. As of the
+        # HA Series datasheet (2026-06-03) this IS a browsable family
+        # (PNEUMATIC_HA below), so the chip is now clickable: target_type
+        # "pneumatic_ha" routes the HA-* model into that catalog. Data present only
+        # on the Pharma Dashboard SKUs that carry a linear model (col 122 via
+        # extra_row_sources); all referenced models (HA-85/110/125 /NC) exist in
+        # the HA catalog.
+        PairedActuator(model_col=122, target_type="pneumatic_ha", target_field="model",
                        label="Pneumatic — Linear (5-6 bar)"),
         PairedActuator(model_col=59, target_type="electrical_rotary", target_field="model",
                        label="Electric"),
@@ -892,15 +891,104 @@ MANUAL_HANDWHEEL = ValveTypeConfig(
 )
 
 
+PNEUMATIC_HA = ValveTypeConfig(
+    key="pneumatic_ha",
+    label="HA Series",
+    category="Actuators",
+    subgroup="Pneumatic",
+    file_substring="HA Series",
+    sheet_marker="Sheet2",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=5,
+    show_bto_fos=False,
+    # 6 rows (HA-85/110/125 in NC & NO). Same CY/M-Series layout. Model is the
+    # unique key; Action (NC/NO) is the only other varying field. This is the
+    # "Linear (5-6 bar)" actuator referenced by PHARMA_VALVE's recommendation
+    # chip — wiring that chip to target_type="pneumatic_ha" makes it clickable.
+    cascade=[
+        ("model",  5, "Model"),
+        ("action", 4, "Action"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Actuator Type"), (3, "Make"), (4, "Action"),
+        (5, "Model"), (7, "Movement"), (8, "Body/Bonnet Material"),
+        (9, "O-Ring Material"), (10, "Temperature Rating"),
+        (11, "Min Pneumatic Supply"), (12, "Max Pneumatic Supply"),
+        (13, "Pneumatic Connections"), (18, "Leakage Class"),
+    ],
+)
+
+
+CONTROL_VALVE = ValveTypeConfig(
+    key="control_valve",
+    label="Control Valve",
+    category="Valves",
+    subgroup="Pune",
+    file_substring="Control Valve Dashboard",
+    path_contains="Pune",
+    sheet_marker="Control Valve",
+    # Power-Query layout: c1 is the table-name column ("…CV"), so Bare Valve
+    # Code is c2 and Catalogue is c3 (same shape as PHARMA_VALVE).
+    primary_label="Bare Valve Code", primary_col=2,
+    secondary_label="Catalogue Code", secondary_col=3,
+    show_bto_fos=False,
+    # 16,406 rows → 1,991 Catalogue specs (≈8 Bare serials each). Control valves
+    # are high-dimensional: this 16-field spec cascade resolves the Catalogue
+    # code UNIQUELY (0 ambiguous); within a spec, up to ~5 Bare serials remain
+    # (they differ only in test/cost columns not exposed here). Fewer fields
+    # leaves catalogues ambiguous; trim only if some attributes are redundant in
+    # AVCON's workflow. NOTE: cost/pricing columns (56-59) are deliberately
+    # excluded from cascade AND detail so they never reach the public JSON.
+    cascade=[
+        ("series",          5, "Series"),
+        ("size",            6, "Valve Size"),
+        ("body_material",   7, "Body Material"),
+        ("trim_material",   8, "Trim Material"),
+        ("seat_material",   9, "Seat Material"),
+        ("characteristics", 10, "Characteristics"),
+        ("end_connection",  11, "End Connections"),
+        ("valve_type",      12, "Valve Type"),
+        ("port_size",       15, "Port Size (mm)"),
+        ("num_ports",       16, "No. Of Ports"),
+        ("body_style",      18, "Body Style"),
+        ("flow_direction",  19, "Flow Direction"),
+        ("bonnet_material", 20, "Bonnet Material"),
+        ("bonnet_type",     21, "Type Of Bonnet"),
+        ("stem_material",   22, "Stem Material"),
+        ("plug_type",       23, "Plug Type"),
+    ],
+    detail_columns=[
+        (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),
+        (5, "Series"), (6, "Valve Size"), (7, "Body Material"),
+        (8, "Trim Material"), (9, "Seat Material"), (10, "Characteristics"),
+        (11, "End Connections"), (12, "Valve Type"), (13, "Design Standard"),
+        (14, "Face to Face"), (15, "Port Size (mm)"), (16, "No. Of Ports"),
+        (17, "Valve Kv (m³/hr)"), (18, "Body Style"), (19, "Flow Direction"),
+        (20, "Bonnet Material"), (21, "Type Of Bonnet"), (22, "Stem Material"),
+        (23, "Plug Type"), (24, "Gland Packing"), (25, "Body Packing"),
+        (26, "Flange Dimensions"), (27, "Flange Drilling"), (28, "Pressure Rating"),
+        (29, "Operating Temp Range (°C)"), (30, "Hardware"), (31, "Valve Paint"),
+        (32, "Testing Standard"), (33, "Leakage Class"),
+        (34, "Body Test Pressure (barg)"), (35, "Body Test Media"),
+        (36, "Seat Leakage Test Pressure (barg)"), (37, "Seat Leakage Test Media"),
+        (38, "Product Group"), (39, "Certification"), (40, "Thrust (kN)"),
+        (41, "Torque (N·m)"), (42, "Mounting PCD"), (43, "Stroke (mm)"),
+        (44, "Stem Diameter"), (55, "Bare Valve Weight (kg)"),
+    ],
+)
+
+
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
     BUTTERFLY_VALVE,
     PHARMA_VALVE,
+    CONTROL_VALVE,
     PNEUMATIC_RACK_PINION,
     PNEUMATIC_SCOTCH_YOKE,
     PNEUMATIC_CY,
     PNEUMATIC_K,
     PNEUMATIC_M,
+    PNEUMATIC_HA,
     ELECTRICAL_ROTARY,
     ELECTRICAL_LINEAR,
     MANUAL_HANDWHEEL,
