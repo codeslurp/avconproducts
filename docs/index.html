@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20260603120652" />
+  <link rel="stylesheet" href="static/styles.css?v=20260603122141" />
 </head>
 <body>
   <header>
@@ -17,9 +17,9 @@
           <span class="title-line">Valve&ndash;Actuator&ndash;Accessory</span>
           <span class="title-line">Product Code Finder</span>
         </h1>
-        <p class="tagline">70,034 AVCON SKUs. Infinite Specs. One Click.</p>
+        <p class="tagline">70,327 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20260603120652" alt="AVCON Controls" class="brand-logo" />
+      <img src="static/avcon-logo.png?v=20260603122141" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
@@ -210,6 +210,18 @@
           </span>
         </button>
         
+        <button type="button" class="type-picker-option type-picker-option--nested" role="menuitem" data-valve-type="pneumatic_msd">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">MSD Series</span>
+            <span class="option-meta">250 SKUs</span>
+          </span>
+        </button>
+        
         
         
         
@@ -261,6 +273,30 @@
           <span class="option-text">
             <span class="option-title">Manual Handwheel (MPW)</span>
             <span class="option-meta">44 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="manual_gearbox">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Gear Box (MHG)</span>
+            <span class="option-meta">41 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="manual_lever">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Handwheel Lever (MHL)</span>
+            <span class="option-meta">2 SKUs</span>
           </span>
         </button>
         
@@ -1439,6 +1475,101 @@
     
       
         
+    <article class="valve-section" data-valve-type="pneumatic_msd" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pneumatic Linear</span>
+          MSD Series
+        </h2>
+        <p class="section-meta">
+          250 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-pneumatic_msd-model">Model</label>
+              
+              <input id="f-pneumatic_msd-model" name="model" data-key="model"
+                     list="pneumatic_msd-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pneumatic_msd-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="action">
+              <label for="f-pneumatic_msd-action">Type</label>
+              
+              <select id="f-pneumatic_msd-action" name="action" data-key="action">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="springs">
+              <label for="f-pneumatic_msd-springs">No. Of Springs</label>
+              
+              <select id="f-pneumatic_msd-springs" name="springs" data-key="springs">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="yoke_bore">
+              <label for="f-pneumatic_msd-yoke_bore">Yoke Bore Dia. (mm)</label>
+              
+              <select id="f-pneumatic_msd-yoke_bore" name="yoke_bore" data-key="yoke_bore">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Catalogue Code</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
     <article class="valve-section" data-valve-type="electrical_rotary" data-category="Actuators" hidden>
       <div class="section-head">
         <h2 class="section-title">
@@ -1678,6 +1809,159 @@
     </article>
     
       
+        
+    <article class="valve-section" data-valve-type="manual_gearbox" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Manual</span>
+          Gear Box (MHG)
+        </h2>
+        <p class="section-meta">
+          41 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="make">
+              <label for="f-manual_gearbox-make">Make</label>
+              
+              <select id="f-manual_gearbox-make" name="make" data-key="make">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="torque">
+              <label for="f-manual_gearbox-torque">Torque (Nm)</label>
+              
+              <select id="f-manual_gearbox-torque" name="torque" data-key="torque">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="model">
+              <label for="f-manual_gearbox-model">Model</label>
+              
+              <input id="f-manual_gearbox-model" name="model" data-key="model"
+                     list="manual_gearbox-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="manual_gearbox-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Make to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="manual_lever" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Manual</span>
+          Handwheel Lever (MHL)
+        </h2>
+        <p class="section-meta">
+          2 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="material">
+              <label for="f-manual_lever-material">Material of Construction</label>
+              
+              <select id="f-manual_lever-material" name="material" data-key="material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Material of Construction to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Material</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
     </div>
 
     
@@ -1724,7 +2008,7 @@
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20260603120652"></script>
-  <script src="static/app.js?v=20260603120652"></script>
+  <script src="static/catalog-engine.js?v=20260603122141"></script>
+  <script src="static/app.js?v=20260603122141"></script>
 </body>
 </html>

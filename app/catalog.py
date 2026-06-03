@@ -883,7 +883,7 @@ MANUAL_HANDWHEEL = ValveTypeConfig(
     label="Manual Handwheel (MPW)",
     category="Actuators",
     subgroup="Manual",
-    file_substring="Manual Handwheel",
+    file_substring="Manual Handwheel (MPW)",  # specific: don't match "MHL Manual Handwheel Lever"
     sheet_marker="Sheet2",
     primary_label="Code", primary_col=1,
     secondary_label="Model", secondary_col=5,
@@ -991,6 +991,84 @@ CONTROL_VALVE = ValveTypeConfig(
 )
 
 
+# MSD multi-spring diaphragm — a second PNEUMATIC LINEAR actuator (joins HA under
+# Pneumatic › Linear). 250 rows in the "MSD ACT" sheet. A code is identified by
+# Model + Type (NC/NO) + No. of Springs + Yoke Bore, matching the Catlouge form
+# MSD-<model>-<spring letter>-<NC/NO>-<bore>. (Also the actuator the THW
+# accessory pairs with — Suitable Actuator Model = MSD-*.)
+PNEUMATIC_MSD = ValveTypeConfig(
+    key="pneumatic_msd",
+    label="MSD Series",
+    category="Actuators",
+    subgroup="Linear",
+    group="Pneumatic",
+    file_substring="MSD Actuator",
+    sheet_marker="MSD ACT",
+    primary_label="Code", primary_col=1,
+    secondary_label="Catalogue Code", secondary_col=2,
+    show_bto_fos=False,
+    cascade=[
+        ("model",      6, "Model"),
+        ("action",     5, "Type"),
+        ("springs",    7, "No. Of Springs"),
+        ("yoke_bore", 23, "Yoke Bore Dia. (mm)"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Catalogue Code"), (3, "Actuator"), (4, "Make"),
+        (5, "Type"), (6, "Model"), (7, "No. Of Springs"), (8, "Movement"),
+        (9, "Top/Bottom Cover Material"), (10, "Diaphragm Material"),
+        (11, "Temperature Rating"), (12, "Min Pneumatic Supply"),
+        (13, "Max Pneumatic Supply"), (15, "Pneumatic Connections"),
+        (16, "Yoke Material"), (23, "Yoke Bore Dia. (mm)"),
+        (24, "MSD Actuator Force"), (25, "Stem Dia."), (27, "Stroke (mm)"),
+    ],
+)
+
+# MHG manual gear box — a MANUAL actuator (alongside Manual Handwheel MPW). 41
+# rows in the "MHG" sheet; Model is unique. Narrow by Make → Torque → Model.
+MANUAL_GEARBOX = ValveTypeConfig(
+    key="manual_gearbox",
+    label="Gear Box (MHG)",
+    category="Actuators",
+    subgroup="Manual",
+    file_substring="MHG Manual Gear Box",
+    sheet_marker="MHG",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=3,
+    show_bto_fos=False,
+    cascade=[
+        ("make",   2, "Make"),
+        ("torque", 7, "Torque (Nm)"),
+        ("model",  3, "Model"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Make"), (3, "Model"), (4, "Material of Construction"),
+        (5, "Valve Side PCD"), (6, "Painting"), (7, "Torque (Nm)"),
+        (8, "Handwheel Material"),
+    ],
+)
+
+# MHL manual handwheel lever — a MANUAL actuator. Only 2 rows ("Sheet1"); the
+# sole varying field is Material of Construction (Carbon Steel vs SS316).
+MANUAL_LEVER = ValveTypeConfig(
+    key="manual_lever",
+    label="Handwheel Lever (MHL)",
+    category="Actuators",
+    subgroup="Manual",
+    file_substring="MHL Manual Handwheel Lever",
+    sheet_marker="Sheet1",
+    primary_label="Code", primary_col=1,
+    secondary_label="Material", secondary_col=2,
+    show_bto_fos=False,
+    cascade=[
+        ("material", 2, "Material of Construction"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Material of Construction"),
+    ],
+)
+
+
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
     BUTTERFLY_VALVE,
@@ -1002,9 +1080,12 @@ VALVE_TYPES: list[ValveTypeConfig] = [
     PNEUMATIC_K,
     PNEUMATIC_M,
     PNEUMATIC_HA,
+    PNEUMATIC_MSD,
     ELECTRICAL_ROTARY,
     ELECTRICAL_LINEAR,
     MANUAL_HANDWHEEL,
+    MANUAL_GEARBOX,
+    MANUAL_LEVER,
 ]
 
 
