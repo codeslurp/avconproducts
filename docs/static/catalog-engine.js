@@ -140,7 +140,14 @@ class CatalogEngine {
     // Earlier this engine put the label in the dedup key and emitted blank-code
     // "empty" placeholders, which over-listed chips and showed code-less slots
     // on GitHub Pages while the Flask app stayed correct (2026-06-03 fix).
-    const seen = new Set();
+    // Show every UNIQUE recommendation slot — do NOT club by code alone.
+    // PRESSURE slots (label contains "@ … bar") stay distinct per pressure even
+    // when the same model repeats (a Double Acting actuator that is ACT-050D at
+    // 3.5/4/5.5 bar shows 3 chips). NON-pressure slots (generic alternatives,
+    // Electric, Linear) only ADD a model not already shown. Mirrors catalog.py
+    // Catalog.resolve().
+    const seenModels = new Set();   // `${tt}|${model}`
+    const seenSlots = new Set();    // `${tt}|${model}|${label}`
     const paired = [];
     for (const pa of cat.paired_actuators || []) {
       const raw = this._cell(cat, row, pa.model_col);
@@ -148,9 +155,14 @@ class CatalogEngine {
       const model = normalizePairedModel(String(raw).trim());
       if (model === "" || model === "#N/A") continue;
       const target_type = resolvePairedTargetType(pa, model);
-      const key = `${target_type}|${model}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+      if (pa.label.includes("@")) {                 // pressure slot — keep each pressure
+        const slot = `${target_type}|${model}|${pa.label}`;
+        if (seenSlots.has(slot)) continue;
+        seenSlots.add(slot);
+      } else if (seenModels.has(`${target_type}|${model}`)) {  // alternative — new codes only
+        continue;
+      }
+      seenModels.add(`${target_type}|${model}`);
       paired.push({
         model,
         target_type,

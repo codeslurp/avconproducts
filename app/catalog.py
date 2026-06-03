@@ -1341,7 +1341,17 @@ class Catalog:
             except (TypeError, ValueError):
                 detail["fos"] = None
         paired_list = []
-        seen_keys = set()  # (target_type, model) — dedupe same recommendation across positions
+        # Show every UNIQUE recommendation slot — do NOT club by code alone.
+        #   * PRESSURE slots (label has "@ … bar", e.g. Ball's DA @3.5/@4/@5.5)
+        #     stay distinct per pressure even when the SAME model repeats: the
+        #     pressure is what makes them unique, so a valve whose Double Acting
+        #     actuator is ACT-050D at all three pressures shows THREE chips.
+        #   * NON-pressure slots (generic "alternative" columns, Electric,
+        #     Linear) carry no distinguishing pressure, so they only ADD a model
+        #     not already surfaced — this drops redundant bare repeats while
+        #     still surfacing genuinely new alternatives (e.g. ACT-063SR07).
+        seen_models = set()  # (target_type, model) shown so far
+        seen_slots = set()   # (target_type, model, label) — exact pressure-slot twins
         for p in self.config.paired_actuators:
             paired_val = row.get(f"c{p.model_col}")
             if paired_val in (None, ""):
@@ -1352,10 +1362,14 @@ class Catalog:
             if model in ("", "#N/A"):
                 continue
             target_type = p.resolve_target_type(model)
-            key = (target_type, model)
-            if key in seen_keys:
+            if "@" in p.label:                       # pressure slot — keep each pressure
+                slot = (target_type, model, p.label)
+                if slot in seen_slots:
+                    continue
+                seen_slots.add(slot)
+            elif (target_type, model) in seen_models:  # alternative — new codes only
                 continue
-            seen_keys.add(key)
+            seen_models.add((target_type, model))
             paired_list.append({
                 "model": model,
                 "target_type": target_type,
