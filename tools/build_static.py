@@ -114,6 +114,7 @@ def _section_summary(key: str, catalog) -> dict:
         "label": cfg.label,
         "category": cfg.category,
         "subgroup": cfg.subgroup,
+        "group": cfg.group,
         "source_file": catalog.file_path.name,
         "row_count": len(catalog.rows),
         "cascade": [{"key": k, "label": lab} for k, _, lab in cfg.cascade],
@@ -137,7 +138,8 @@ def _category_blocks(sections: list[dict]) -> list[dict]:
         out.append({
             "name": cat["name"],
             "subgroups": [
-                {"name": k, "members": v}
+                {"name": k, "members": v,
+                 "group": (v[0].get("group") if v else "") or ""}
                 for k, v in cat["subgroups"].items()
             ],
         })

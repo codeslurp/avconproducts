@@ -116,6 +116,13 @@ class ValveTypeConfig:
     # E.g. within Actuators picker: "Pneumatic" vs "Electrical".
     subgroup: str | None = None
 
+    # Optional PARENT heading above `subgroup`, for a two-level menu nesting.
+    # When set, the menu renders `group` once as a parent header, then each
+    # distinct `subgroup` under it as an indented child header. E.g. Pneumatic
+    # actuators set group="Pneumatic" with subgroup="Rotary"/"Linear" so the
+    # menu reads Pneumatic › Rotary / Linear. None = no parent (flat subgroup).
+    group: str | None = None
+
     # Optional path scope to disambiguate same-named files across subfolders.
     # find_catalog_file matches on FILENAME only, so when two folders hold a
     # file with the same name (e.g. Pune and Mumbai both ship a
@@ -638,7 +645,8 @@ PNEUMATIC_RACK_PINION = ValveTypeConfig(
     key="pneumatic_rp",
     label="Rack & Pinion",
     category="Actuators",
-    subgroup="Pneumatic Rotary",
+    subgroup="Rotary",
+    group="Pneumatic",
     file_substring="Rack & Pinion",
     sheet_marker="Rack & Pinion ACT",
     primary_label="Code", primary_col=1,
@@ -684,7 +692,8 @@ PNEUMATIC_SCOTCH_YOKE = ValveTypeConfig(
     key="pneumatic_sy",
     label="Scotch Yoke",
     category="Actuators",
-    subgroup="Pneumatic Rotary",
+    subgroup="Rotary",
+    group="Pneumatic",
     file_substring="Scotch Yoke",
     sheet_marker="Scotch Yoke Actuator SYA",
     primary_label="Code", primary_col=1,
@@ -795,7 +804,8 @@ PNEUMATIC_CY = ValveTypeConfig(
     key="pneumatic_cy",
     label="CY Series",
     category="Actuators",
-    subgroup="Pneumatic Rotary",
+    subgroup="Rotary",
+    group="Pneumatic",
     file_substring="CY Series",
     sheet_marker="Sheet2",
     primary_label="Code", primary_col=1,
@@ -821,7 +831,8 @@ PNEUMATIC_K = ValveTypeConfig(
     key="pneumatic_k",
     label="K Series",
     category="Actuators",
-    subgroup="Pneumatic Rotary",
+    subgroup="Rotary",
+    group="Pneumatic",
     file_substring="K Series",
     sheet_marker="K-Series",
     primary_label="Code", primary_col=1,
@@ -847,7 +858,8 @@ PNEUMATIC_M = ValveTypeConfig(
     key="pneumatic_m",
     label="M Series",
     category="Actuators",
-    subgroup="Pneumatic Rotary",
+    subgroup="Rotary",
+    group="Pneumatic",
     file_substring="M Series",
     sheet_marker="Sheet2",
     primary_label="Code", primary_col=1,
@@ -895,7 +907,8 @@ PNEUMATIC_HA = ValveTypeConfig(
     key="pneumatic_ha",
     label="Linear (HA Series)",
     category="Actuators",
-    subgroup="Pneumatic Linear",
+    subgroup="Linear",
+    group="Pneumatic",
     file_substring="HA Series",
     sheet_marker="Sheet2",
     primary_label="Code", primary_col=1,
@@ -1438,14 +1451,19 @@ def build_category_blocks(sections, planned_subgroups=None):
     blocks = []
     for cat_name, subgroups in categories.items():
         block_subgroups = [
-            {"name": name, "members": members, "placeholder": ""}
+            # `group` (parent heading) is shared by all members of a subgroup;
+            # take it from the first member so the template can render the
+            # two-level Pneumatic › Rotary / Linear nesting.
+            {"name": name, "members": members, "placeholder": "",
+             "group": (members[0].get("group") if members else "") or ""}
             for name, members in subgroups.items()
         ]
         for sub_name, placeholder in planned_subgroups.get(cat_name, []):
             if sub_name in subgroups:
                 continue  # already has real members
             block_subgroups.append(
-                {"name": sub_name, "members": [], "placeholder": placeholder}
+                {"name": sub_name, "members": [], "placeholder": placeholder,
+                 "group": ""}
             )
         blocks.append({"name": cat_name, "subgroups": block_subgroups})
     return blocks

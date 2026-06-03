@@ -676,6 +676,35 @@ footer small { font-family: var(--c-font-sans); }
   border-top: none;
   padding-top: 6px;
 }
+/* Two-level menu nesting (e.g. Pneumatic › Rotary / Linear): a full-width parent
+   group header, with its child subheaders + options indented underneath. */
+.type-picker-group {
+  font-family: var(--c-font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-soft);
+  padding: 10px 12px 2px;
+  margin-top: 4px;
+  border-top: 1px solid var(--c-border);
+}
+.type-picker-group:first-child {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 6px;
+}
+.type-picker-subheader--nested {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 4px;
+  padding-left: 24px;
+  font-size: 10px;
+  color: var(--c-text-muted);
+}
+.type-picker-option--nested {
+  padding-left: 22px;
+}
 /* Non-selectable "data pending" row for a declared-but-empty subgroup.
    Deliberately NOT .type-picker-option so app.js never wires it for clicks. */
 .type-picker-placeholder {

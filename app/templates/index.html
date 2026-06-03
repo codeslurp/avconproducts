@@ -37,13 +37,18 @@
         </svg>
       </button>
       <div class="type-picker-menu" role="menu" hidden>
+        {% set ns = namespace(group=None) %}
         {% for sg in cat.subgroups %}
+        {% if sg.group and sg.group != ns.group %}
+        <div class="type-picker-group">{{ sg.group }}</div>
+        {% endif %}
+        {% set ns.group = sg.group %}
         {% if sg.name %}
-        <div class="type-picker-subheader">{{ sg.name }}</div>
+        <div class="type-picker-subheader{% if sg.group %} type-picker-subheader--nested{% endif %}">{{ sg.name }}</div>
         {% endif %}
         {% if sg.members %}
         {% for item in sg.members %}
-        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="{{ item.key }}">
+        <button type="button" class="type-picker-option{% if sg.group %} type-picker-option--nested{% endif %}" role="menuitem" data-valve-type="{{ item.key }}">
           <span class="option-icon" aria-hidden="true">
             {% if item.key == "ball" %}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
@@ -134,7 +139,7 @@
     <article class="valve-section" data-valve-type="{{ section.key }}" data-category="{{ section.category }}" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          {% if section.subgroup %}<span class="section-subgroup">{{ section.subgroup }}</span>{% endif %}
+          {% if section.group or section.subgroup %}<span class="section-subgroup">{% if section.group %}{{ section.group }} {% endif %}{{ section.subgroup }}</span>{% endif %}
           {{ section.label }}
         </h2>
         <p class="section-meta">

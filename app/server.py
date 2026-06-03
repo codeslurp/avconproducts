@@ -62,6 +62,7 @@ def _section_summary(key: str, cat) -> dict:
         "label": cfg.label,
         "category": cfg.category,
         "subgroup": cfg.subgroup,
+        "group": cfg.group,
         "source_file": cat.file_path.name,
         "row_count": len(cat.rows),
         "cascade": cat.cascade(),
