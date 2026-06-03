@@ -1040,19 +1040,35 @@ that's safe to omit if you don't need those subcomponents.
 
 ### 11.1 Per-product-type icons (in picker menu options)
 
-Embedded inline in [index.html](app/templates/index.html) lines 47-58.
-All use `viewBox="0 0 24 24"`, `stroke="currentColor"`, `stroke-width="1.6"`.
+**RULE (do not regress): every valve and actuator type has its OWN distinct
+icon.** The plain-circle fallback is reserved for an unforeseen new key only —
+when you add a type, add an icon for it too. Keyed on `item.key` via an
+`{% if/elif %}` chain in [index.html](app/templates/index.html) (the
+`.option-icon` block). All use `viewBox="0 0 24 24"`, `stroke="currentColor"`,
+`stroke-width="1.6"`, rendered in a 40×40 `.option-icon` box (~22px SVG).
 
-| Product | SVG path |
-|---|---|
-| Ball valve | `<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>` |
-| Butterfly valve | `<circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/>` |
-| Pneumatic R&P | `<rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/>` |
-| Pneumatic Scotch Yoke | `<rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/>` |
-| Electrical Rotary | `<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/>` (lightning bolt) |
-| Fallback | `<circle cx="12" cy="12" r="7"/>` |
+| key | Product | Icon (inner SVG) |
+|---|---|---|
+| `ball` | Ball valve | `<circle r=7/><circle r=2.5 fill>` — ring + center dot |
+| `butterfly` | Butterfly valve | `<circle r=8/><ellipse rx=7.5 ry=1.5/><line/>` — disc on shaft |
+| `pharma` | Pharma valve | `<circle r=6/>` + two clamp bars — sanitary tri-clamp |
+| `control_valve` | Control valve | two triangles (bowtie) `M5 7v10l7-5z` + stem — globe valve |
+| `pneumatic_rp` | Rack & Pinion | `<rect 16×6/><circle r=2.5/>` |
+| `pneumatic_sy` | Scotch Yoke | `<rect 10×8/><line/><circle r=1.5/>` — body + shaft |
+| `pneumatic_cy` | CY Series (cylinder) | `<rect rx=2.5/>` + rod + end-plate — cylinder |
+| `pneumatic_k` | K Series (cylinder) | cylinder `<rect/>` + spring zigzag `M11 12h2l1.3-3…` |
+| `pneumatic_m` | M Series (cylinder) | two stacked rounded rects |
+| `pneumatic_ha` | Linear (HA Series) | dome `M5 11a7 6 0 0 1 14 0` + stem — diaphragm |
+| `pneumatic_msd` | MSD Series (linear) | housing `<rect 12×9/>` + 3 vertical springs + stem — multi-spring diaphragm |
+| `electrical_rotary` | Electrical Rotary | filled lightning bolt `M13 2L4 14…` |
+| `electrical_linear` | Electrical Linear | bolt `M10 2L4 11…` + linear shaft + down-arrow |
+| `manual_handwheel` | Manual Handwheel (MPW) | `<circle r=7/>` + cross spokes + hub — handwheel |
+| `manual_gearbox` | Gear Box (MHG) | `<circle r=3.2/>` + 8 teeth — gear |
+| `manual_lever` | Handwheel Lever (MHL) | pivot circle + arm `M8.4 14.6 → 18 6` + knob — lever |
+| *(fallback)* | unknown new key | `<circle r=7/>` plain ring — replace by adding a real icon |
 
-Rendered inside a 40×40 `.option-icon` box with 22px SVG sizing.
+Last reviewed 2026-06-03: 16 typed icons, all distinct (verified 12/12 actuator
+options unique in the rendered menu).
 
 ### 11.2 Type-picker chevron
 
@@ -1595,6 +1611,50 @@ state changes (gray → teal on selection, amber on missing data) but never
 alarms. The whole interface is designed to disappear behind the catalog —
 the user's attention should land on Excel data rendered as web UI, not on
 chrome.
+
+---
+
+## Appendix C — Design decisions log (DO NOT REGRESS)
+
+Locked-in UI rules the user has had to repeat. Honour these; don't silently
+revert them when editing nearby code.
+
+1. **"Your Product Code is" panel.** Two parts:
+   - **Hero code** = `<Bare Valve Code> - <Actuator Code> - <AccLetter>+<AccLetter>`.
+     Accessory part uses each family's **LETTER** (S/L/E/T/M/A/C…), NOT the full
+     accessory code (user confirmed 2026-06-04). Built by `CombinedCode` in app.js.
+   - **Description block below** *decodes* the hero: each row shows the descriptive
+     **secondary** code, not the bare primary — VALVE → Catalogue Code
+     (`2030F205/WCB/F6/RT/ONF/A1`) · type; ACTUATOR → Model (`ACT-050D`) · name ·
+     type; ACCESSORIES → family + full-code chips. Flat inline `LABEL → value`
+     rows (not boxed cards); code + Copy on one row, divider, then the rows.
+
+2. **Recommended-actuator chips.** Show every UNIQUE slot; do NOT club by code
+   alone. **Only Double-Acting pressure slots** (label has "Double Acting" AND
+   "@ … bar") show every pressure even when the code repeats (DA at 3.5/4/5.5 bar
+   → 3 chips). Everything else (Spring-Return, Electric, Linear, generic
+   alternatives) dedups by `(target_type, model)` — one chip per distinct code.
+   Mirror any change in BOTH `app/catalog.py` `Catalog.resolve()` and
+   `docs/static/catalog-engine.js`.
+
+3. **Actuator picker hierarchy.** Two-level nesting via the config `group` field:
+   **Pneumatic** › **Rotary** (Rack & Pinion, Scotch Yoke) / **Cylinder**
+   (CY, K, M Series) / **Linear** (HA Series, MSD Series); then **Electrical**
+   (Rotary, Linear); then **Manual** (Handwheel MPW, Gear Box MHG, Handwheel
+   Lever MHL). Sub-groups mirror the `data/Actuator/` folder layout.
+
+4. **Picker header weight.** Top-level category headers (`.type-picker-group` and
+   non-nested `.type-picker-subheader`: PNEUMATIC/ELECTRICAL/MANUAL, Pune/Mumbai)
+   are **bold (700)**; nested sub-headers (Rotary/Cylinder/Linear) are 600.
+
+5. **Per-type icons.** Every valve/actuator type has its own icon — see §11.1.
+
+6. **Deploy.** GitHub Pages serves `docs/` from repo `codeslurp/avconproducts`
+   (branch `main`). `tools/build_static.py` regenerates `docs/` (data JSON +
+   index.html + copies app.js/styles.css) but does NOT touch
+   `catalog-engine.js` (hand-maintained — keep in sync with catalog.py). The dev
+   tree (`OneDrive/.../Product Code Finder`) and deploy tree (`repos/avconproducts`)
+   are separate copies; sync changed source files between them.
 
 ---
 
