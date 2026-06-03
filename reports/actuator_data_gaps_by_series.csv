@@ -1,0 +1,12 @@
+catalog,series_prefix,total_skus,fully_populated,partially_empty,fully_empty,status
+ball,2030F,672,392,280,0,mixed
+ball,2038F,672,392,280,0,mixed
+ball,2060F,504,336,168,0,mixed
+ball,2070F,1204,840,364,0,mixed
+ball,2090F,840,728,0,112,mixed
+butterfly,4020B,7200,7200,0,0,all populated
+butterfly,4020M,7200,0,0,7200,ALL EMPTY
+butterfly,4022B,7200,7200,0,0,all populated
+butterfly,4022M,7200,0,0,7200,ALL EMPTY
+butterfly,4023B,7200,7200,0,0,all populated
+butterfly,4023M,7200,0,0,7200,ALL EMPTY
