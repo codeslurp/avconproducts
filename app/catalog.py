@@ -1110,9 +1110,30 @@ class Catalog:
         key_idx = self.config.primary_col - 1
         for sn in sheet_names:
             ws = wb[sn]
-            for raw in ws.iter_rows(min_row=2, max_col=max_col, values_only=True):
-                if not raw or key_idx >= len(raw) or _norm(raw[key_idx]) in (None, ""):
+            # Capture the primary-column header (row 1) so we can drop any
+            # REPEATED header rows embedded mid-data. Some source workbooks
+            # (e.g. Control Valve Dashboard, concatenated from several
+            # Power-Query exports) carry the header line many times — at rows
+            # 643/964/1285/… as well as row 1. Without this they load as ghost
+            # rows whose every cell is the column label ("Bare Valve Code" =
+            # "Bare Valve Code"), polluting every dropdown with a junk option.
+            # Real codes never equal the header text, so this is safe for all
+            # catalogs.
+            header_key = None
+            for r_i, raw in enumerate(ws.iter_rows(min_row=1, max_col=max_col, values_only=True)):
+                if not raw or key_idx >= len(raw):
                     continue
+                key_val = _norm(raw[key_idx])
+                if r_i == 0:  # header row
+                    header_key = (
+                        str(key_val).strip().lower()
+                        if key_val not in (None, "") else None
+                    )
+                    continue
+                if key_val in (None, ""):
+                    continue
+                if header_key is not None and str(key_val).strip().lower() == header_key:
+                    continue  # repeated header row embedded in the data
                 row = {f"c{i+1}": _norm(v) for i, v in enumerate(raw)}
                 self.rows.append(row)
 
