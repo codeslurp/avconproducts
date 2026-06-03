@@ -574,16 +574,22 @@ class SummaryPanel {
     if (!card) return;
     this.activeKeyByCategory.set(detail.category, detail.key);
 
-    card.codeEl.textContent = detail.primary ?? "—";
+    // The description card DECODES the compact hero code: it shows the
+    // descriptive *secondary* code — the valve's Catalogue Code
+    // (e.g. 2030F205/WCB/F6/RT/ONF/A1) or the actuator's Model (e.g. ACT-050D)
+    // — rather than repeating the bare primary already shown in the hero line.
+    // Falls back to primary for any catalog with no secondary. (Authoritative
+    // layout per the user's reference screenshot, 2026-06-04.)
+    card.codeEl.textContent = detail.secondary ?? detail.primary ?? "—";
 
     // Compose a short descriptive name. Different shape per category:
     //   Valves    -> section label (e.g. "Butterfly Valve (Centric)")
-    //   Actuators -> "<Model> · <Actuator description>" when both exist
+    //   Actuators -> "<Actuator type> · <operation>" (the Model is the code now)
     let name = detail.sectionLabel || "";
     if (detail.category === "Actuators") {
       const parts = [];
-      if (detail.secondary) parts.push(detail.secondary);
       if (detail.actuatorName) parts.push(detail.actuatorName);
+      if (detail.actuatorType) parts.push(detail.actuatorType);
       if (parts.length) name = parts.join(" · ");
     }
     card.nameEl.textContent = name || "—";
