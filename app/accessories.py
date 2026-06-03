@@ -55,21 +55,203 @@ def _clean_family(raw: str) -> str:
     return s
 
 
+# Single-family accessory files with their own tabular layout (code in a key
+# column, row 1 = headers). Each becomes ONE accessory family appended to the
+# consolidated list. Added 2026-06-02: Positioner + Solenoid Valve.
+EXTRA_ACCESSORY_SOURCES = [
+    # EVP and PTR are two split workbooks that BOTH contain the substring
+    # "Positioner" (the EVP file is "EVP Positioner Data Sheet Structure...").
+    # The PTR source therefore EXCLUDES any file whose name contains "EVP", so
+    # the two don't collide on the most-recently-modified pick.
+    {"file_substring": "EVP Positioner",  "sheet": "Positioner", "family": "EVP",            "code_col": 1},
+    {"file_substring": "Positioner", "exclude": "EVP", "sheet": "Positioner", "family": "Positioner", "code_col": 1},
+    {"file_substring": "Solenoid Valve",  "sheet": "Sheet1",     "family": "Solenoid Valve", "code_col": 1},
+    # THW FOR MSD now has its own dedicated file (cleaner columns: Suitable
+    # Actuator Model, Material, …). Loaded here and SKIPPED from the consolidated
+    # Dashboard sheet (see `dedicated_families` in load_accessories) so it isn't
+    # loaded twice.
+    {"file_substring": "THW FOR MSD",     "sheet": "THW FOR MSD", "family": "THW FOR MSD",    "code_col": 1},
+]
+
+
+# Curated, ORDERED accessory families. The picker shows families in THIS order;
+# any loaded family not listed here is appended after (e.g. "THW FOR MSD").
+# Each entry: (data_key, tag, letter, display_name)
+#   data_key  = the family string as it appears in the loaded data (the cleaned
+#               consolidated-sheet marker, or an EXTRA_ACCESSORY_SOURCES family).
+#               None = no data yet → rendered as a "data pending" placeholder.
+#   tag       = short chip label shown in the UI.
+#   letter    = single-char code used in the COMBINED PRODUCT CODE (must be
+#               unique across families; e.g. Silencer uses 'Z' because 'S' is
+#               taken by Solenoid Valve).
+#   display_name = full human name.
+# NOTE: "Positioner" (the 119-row Positioner Data Sheet Structure file, loaded
+# via EXTRA_ACCESSORY_SOURCES) maps to PTR (Positioner Transmitter) per the
+# data owner. EVP (Electronic Valve Positioner) has no source yet → placeholder.
+ACCESSORY_FAMILY_ORDER: list[tuple[str | None, str, str, str]] = [
+    ("Solenoid Valve",  "SV",                  "S", "Solenoid Valve"),
+    ("LSB",             "LSB",                 "L", "Limit Switch"),
+    ("EVP",             "EVP",                 "E", "Electronic Valve Positioner"),
+    ("Positioner",      "PTR",                 "T", "Positioner Transmitter"),
+    ("MOR",             "MOR",                 "M", "Manual Override"),
+    ("FRG",             "AFR",                 "R", "Air Filter Regulator"),
+    ("CFLG",            "CFLG",                "C", "Companion Flange"),
+    ("Gland",           "Gland",               "G", "Gland"),
+    (None,              "Plug",                "P", "Plug"),
+    ("Silencer",        "Silencer/Bug Screen", "Z", "Silencer/Bug Screen"),
+    ("Volume Booster",  "Volume Booster",      "V", "Volume Booster"),
+    ("FITTING",         "Tube & Fittings",     "N", "Tube & Fittings"),
+    ("FCV",             "FCV",                 "F", "Flow Control Valve"),
+    ("ALR",             "ALR",                 "A", "Air Lock Relay"),
+    ("QEV",             "QEV",                 "Q", "Quarter turn Electric Valve"),
+    (None,              "Direct Mount",        "D", "Direct Mount"),
+    ("BKT",             "BKT",                 "B", "Bracket Mount"),
+    ("THW FOR MSD",     "THW",                 "H", "THW for MSD"),  # data_key (elem 0) must match the loaded family; display name = "THW for MSD"
+]
+
+
+def _meta_by_data_key() -> dict[str, tuple[str, str, str]]:
+    """data_key -> (tag, letter, display_name) for families that have data."""
+    return {
+        dk: (tag, letter, label)
+        for dk, tag, letter, label in ACCESSORY_FAMILY_ORDER
+        if dk is not None
+    }
+
+
+def _build_ordered_families(counts: dict[str, int]) -> list[dict[str, Any]]:
+    """Build the picker's family list in curated order. `counts` is data_key ->
+    row count (from the loaded rows). Declared-but-empty families (data_key None,
+    or present in the order but with zero rows) are marked pending=True. Any
+    loaded family NOT in the curated order is appended last (e.g. THW FOR MSD)."""
+    used: set[str] = set()
+    families: list[dict[str, Any]] = []
+    for data_key, tag, letter, label in ACCESSORY_FAMILY_ORDER:
+        count = counts.get(data_key, 0) if data_key else 0
+        families.append({
+            "key": data_key if data_key else tag,
+            "tag": tag,
+            "letter": letter,
+            "label": label,
+            "count": count,
+            "pending": (data_key is None) or count == 0,
+        })
+        if data_key:
+            used.add(data_key)
+    for data_key, count in counts.items():
+        if data_key in used:
+            continue
+        families.append({
+            "key": data_key, "tag": data_key, "letter": "",
+            "label": data_key, "count": count, "pending": False,
+        })
+    return families
+
+
+def _attach_family_meta_to_rows(rows: list[dict[str, Any]]) -> None:
+    """Stamp each row with its family's `tag` (chip label) and `letter` (product-
+    code char). Families not in the curated order fall back to tag=family name,
+    letter='' (so the combined code falls back to the full accessory code)."""
+    meta = _meta_by_data_key()
+    for r in rows:
+        tag, letter, _label = meta.get(r["family"], (r["family"], "", r["family"]))
+        r["tag"] = tag
+        r["letter"] = letter
+
+
 def find_accessories_file(data_dir: Path) -> Path | None:
-    """Pick the most recently modified .xlsx in data/Accessories/. Returns
-    None if the folder doesn't exist or has no files — the app stays usable
-    without accessories."""
+    """Pick the consolidated accessories workbook — the most recently modified
+    .xlsx in data/Accessories/ that actually contains an `Accessories` sheet.
+    Checking for the sheet (not just newest file) stops single-family files like
+    'Solenoid Valve as accessories.xlsx' from hijacking the load. Returns None if
+    the folder is absent/empty — the app stays usable without accessories."""
     acc_dir = data_dir / "Accessories"
     if not acc_dir.exists():
         return None
     candidates = [
         p for p in acc_dir.rglob("*.xls*")
-        if not p.name.startswith("~$")
+        if not p.name.startswith("~$") and p.name not in _extra_filenames(acc_dir)
     ]
     if not candidates:
         return None
     candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    return candidates[0]
+    for p in candidates:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                wb = openpyxl.load_workbook(p, read_only=True, keep_vba=False)
+            has_sheet = SHEET_NAME in wb.sheetnames
+            wb.close()
+            if has_sheet:
+                return p
+        except Exception:
+            continue
+    return candidates[0]  # fallback: nothing had an Accessories sheet
+
+
+def _extra_filenames(acc_dir: Path) -> set[str]:
+    """Filenames that are single-family extra sources (so the consolidated-file
+    search skips them)."""
+    names: set[str] = set()
+    for src in EXTRA_ACCESSORY_SOURCES:
+        for p in acc_dir.rglob("*.xls*"):
+            if src["file_substring"] in p.name and not p.name.startswith("~$"):
+                names.add(p.name)
+    return names
+
+
+def _load_extra_family(acc_dir: Path, src: dict) -> list[dict[str, Any]]:
+    """Load one single-family accessory file into [{code, family, attrs}]."""
+    cands = [
+        p for p in acc_dir.rglob("*.xls*")
+        if src["file_substring"] in p.name and not p.name.startswith("~$")
+        and (not src.get("exclude") or src["exclude"] not in p.name)
+    ]
+    if not cands:
+        return []
+    path = sorted(cands, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            wb = openpyxl.load_workbook(path, data_only=True, keep_vba=False, read_only=True)
+        except PermissionError:
+            tmp_dir = Path(tempfile.gettempdir()) / "valve-selector-cache"
+            tmp_dir.mkdir(exist_ok=True)
+            tmp_path = tmp_dir / path.name
+            shutil.copyfile(path, tmp_path)
+            wb = openpyxl.load_workbook(tmp_path, data_only=True, keep_vba=False, read_only=True)
+    if src["sheet"] not in wb.sheetnames:
+        wb.close()
+        print(f"[valve-selector] Accessories: no '{src['sheet']}' sheet in {path.name}; skipping.", flush=True)
+        return []
+    raw_rows = list(wb[src["sheet"]].iter_rows(values_only=True))
+    wb.close()
+    if not raw_rows:
+        return []
+    headers = [str(_norm(h) or "").strip() for h in raw_rows[0]]
+    code_idx = src["code_col"] - 1
+    out: list[dict[str, Any]] = []
+    for raw in raw_rows[1:]:
+        if not raw or code_idx >= len(raw):
+            continue
+        code = _norm(raw[code_idx])
+        if code in (None, ""):
+            continue
+        code = str(code).strip()
+        if code_idx < len(headers) and code.lower() == headers[code_idx].lower():
+            continue  # repeated header row
+        attrs = []
+        for i, val in enumerate(raw):
+            if i == code_idx:
+                continue
+            v = _norm(val)
+            if v in (None, ""):
+                continue
+            label = headers[i] if i < len(headers) else f"Col {i + 1}"
+            attrs.append({"label": label, "value": str(v)})
+        out.append({"code": code, "family": src["family"], "attrs": attrs})
+    print(f"[valve-selector] Accessories: loaded {len(out)} {src['family']} rows from {path.name}.", flush=True)
+    return out
 
 
 def load_accessories(data_dir: Path) -> dict[str, Any]:
@@ -124,6 +306,11 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
     skipped_header = 0
     skipped_table = 0
     skipped_no_code = 0
+    skipped_dedicated = 0
+    # Families that now load from a dedicated extra-source file (e.g. THW FOR MSD)
+    # are skipped here, so they aren't loaded from BOTH the consolidated sheet and
+    # the dedicated file.
+    dedicated_families = {s["family"] for s in EXTRA_ACCESSORY_SOURCES}
 
     for raw in raw_rows[1:]:
         if not raw or all(v is None for v in raw):
@@ -145,6 +332,11 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
             continue
 
         family = _clean_family(family_raw) if family_raw else "Other"
+        # FILTER 4: family superseded by a dedicated extra-source file (loaded
+        # separately below) — skip the consolidated copy to avoid duplicates.
+        if family in dedicated_families:
+            skipped_dedicated += 1
+            continue
         # Build attributes dict — pair headers with values, drop empty cells.
         attrs = []
         for i, val in enumerate(raw):
@@ -167,11 +359,27 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
         f"[valve-selector] Accessories: loaded {len(rows)} rows across "
         f"{len(families_seen)} families from {src.name} "
         f"(skipped: {skipped_header} headers, {skipped_table} Table_* "
-        f"leaks, {skipped_no_code} no-code rows).",
+        f"leaks, {skipped_no_code} no-code rows, {skipped_dedicated} dedicated-file dupes).",
         flush=True,
     )
 
-    families = [{"name": name, "count": count} for name, count in families_seen.items()]
+    # Append single-family extra sources (Positioner→PTR, Solenoid Valve→SV) —
+    # each its own file/family, merged into the same flat list the UI browses.
+    acc_dir = data_dir / "Accessories"
+    for esrc in EXTRA_ACCESSORY_SOURCES:
+        extra = _load_extra_family(acc_dir, esrc)
+        if extra:
+            rows.extend(extra)
+
+    # Order + label families per the curated ACCESSORY_FAMILY_ORDER, attach the
+    # chip tag + product-code letter to every row, and inject declared-but-empty
+    # families (EVP, Plug, Direct Mount) as 'data pending' placeholders.
+    counts: dict[str, int] = {}
+    for r in rows:
+        counts[r["family"]] = counts.get(r["family"], 0) + 1
+    families = _build_ordered_families(counts)
+    _attach_family_meta_to_rows(rows)
+
     return {
         "rows": rows,
         "families": families,

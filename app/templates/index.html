@@ -23,64 +23,98 @@
     </div>
   </header>
 
-  {# Picker macro — used once per workspace column (Valves, Actuators) so each
-     column shows the type-picker right inside its own card instead of a
-     separate row at the top. JS picks them up via `class="type-picker"`
-     regardless of where they live in the DOM. #}
-  {% macro render_type_picker(cat) %}
-  <nav class="type-picker" data-category="{{ cat.name }}">
-    <button type="button" class="type-picker-trigger"
-            aria-haspopup="true" aria-expanded="false">
-      <span class="type-picker-trigger-prefix">{{ cat.name }}</span>
-      <span class="type-picker-trigger-label">Choose {{ cat.name|lower|trim('s') }} type</span>
-      <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
-        <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <div class="type-picker-menu" role="menu" hidden>
-      {% for sg in cat.subgroups %}
-      {% if sg.name %}
-      <div class="type-picker-subheader">{{ sg.name }}</div>
-      {% endif %}
-      {% for item in sg.members %}
-      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="{{ item.key }}">
-        <span class="option-icon" aria-hidden="true">
-          {% if item.key == "ball" %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
-          {% elif item.key == "butterfly" %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-          {% elif item.key == "pneumatic_rp" %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
-          {% elif item.key == "pneumatic_sy" %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
-          {% elif item.key == "electrical_rotary" %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
-          {% else %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
-          {% endif %}
-        </span>
-        <span class="option-text">
-          <span class="option-title">{{ item.label }}</span>
-          <span class="option-meta">{{ "{:,}".format(item.row_count) }} SKUs</span>
-        </span>
-      </button>
-      {% endfor %}
-      {% endfor %}
-    </div>
-  </nav>
-  {% endmacro %}
-
-  {# Top toolbar row — used to also hold the type pickers; now slim and only
-     hosts the global Reset (right-aligned on desktop, floating FAB on mobile). #}
+  <!-- One picker widget per category. Independent selections. -->
   <div class="picker-row">
-    {# Global Reset — wipes type pickers, all cascade selections, accessories,
-       and the summary panel. Renders as a labeled button on desktop and as a
-       circular FAB anchored to bottom-right on mobile (see styles.css). #}
-    <button type="button" id="global-reset-btn" class="global-reset-btn" aria-label="Reset all">
-      <span class="global-reset-label">Reset all</span>
-      <span class="global-reset-icon" aria-hidden="true">&#x21BB;</span>
+    <div class="pr-pickers">
+    {% for cat in category_blocks %}
+    <nav class="type-picker" data-category="{{ cat.name }}">
+      <button type="button" class="type-picker-trigger"
+              aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">{{ cat.name }}</span>
+        <span class="type-picker-trigger-label">Choose {{ cat.name|lower|trim('s') }} type</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu" role="menu" hidden>
+        {% for sg in cat.subgroups %}
+        {% if sg.name %}
+        <div class="type-picker-subheader">{{ sg.name }}</div>
+        {% endif %}
+        {% if sg.members %}
+        {% for item in sg.members %}
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="{{ item.key }}">
+          <span class="option-icon" aria-hidden="true">
+            {% if item.key == "ball" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+            {% elif item.key == "butterfly" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            {% elif item.key == "pneumatic_rp" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
+            {% elif item.key == "pneumatic_sy" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
+            {% elif item.key == "electrical_rotary" %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
+            {% else %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            {% endif %}
+          </span>
+          <span class="option-text">
+            <span class="option-title">{{ item.label }}</span>
+            <span class="option-meta">{{ "{:,}".format(item.row_count) }} SKUs</span>
+          </span>
+        </button>
+        {% endfor %}
+        {% else %}
+        <div class="type-picker-placeholder" aria-disabled="true">{{ sg.placeholder }}</div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </nav>
+    {% endfor %}
+
+    {# Accessories: a peer picker at the top-right (in line with the category
+       pickers). Original family -> item dropdown selection (not a cascade).
+       Hydrated client-side by AccessoryPicker in app.js. #}
+    {% if accessories_summary.row_count %}
+    <nav class="type-picker acc-picker" id="acc-picker">
+      <button type="button" class="type-picker-trigger" aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">Accessories</span>
+        <span class="type-picker-trigger-label">Add accessory</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu acc-menu" role="menu" hidden>
+        <label class="acc-field"><span class="acc-field-label">Family</span>
+          <select id="acc-family"><option value="">All families</option></select>
+        </label>
+        <label class="acc-field"><span class="acc-field-label">Search &amp; add</span>
+          <input type="search" id="acc-search" list="acc-item-list"
+                 placeholder="Type code or attribute…" autocomplete="off" spellcheck="false" />
+          <datalist id="acc-item-list"></datalist>
+        </label>
+        <div class="acc-selected">
+          <div class="acc-selected-h">
+            <span><span id="acc-selected-count">0</span> selected</span>
+            <button type="button" class="acc-clear-btn" id="acc-clear" hidden>Clear all</button>
+          </div>
+          <div class="acc-chips" id="acc-selected-chips"></div>
+        </div>
+      </div>
+    </nav>
+    {% endif %}
+    </div>{# /.pr-pickers #}
+
+    {# Global reset (top-right): clears every valve/actuator cascade + all
+       accessories in one click. Wired in app.js. #}
+    <button type="button" class="global-reset-btn" id="global-reset" title="Clear all selections">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      Reset
     </button>
   </div>
+
+  <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
 
   {#
     Layout: a 4-cell grid. Top row holds Valves (left) and Actuators (right)
@@ -127,6 +161,9 @@
               {% endif %}
             </div>
             {% endfor %}
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
           </form>
         </section>
 
@@ -179,11 +216,9 @@
         <span class="workspace-col-icon" aria-hidden="true">◐</span>
         Valves
       </h2>
-      {# Type picker now lives in the card itself — replaces the old placeholder
-         prompt. Iterate just to find the matching category block. #}
-      {% for cat in category_blocks if cat.name == 'Valves' %}
-        {{ render_type_picker(cat) }}
-      {% endfor %}
+      <p class="column-placeholder">
+        Pick a <strong>valve type</strong> from the menu above.
+      </p>
       {% for section in sections if section.category == 'Valves' %}
         {{ render_section(section) }}
       {% endfor %}
@@ -194,60 +229,17 @@
         <span class="workspace-col-icon" aria-hidden="true">◑</span>
         Actuators
       </h2>
-      {% for cat in category_blocks if cat.name == 'Actuators' %}
-        {{ render_type_picker(cat) }}
-      {% endfor %}
+      <p class="column-placeholder">
+        Pick an <strong>actuator type</strong>, or use a valve's recommendation.
+      </p>
       {% for section in sections if section.category == 'Actuators' %}
         {{ render_section(section) }}
       {% endfor %}
     </div>
 
-    {# Bottom row: accessories.
-       Browse-and-multi-select, NOT a cascade — the user explicitly does not
-       want recommendations here. Hydrated client-side from /api/accessories/list. #}
-    <div class="workspace-accessories" id="workspace-accessories">
-      <h2 class="accessories-title">
-        <span class="accessories-icon" aria-hidden="true">+</span>
-        Accessories
-        {% if accessories_summary.row_count %}
-        <span class="accessories-count">{{ accessories_summary.row_count }} items · {{ accessories_summary.family_count }} families</span>
-        {% endif %}
-      </h2>
-
-      {% if not accessories_summary.row_count %}
-      <div class="accessories-placeholder">
-        <p class="accessories-placeholder-headline">Data pending</p>
-        <p class="accessories-placeholder-sub">
-          Please provide the accessories catalog file at
-          <code>data/Accessories/Dashboard accessories.xlsx</code>.
-        </p>
-      </div>
-      {% else %}
-      <div class="accessories-toolbar">
-        <label class="accessories-filter">
-          <span class="accessories-filter-label">ACCESSORIES</span>
-          <select id="accessories-family-filter">
-            <option value="">Choose family</option>
-          </select>
-        </label>
-        <label class="accessories-search">
-          <span class="accessories-search-label">Search</span>
-          <input type="search" id="accessories-search-input"
-                 placeholder="Filter by code or attribute…" autocomplete="off" />
-        </label>
-        <div class="accessories-selected-summary" id="accessories-selected-summary">
-          <span class="selected-count" id="accessories-selected-count">0 selected</span>
-          <button type="button" class="accessories-clear-btn" id="accessories-clear-btn" hidden>
-            Clear all
-          </button>
-        </div>
-      </div>
-
-      <div class="accessories-list" id="accessories-list" role="list">
-        <div class="accessories-loading">Loading accessories…</div>
-      </div>
-      {% endif %}
-    </div>
+    {# Accessories selection moved to the top-right picker (#acc-picker, in the
+       picker row). Selected accessories flow into the summary below via
+       AccessoryPicker in app.js. #}
 
     {# Final row: the consolidated product code summary. Appears once at
        least one selection (valve / actuator / accessory) has resolved.
@@ -255,34 +247,34 @@
        `valve-selector:resolved` and `accessories:selected-changed` events. #}
     <div class="workspace-summary" id="workspace-summary" hidden>
       <h2 class="summary-title">Your Product Code is</h2>
-      {# Hero line: the consolidated single-line product code
-         (Valve - Actuator - Accessory1+Accessory2…), with the Copy button
-         anchored to its right. Composed in app.js by computeFullCode() from
-         the breakdown rows below and kept in sync via a MutationObserver. #}
-      <div class="summary-fullcode-row">
-        <span class="summary-fullcode" id="summary-fullcode">—</span>
-        <button type="button" id="summary-copy-btn" class="summary-copy-btn" aria-label="Copy full product code to clipboard">
-          <span class="summary-copy-icon" aria-hidden="true">&#x29C9;</span>
-          <span class="summary-copy-label">Copy</span>
+
+      {# Combined product code: Valve Catalogue - Actuator code - Accessory code(s),
+         hyphen-joined, following the source "Combined Catlouge" pattern. Built by
+         CombinedCode in app.js from the current valve/actuator/accessory selection. #}
+      <div class="summary-combined" id="summary-combined" hidden>
+        <div class="summary-combined-code" id="summary-combined-code">—</div>
+        <button type="button" class="summary-combined-copy" id="summary-combined-copy" title="Copy to clipboard">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
         </button>
       </div>
-      {# Vertical breakdown: one plain row per component (no boxes). Same
-         classes as before so SummaryPanel / AccessorySummary need no changes. #}
-      <div class="summary-breakdown">
+
+      <div class="summary-grid">
         <div class="summary-card summary-card--valve" data-summary-category="Valves" hidden>
-          <span class="summary-label">Valve</span>
-          <span class="summary-code">—</span>
-          <span class="summary-name">—</span>
+          <div class="summary-label">Valve</div>
+          <div class="summary-code">—</div>
+          <div class="summary-name">—</div>
         </div>
         <div class="summary-card summary-card--actuator" data-summary-category="Actuators" hidden>
-          <span class="summary-label">Actuator</span>
-          <span class="summary-code">—</span>
-          <span class="summary-name">—</span>
+          <div class="summary-label">Actuator</div>
+          <div class="summary-code">—</div>
+          <div class="summary-name">—</div>
         </div>
-        <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
-          <span class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</span>
-          <span class="summary-acc-list">—</span>
-        </div>
+      </div>
+      {# Accessory card spans full width below the valve+actuator cards. #}
+      <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
+        <div class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</div>
+        <div class="summary-acc-list">—</div>
       </div>
     </div>
 

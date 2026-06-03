@@ -446,32 +446,45 @@ Every text element in the UI with its exact properties:
 .workspace-accessories     { grid-area: access; }
 ```
 
-### 8.3 Container max-widths
+### 8.3 Container max-widths — single source of truth
+
+Every centered page band shares ONE max-width token, `--c-content` (default
+**1600px**), and ONE side-padding token, `--c-gutter` (see §14). Because they
+all read the same two values, the header title, the picker row, and the
+workspace columns line up pixel-for-pixel at every viewport width. Bump
+`--c-content` in one place to widen/narrow the whole layout.
 
 | Container | max-width | Notes |
 |---|---|---|
-| Header | 1280px | centered with `margin: 0 auto` |
-| Picker row | 1280px | centered |
-| Empty prompt | 1280px | centered |
-| **Workspace grid** | **1400px** | slightly wider than header for breathing room |
-| Footer | 1280px | centered |
-| Section-head (legacy) | 1280px | inside `.valve-section`, overridden inside workspace-col |
+| Header brand (`.brand`) | `var(--c-content)` | centered with `margin: 0 auto`; the white BAR is full-width, only the brand content is capped |
+| Picker row | `var(--c-content)` | centered |
+| Empty prompt | `var(--c-content)` | centered |
+| Workspace grid | `var(--c-content)` | centered — same cap as the bands above so columns align with the pickers |
+| Footer | `var(--c-content)` | centered |
+| `main` / `.section-head` / `.valve-section` (legacy) | `var(--c-content)` | shadowed inside `.workspace-col` (`max-width: none`, `padding: 0 4px`); token-tied so they never desync |
 | Workspace-col cards | (fills grid cell, no max) | half the workspace width on desktop |
 | Accessories list inside | 100% of card | with `max-height: 480px` and scroll |
 | Type-picker menu | min-width 360px | popover |
 | Accessory placeholder sub-text | 620px | centered within card |
 
-### 8.4 Horizontal padding by section
+### 8.4 Horizontal padding — driven by `--c-gutter`
+
+All centered bands use `padding: 0 var(--c-gutter)` (footer/empty-prompt add
+vertical padding). The gutter VALUE changes per screen class (§14), but every
+band always reads the same value, so they stay aligned. Cards INSIDE the
+workspace keep their own fixed inner padding (they sit within an already-
+guttered column).
 
 | Section | Padding |
 |---|---|
-| `header` | `14px 40px` |
-| `.picker-row` | `0 40px` |
-| `.workspace` | `0 24px` |
-| `.workspace-col` | `18px 22px` |
-| `.workspace-accessories` | `18px 22px` |
-| `.workspace-summary` | `18px 22px` |
-| `footer` | `14px 24px 18px` |
+| `header` (bar) | `14px 0` (full-width) |
+| `.brand` (content) | `0 var(--c-gutter)` |
+| `.picker-row` | `0 var(--c-gutter)` |
+| `.workspace` | `0 var(--c-gutter)` |
+| `.empty-prompt` | `60px var(--c-gutter)` |
+| `footer` | `14px var(--c-gutter) 18px` |
+| `.workspace-col` | `18px 22px` (fixed inner) |
+| `.workspace-summary` | `18px 22px` (fixed inner) |
 
 ---
 
@@ -1312,15 +1325,38 @@ Every visible string in the UI. Strings in `{braces}` are dynamic.
 
 ## 14. Responsive specs
 
-### 14.1 Breakpoints
+### 14.0 Screen-class model (auto-detected, no JS)
 
-| Breakpoint | Trigger | What changes |
-|---|---|---|
-| `980px` | `@media (max-width: 980px)` | Workspace grid collapses to 1 column; summary grid → 1 column; accessories toolbar wraps vertically; picker/search become full-width |
-| `860px` | `@media (max-width: 860px)` | Picker row stacks vertically; type pickers full-width; main grid (legacy) → 1 column; section-head padding reduced to 16px |
-| `720px` | `@media (max-width: 720px)` | Header brand stacks (title above logo) |
+The layout has TWO responsive mechanisms, kept separate:
 
-### 14.2 At each breakpoint
+1. **Gutter token (`--c-gutter`)** — the side breathing room every centered band
+   shares. Redefined per screen class in `:root` media queries at the top of the
+   stylesheet. CSS reads the live viewport width and applies the matching value
+   automatically on every resize (including dragging a window between a laptop
+   and an external monitor). Ordered widest→narrowest so the smallest matching
+   rule wins.
+
+   | Screen class | Viewport (CSS px) | `--c-gutter` | Notes |
+   |---|---|---|---|
+   | Big monitor / desktop / laptop | `> 1280` | **40px** (base) | content also capped at `--c-content` = 1600px and centered on big monitors |
+   | Small laptop | `≤ 1280` | 32px | |
+   | Large tablet | `≤ 1024` | 24px | |
+   | Phone / small tablet | `≤ 860` | 16px | |
+
+   > Windows display scaling note: a 1920px laptop at 150% reports ~1280 CSS px,
+   > a 2560px monitor at 150% reports ~1707 CSS px — both land in sensible
+   > classes. To make big monitors fill MORE of the screen, raise `--c-content`.
+
+2. **Structural breakpoints** — change layout *shape* (grid columns, stacking),
+   independent of the gutter steps above:
+
+   | Breakpoint | Trigger | What changes |
+   |---|---|---|
+   | `980px` | `@media (max-width: 980px)` | Workspace grid collapses to 1 column; summary grid → 1 column; accessories toolbar wraps vertically |
+   | `860px` | `@media (max-width: 860px)` | Picker row stacks vertically; type pickers full-width; picker/acc menus full-width; main grid (legacy) → 1 column; global reset stretches; combined-code block stacks |
+   | `720px` | `@media (max-width: 720px)` | Header brand stacks: **logo centered at top**, title/tagline left-aligned below |
+
+### 14.1 At each breakpoint
 
 **Desktop (≥ 980px):**
 - Workspace: `1fr 1fr` two-column grid
@@ -1336,12 +1372,14 @@ Every visible string in the UI. Strings in `{braces}` are dynamic.
 
 **Mobile (< 860px):**
 - Picker row: column layout, full-width buttons
-- Picker dropdown menus: full width (`left: 0; right: 0`)
+- Picker + accessories dropdown menus: full width (`left: 0; right: 0`)
 - Main grid (legacy `valve-section`): single column
-- Section head padding: 16px (was 40px)
+- Global reset button: full-width (`align-self: stretch`)
+- Combined-code block: stacks (code above Copy button)
+- Side gutter: 16px (from `--c-gutter`, applied to every band uniformly)
 
 **Narrow mobile (< 720px):**
-- Header `.brand`: column layout (title above logo, both left-aligned, 12px gap)
+- Header `.brand`: column layout — **logo centered at top** (`order: -1; align-self: center`), title/tagline left-aligned below (10px gap). Keeps the title's left edge in line with the stacked pickers.
 
 ---
 

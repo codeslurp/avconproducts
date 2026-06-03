@@ -12,6 +12,7 @@ from __future__ import annotations
 import shutil
 import tempfile
 import warnings
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -80,6 +81,27 @@ class EnrichmentSource:
 
 
 @dataclass(frozen=True)
+class ExtraRowSource:
+    """Adds ROWS (not columns) from a secondary workbook whose SKU keys aren't
+    already in the catalog. Source columns are remapped to the catalog's column
+    positions via `column_map`. Used to fold in SKUs that live only in a
+    secondary file with a different layout (e.g. the 162 Pharma SKUs that exist
+    only in 'Pharma Dashboard.xlsx', or actuators present only in a combined
+    workbook). Non-destructive: nothing is written back to any source file.
+
+    Dedup: a source row is added only if its key isn't already in the catalog,
+    so re-listing existing SKUs is harmless. `key_pattern` (optional regex) gates
+    which source rows count — used to skip embedded header/garbage rows."""
+    file_substring: str
+    sheet_marker: str
+    key_col: int                                 # 1-based source col holding the SKU key
+    master_key_col: int                          # 1-based catalog col the key maps to
+    column_map: tuple[tuple[int, int], ...]      # (source_col, master_col) pairs
+    path_contains: str | None = None
+    key_pattern: str | None = None               # only add rows whose key matches
+
+
+@dataclass(frozen=True)
 class ValveTypeConfig:
     key: str                            # URL/JSON identifier, e.g. "ball"
     label: str                          # Section title shown in the UI
@@ -93,6 +115,13 @@ class ValveTypeConfig:
     # Sub-grouping shown as a heading inside the picker menu (None = no heading).
     # E.g. within Actuators picker: "Pneumatic" vs "Electrical".
     subgroup: str | None = None
+
+    # Optional path scope to disambiguate same-named files across subfolders.
+    # find_catalog_file matches on FILENAME only, so when two folders hold a
+    # file with the same name (e.g. Pune and Mumbai both ship a
+    # "Valve_Code_Selector_Dashboard.xlsx"), set this to a path fragment that
+    # only the intended file's path contains (e.g. "Mumbai"). None = no scoping.
+    path_contains: str | None = None
 
     # Headline result cards. Defaults match valves. Actuators override these
     # because they have a Code + Model (not a separate Catalogue Code) and
@@ -114,11 +143,15 @@ class ValveTypeConfig:
     # Optional VLOOKUP-style enrichment sources merged in after the main load.
     enrichment_sources: tuple[EnrichmentSource, ...] = ()
 
+    # Optional secondary files that ADD rows (SKUs missing from the main file).
+    extra_row_sources: tuple[ExtraRowSource, ...] = ()
+
 
 BALL_VALVE = ValveTypeConfig(
     key="ball",
     label="Ball Valve",
     category="Valves",
+    subgroup="Pune",
     file_substring="Ball Valve",
     sheet_marker="BV NEW CODEING",
     # Recommended actuators per SKU. As of 2026-05-27, the richer source is
@@ -126,9 +159,9 @@ BALL_VALVE = ValveTypeConfig(
     # pressure-specific labels (3.5/4/5.5 bar) for the 9 pneumatic positions
     # AND the 2 electric positions. The enrichment below pulls source cols
     # 49-59 into master cols 100-110, and these entries read the enriched cols.
-    # Dedup is by (target_type, model, label), so a model valid at multiple
-    # pressures (common: ACT-050D works at 3.5, 4, AND 5.5 bar) surfaces one
-    # chip per pressure — matching the column count in the source sheet.
+    # Dedup is by (target_type, model), so if the same model is valid at
+    # multiple pressures (common: ACT-050D works at 3.5, 4, AND 5.5 bar), the
+    # user sees one chip with the first matching label.
     paired_actuators=(
         # Pneumatic Double Acting — 3 pressure variants
         PairedActuator(model_col=100, target_type="pneumatic_rp", target_field="model",
@@ -151,14 +184,40 @@ BALL_VALVE = ValveTypeConfig(
                        label="Pneumatic — Spring Return Fail-Open @ 4 bar"),
         PairedActuator(model_col=108, target_type="pneumatic_rp", target_field="model",
                        label="Pneumatic — Spring Return Fail-Open @ 5.5 bar"),
-        # Electrical — same label on both chips so the JS group heading reads
-        # "Option N — Electrical" and each chip's sub-line shows "Electrical".
-        # (Stripping only happens when the label has an em dash like
-        # "Pneumatic — Double Acting"; plain "Electrical" passes through.)
+        # Electric — no sub-text on chips (user's choice which to pick).
+        # Plain "Electric" labels are stripped to empty by the JS prefix
+        # regex, so each chip shows just the model code with no sub-line.
         PairedActuator(model_col=109, target_type="electrical_rotary", target_field="model",
-                       label="Electrical"),
+                       label="Electric"),
         PairedActuator(model_col=110, target_type="electrical_rotary", target_field="model",
-                       label="Electrical"),
+                       label="Electric"),
+        # Per-series files (cols 49-59 -> 111-121): the COMPLETE alternative
+        # actuator set. The dashboard's fixed 3.5/4/5.5-bar slots above drop some
+        # valid 3rd-alternative models (verified: 10 models across 140 SKUs, e.g.
+        # ACT-063SR07). Dedup by (target_type, model) at resolve time means these
+        # only ADD chips for models not already surfaced above — no duplicates.
+        PairedActuator(model_col=111, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Double Acting"),
+        PairedActuator(model_col=112, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Double Acting"),
+        PairedActuator(model_col=113, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Double Acting"),
+        PairedActuator(model_col=114, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close"),
+        PairedActuator(model_col=115, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close"),
+        PairedActuator(model_col=116, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close"),
+        PairedActuator(model_col=117, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open"),
+        PairedActuator(model_col=118, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open"),
+        PairedActuator(model_col=119, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open"),
+        PairedActuator(model_col=120, target_type="electrical_rotary", target_field="model",
+                       label="Electric"),
+        PairedActuator(model_col=121, target_type="electrical_rotary", target_field="model",
+                       label="Electric"),
     ),
     cascade=[
         ("series",          4,  "Series"),
@@ -207,13 +266,25 @@ BALL_VALVE = ValveTypeConfig(
         (107, "Single Acting Fail-Safe Open @ 4 bar"),
         (108, "Single Acting Fail-Safe Open @ 5.5 bar"),
         (109, "Electric Actuator 1"), (110, "Electric Actuator 2"),
+        # Per-series files (cols 49-59 -> 111-121): the complete alternative
+        # actuator set, surfacing models the dashboard's pressure slots omit.
+        (111, "Double Acting Actuator (alt 1)"), (112, "Double Acting Actuator (alt 2)"),
+        (113, "Double Acting Actuator (alt 3)"),
+        (114, "Single Acting Fail-Safe Close (alt 1)"),
+        (115, "Single Acting Fail-Safe Close (alt 2)"),
+        (116, "Single Acting Fail-Safe Close (alt 3)"),
+        (117, "Single Acting Fail-Safe Open (alt 1)"),
+        (118, "Single Acting Fail-Safe Open (alt 2)"),
+        (119, "Single Acting Fail-Safe Open (alt 3)"),
+        (120, "Electric Actuator (alt 1)"), (121, "Electric Actuator (alt 2)"),
     ],
-    # Single enrichment source — the new dashboard file's "Ball Valve Actuator
-    # combination" sheet (added 2026-05-27). It carries all 11 actuator
-    # positions (9 pneumatic at varying pressures, 2 electric) for every Bare
-    # Valve Code in the catalog. Replaces the 4 per-series enrichments we
-    # previously used (which only carried the 2 electric columns and required
-    # 4 separate files).
+    # Enrichment sources, merged in after the main load:
+    #  1. The dashboard's "Ball Valve Actuator combination" sheet -> cols 100-110
+    #     (9 pneumatic at 3.5/4/5.5 bar + 2 electric), pressure-labelled.
+    #  2. The 4 per-series files -> NEW cols 111-121 (clear of 100-110). These
+    #     carry the COMPLETE alternative actuator set; the union (deduped at
+    #     resolve time) recovers models the dashboard's fixed pressure slots drop
+    #     (verified: 10 models across 140 SKUs).
     enrichment_sources=(
         EnrichmentSource(
             file_substring="Valve_Code_Selector_Dashboard",
@@ -226,6 +297,26 @@ BALL_VALVE = ValveTypeConfig(
                 (58, 109), (59, 110),
             ),
         ),
+        EnrichmentSource(
+            file_substring="2030F BV NEW CODEING", sheet_marker="2030F BV NEW CODEING",
+            source_key_col=1, master_key_col=1,
+            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+        ),
+        EnrichmentSource(
+            file_substring="2060F BV NEW CODEING", sheet_marker="2060F BV NEW CODEING",
+            source_key_col=1, master_key_col=1,
+            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+        ),
+        EnrichmentSource(
+            file_substring="2070F BV NEW CODEING", sheet_marker="2070F BV NEW CODEING",
+            source_key_col=1, master_key_col=1,
+            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+        ),
+        EnrichmentSource(
+            file_substring="2090F BV NEW CODEING", sheet_marker="2090F BV NEW CODEING",
+            source_key_col=1, master_key_col=1,
+            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+        ),
     ),
 )
 
@@ -234,6 +325,7 @@ BUTTERFLY_VALVE = ValveTypeConfig(
     key="butterfly",
     label="Butterfly Valve (Centric)",
     category="Valves",
+    subgroup="Pune",
     file_substring="Butterfly Valve",
     sheet_marker="BFV NEW CODEING",
     # NOTE: catalog has a "Disc Type" column (V/22) but it is empty in all
@@ -299,17 +391,16 @@ BUTTERFLY_VALVE = ValveTypeConfig(
             label="Pneumatic — Spring Return Fail-Open (alt 2)",
             target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
         ),
-        # Electrical — single-target (all values are EA-* or QM-*, both in
-        # electrical_rotary catalog). Plain "Electrical" label reaches the
-        # chip's sub-line unchanged since there's no em dash for the JS
-        # prefix regex to strip.
+        # Electric — single-target (all values are EA-* or QM-*, both in
+        # electrical_rotary catalog). Plain "Electric" label so each chip
+        # shows only the model code (no sub-text — user picks freely).
         PairedActuator(
             model_col=109, target_type="electrical_rotary", target_field="model",
-            label="Electrical",
+            label="Electric",
         ),
         PairedActuator(
             model_col=110, target_type="electrical_rotary", target_field="model",
-            label="Electrical",
+            label="Electric",
         ),
     ),
     cascade=[
@@ -386,6 +477,150 @@ BUTTERFLY_VALVE = ValveTypeConfig(
                 (52, 103), (53, 104), (54, 105),
                 (55, 106), (56, 107), (57, 108),
                 (58, 109), (59, 110),
+            ),
+        ),
+    ),
+)
+
+
+PHARMA_VALVE = ValveTypeConfig(
+    key="pharma",
+    label="Pharma Valve",
+    category="Valves",
+    subgroup="Mumbai",
+    # The catalog lives in the 'Pharma' sheet of a Valve_Code_Selector_Dashboard
+    # .xlsx whose NAME collides with the Pune ball-valve dashboard, so we scope
+    # the file search to the Mumbai subfolder.
+    file_substring="Valve_Code_Selector_Dashboard",
+    path_contains="Mumbai",
+    sheet_marker="Pharma",
+    # Column layout is shifted +1 vs the Ball Valve master: this sheet has a
+    # leading Power-Query "Name" column (c1, "Table_…"), so Bare Valve Code is
+    # c2, Series c5, etc. The 728 spacer rows with an empty Bare Valve Code are
+    # dropped by the primary-col row filter in Catalog._load.
+    primary_label="Bare Valve Code", primary_col=2,
+    secondary_label="Catalogue Code", secondary_col=3,
+    show_bto_fos=True, bto_col=40,
+    # Recommended actuators are present IN this sheet (c50–60), so no enrichment
+    # is needed (unlike ball/butterfly). Pneumatic models are ACT-* (Rack &
+    # Pinion); prefix routing also handles any SYA-* (Scotch Yoke). Electric
+    # models (c59–60) route to the rotary catalog. Dedup by (target_type, model)
+    # at resolve time collapses repeats across the three positions.
+    paired_actuators=(
+        PairedActuator(model_col=50, target_field="model",
+                       label="Pneumatic — Double Acting",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=51, target_field="model",
+                       label="Pneumatic — Double Acting (alt 1)",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=52, target_field="model",
+                       label="Pneumatic — Double Acting (alt 2)",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=53, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=54, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close (alt 1)",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=55, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close (alt 2)",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=56, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=57, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open (alt 1)",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=58, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open (alt 2)",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        # Linear actuator (HA-*, 5-6 bar) — a pneumatic operation type that belongs
+        # in the SAME recommendation list as Double Acting / Spring Return (not a
+        # browsable actuator family). No standalone Linear catalog exists, so
+        # target_type="linear" names an unknown catalog → server.py marks it
+        # not_in_catalog → the front-end renders an informational, non-clickable
+        # chip showing the HA-* model under the Pneumatic group. If a Linear
+        # catalog (ValveTypeConfig key="linear") is ever added, the chip becomes
+        # clickable automatically. Data present only on the ~148 Pharma Dashboard
+        # SKUs that carry a linear model (col 122 via extra_row_sources).
+        PairedActuator(model_col=122, target_type="linear", target_field="model",
+                       label="Pneumatic — Linear (5-6 bar)"),
+        PairedActuator(model_col=59, target_type="electrical_rotary", target_field="model",
+                       label="Electric"),
+        PairedActuator(model_col=60, target_type="electrical_rotary", target_field="model",
+                       label="Electric"),
+    ),
+    # "Characteristics" (c10) is omitted from the cascade — it has a single value
+    # ("ONF") across all rows, so a dropdown for it would be dead weight (same
+    # reasoning the Electrical Rotary config uses). It still appears in details.
+    cascade=[
+        ("series",          5,  "Series"),
+        ("size",            6,  "Valve Size"),
+        ("body_material",   7,  "Body Material"),
+        ("ball_material",   8,  "Ball Material"),
+        ("seat_material",   9,  "Seat Material"),
+        ("end_connection", 11,  "End Connections"),
+        ("ball_type",      23,  "Ball Type"),
+    ],
+    detail_columns=[
+        (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),
+        (5, "Series"), (6, "Valve Size"),
+        (7, "Body Material"), (8, "Ball Material"), (9, "Seat Material"),
+        (10, "Characteristics"), (11, "End Connections"),
+        (12, "Valve Type"), (13, "Design Standard"), (14, "Face to Face"),
+        (15, "Port Size"), (16, "No. of Ports"), (17, "Valve Kv (m³/hr)"),
+        (18, "Body Style"), (19, "Flow Direction"), (20, "End Piece Material"),
+        (21, "Type of Bonnet"), (22, "Stem Material"), (23, "Ball Type"),
+        (24, "Gland Packing"), (25, "Body Packing"),
+        (26, "Flange Dimensions"), (27, "Flange Drilling"),
+        (28, "Pressure Rating"), (29, "Operating Temp Range (°C)"),
+        (30, "Hardware"), (31, "Valve Paint"),
+        (32, "Testing Standard"), (33, "Leakage Class"),
+        (34, "Body Test Pressure (barg)"), (35, "Body Test Media"),
+        (36, "Seat Leakage Test Pressure (barg)"), (37, "Seat Leakage Test Media"),
+        (38, "Product Group"), (39, "Certification"),
+        (40, "BTO"), (41, "ETO"), (42, "BTC"), (43, "ETC"), (44, "Run"),
+        (45, "Top PCD"), (46, "Stem Shape"), (47, "Stem Dimension"),
+        (48, "Stem Orientation"), (49, "Stem Protrusion (mm)"),
+        (50, "Double Acting Actuator 1"), (51, "Double Acting Actuator 2"),
+        (52, "Double Acting Actuator 3"),
+        (53, "Single Acting Fail-Safe Close 1"),
+        (54, "Single Acting Fail-Safe Close 2"),
+        (55, "Single Acting Fail-Safe Close 3"),
+        (56, "Single Acting Fail-Safe Open 1"),
+        (57, "Single Acting Fail-Safe Open 2"),
+        (58, "Single Acting Fail-Safe Open 3"),
+        (59, "Electric Actuator 1"), (60, "Electric Actuator 2"),
+        # From the Pharma Dashboard extra-row source (no equivalent in the main
+        # 'Pharma' sheet). Linear (122) ALSO surfaces as a 'Linear' chip in the
+        # Recommended Actuator list (paired_actuators above) — it's a pneumatic
+        # operation type, not just a spec; it stays here too so the full
+        # attribute dump is complete. Manual (123) is detail-only.
+        (122, "Linear Actuator (5-6 bar)"), (123, "Manual Operator"),
+    ],
+    extra_row_sources=(
+        # Fold in the 162 Pharma SKUs that exist ONLY in Pharma Dashboard.xlsx
+        # ('Ball Valve Data Sheet Structure' sheet, ball layout: c1=Bare Code, so
+        # base cols map +1 into the 'Pharma' layout). Pneumatic/electric actuators
+        # land in cols 50-60 (surfaced as chips by paired_actuators above);
+        # Linear/Manual land in 122/123 (detail only). key_pattern skips the
+        # sheet's embedded header rows.
+        ExtraRowSource(
+            file_substring="Pharma Dashboard",
+            sheet_marker="Ball Valve Data Sheet Structure",
+            path_contains="Mumbai",
+            key_col=1, master_key_col=2,
+            key_pattern=r"^[0-9]{3,4}[A-Z]",
+            column_map=(
+                (1,2),(2,3),(3,4),(4,5),(5,6),(6,7),(7,8),(8,9),(9,10),(10,11),
+                (11,12),(12,13),(13,14),(14,15),(15,16),(16,17),(17,18),(18,19),
+                (19,20),(20,21),(21,22),(22,23),(23,24),(24,25),(25,26),(26,27),
+                (27,28),(28,29),(29,30),(30,31),(31,32),(32,33),(33,34),(34,35),
+                (35,36),(36,37),(37,38),(38,39),(39,40),(40,41),(41,42),(42,43),
+                (43,44),(44,45),(45,46),(46,47),(47,48),(48,49),
+                (49,50),(50,51),(51,52),(52,53),(53,54),(54,55),(55,56),(56,57),(57,58),
+                (59,59),(60,60),
+                (58,122),(61,123),
             ),
         ),
     ),
@@ -512,23 +747,45 @@ ELECTRICAL_ROTARY = ValveTypeConfig(
         (11, "Power Consumption (W)"), (12, "Open-to-Close Time (s)"),
         (13, "Enclosure Protection"), (14, "Actuator Orientation"),
         (15, "Application"), (16, "Painting"), (17, "Certification"),
-        # Col 18 is mislabeled "Additional Sp 1" in the source header, but
-        # carries a real feature flag for all 96 rows (values: ONF or
-        # 'with Potentiometer'). Surfacing it as Additional Specification.
-        (18, "Additional Specification"),
         (21, "Shaft Female"), (22, "PCD"),
         (23, "Torque (N·m)"), (24, "Weight (kg)"),
     ],
+    # NOTE: Actuator.xlsx's 'Working' sheet contains 2 codes not in this catalog
+    # (E021GN02, E021GX02 = EA-21/E "with Potentiometer" @ 110 VAC 50/60 Hz). They
+    # were NOT folded in: E021GN02 collides with E021GN01 on Model+Voltage (the
+    # only cascade fields), and the source is a combined working template whose
+    # columns don't map cleanly to this catalog. If these variants are needed,
+    # add them to the authoritative datasheet with a distinguishing attribute.
 )
 
 
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
     BUTTERFLY_VALVE,
+    PHARMA_VALVE,
     PNEUMATIC_RACK_PINION,
     PNEUMATIC_SCOTCH_YOKE,
     ELECTRICAL_ROTARY,
 ]
+
+
+# Subgroups that should appear in a category's picker menu even before any
+# catalog populates them. Each entry: category -> ordered list of
+# (subgroup_name, placeholder_text). Auto-superseded once a real family loads
+# into the subgroup (see build_category_blocks). Only injected into categories
+# that already have at least one loaded family.
+PLANNED_SUBGROUPS: dict[str, list[tuple[str, str]]] = {
+    "Valves": [("Mumbai", "Data pending — Mumbai catalog coming soon")],
+    # Manual (SHL) is a distinct, hand-operated actuator family referenced by
+    # Pharma valves; its catalog is pending (data/Actuator/Manual Actuator) and
+    # shows as a placeholder subgroup until supplied.
+    # Linear (HA-*, 5-6 bar) is NOT a browsable family — it's a pneumatic
+    # operation type, surfaced as a chip in each valve's Recommended Actuator
+    # list (see PHARMA_VALVE.paired_actuators), so it has no picker subgroup.
+    "Actuators": [
+        ("Manual", "Data pending — Manual actuator catalog coming soon"),
+    ],
+}
 
 
 def _norm(v: Any) -> Any:
@@ -572,9 +829,12 @@ def _normalize_paired_model(model: str) -> str:
 
 
 class Catalog:
-    def __init__(self, config: ValveTypeConfig, file_path: Path):
+    def __init__(self, config: ValveTypeConfig, file_path: Path, data_dir: Path | None = None):
         self.config = config
         self.file_path = file_path
+        # Root used to resolve extra_row_sources (which may live in a different
+        # subfolder than this catalog's file). Defaults to the file's parent.
+        self.data_dir = data_dir if data_dir is not None else file_path.parent
         self.rows: list[dict[str, Any]] = []
         self._key_to_col = {k: idx for k, idx, _ in config.cascade}
         self._load()
@@ -616,10 +876,16 @@ class Catalog:
             self.config.bto_col if self.config.show_bto_fos else 0,
         )
 
+        # Skip rows whose PRIMARY code column is empty. For ball/butterfly/
+        # actuators primary_col is 1 (same as the old `not raw[0]` check); for
+        # Pharma the real code is c2 (c1 is a Power-Query "Name" column), so this
+        # drops the 728 blank-code spacer rows that would otherwise load as
+        # ghost SKUs with no Bare Valve Code.
+        key_idx = self.config.primary_col - 1
         for sn in sheet_names:
             ws = wb[sn]
             for raw in ws.iter_rows(min_row=2, max_col=max_col, values_only=True):
-                if not raw or not raw[0]:
+                if not raw or key_idx >= len(raw) or _norm(raw[key_idx]) in (None, ""):
                     continue
                 row = {f"c{i+1}": _norm(v) for i, v in enumerate(raw)}
                 self.rows.append(row)
@@ -632,6 +898,79 @@ class Catalog:
 
         for src in self.config.enrichment_sources:
             self._apply_enrichment(src)
+
+        for src in self.config.extra_row_sources:
+            self._apply_extra_rows(src)
+
+    def _apply_extra_rows(self, src: ExtraRowSource) -> None:
+        """Append rows from `src` whose key isn't already in self.rows, remapping
+        source columns to catalog columns via src.column_map. Non-destructive."""
+        try:
+            src_path = find_catalog_file(self.data_dir, src.file_substring, src.path_contains)
+        except FileNotFoundError:
+            print(
+                f"[valve-selector]   extra-rows skipped for {self.config.key}: "
+                f"no file matching '*{src.file_substring}*'.",
+                flush=True,
+            )
+            return
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                wb = openpyxl.load_workbook(
+                    src_path, data_only=True, keep_vba=False, read_only=True
+                )
+            except PermissionError:
+                tmp_dir = Path(tempfile.gettempdir()) / "valve-selector-cache"
+                tmp_dir.mkdir(exist_ok=True)
+                tmp_path = tmp_dir / src_path.name
+                shutil.copyfile(src_path, tmp_path)
+                wb = openpyxl.load_workbook(
+                    tmp_path, data_only=True, keep_vba=False, read_only=True
+                )
+
+        sheet_names = [s for s in wb.sheetnames if src.sheet_marker in s]
+        if not sheet_names:
+            wb.close()
+            print(
+                f"[valve-selector]   extra-rows skipped: no sheet matching "
+                f"{src.sheet_marker!r} in {src_path.name}.",
+                flush=True,
+            )
+            return
+
+        pat = re.compile(src.key_pattern) if src.key_pattern else None
+        master_key = f"c{src.master_key_col}"
+        existing = {
+            str(_norm(r.get(master_key))).strip()
+            for r in self.rows if r.get(master_key) not in (None, "")
+        }
+        max_col = max(src.key_col, max(s for s, _ in src.column_map))
+        added = 0
+        for sn in sheet_names:
+            for raw in wb[sn].iter_rows(min_row=2, max_col=max_col, values_only=True):
+                if not raw or src.key_col - 1 >= len(raw):
+                    continue
+                key = _norm(raw[src.key_col - 1])
+                if key in (None, ""):
+                    continue
+                key = str(key).strip()
+                if pat and not pat.match(key):
+                    continue          # header/garbage row
+                if key in existing:
+                    continue          # SKU already in the catalog
+                row = {}
+                for s_col, m_col in src.column_map:
+                    row[f"c{m_col}"] = _norm(raw[s_col - 1]) if s_col - 1 < len(raw) else None
+                self.rows.append(row)
+                existing.add(key)
+                added += 1
+        wb.close()
+        print(
+            f"[valve-selector]   added {added} extra rows from {src_path.name}.",
+            flush=True,
+        )
 
     def _apply_enrichment(self, src: EnrichmentSource) -> None:
         """Pull extra columns from `src` and merge into self.rows by join key."""
@@ -755,37 +1094,18 @@ class Catalog:
             except (TypeError, ValueError):
                 detail["fos"] = None
         paired_list = []
-        # Dedupe on (target_type, model, label). Keying on the LABEL too means a
-        # model recommended at several pressures (e.g. ACT-050D Double-Acting at
-        # 3.5/4/5.5 bar) surfaces one chip PER pressure — the column count the
-        # user expects — while truly identical positions (same model AND label,
-        # e.g. the two "Electrical" cols 109/110 holding the same model) still
-        # collapse to one chip so the panel never shows a pixel-identical twin.
-        seen_keys = set()
+        seen_keys = set()  # (target_type, model) — dedupe same recommendation across positions
         for p in self.config.paired_actuators:
             paired_val = row.get(f"c{p.model_col}")
-            raw = "" if paired_val is None else str(paired_val).strip()
-            model = _normalize_paired_model(raw)
-            # The ball-valve actuator-combination sheet uses sentinels for "no
-            # actuator at this pressure": empty cells, literal 0 (~1,176 rows at
-            # 5.5 bar), and broken VLOOKUPs (#N/A/#REF!/#VALUE!). Rather than
-            # drop them, emit a placeholder entry (empty=True, model=None) so the
-            # panel renders the position as a greyed 'not available' slot.
-            if model in ("", "0", "#N/A", "#REF!", "#VALUE!"):
-                empty_key = ("empty", p.label)
-                if empty_key in seen_keys:
-                    continue
-                seen_keys.add(empty_key)
-                paired_list.append({
-                    "model": None,
-                    "target_type": p.target_type,
-                    "target_field": p.target_field,
-                    "label": p.label,
-                    "empty": True,
-                })
+            if paired_val in (None, ""):
+                continue
+            model = _normalize_paired_model(str(paired_val).strip())
+            # `#N/A` is an Excel error string from broken VLOOKUP cells in the
+            # source — treat as no recommendation (see 2026-05-27 report).
+            if model in ("", "#N/A"):
                 continue
             target_type = p.resolve_target_type(model)
-            key = (target_type, model, p.label)
+            key = (target_type, model)
             if key in seen_keys:
                 continue
             seen_keys.add(key)
@@ -803,32 +1123,82 @@ class Catalog:
         return [{"key": k, "label": label} for k, _idx, label in self.config.cascade]
 
 
-def find_catalog_file(data_dir: Path, file_substring: str) -> Path:
+def find_catalog_file(
+    data_dir: Path, file_substring: str, path_contains: str | None = None
+) -> Path:
     """Pick the most recently modified .xlsx/.xlsm under `data_dir` (recursively)
     whose name contains `file_substring`. Walking recursively lets the catalog
-    files live in nested subfolders (e.g. `data/Valve/Ball Valve Data Set/`)."""
+    files live in nested subfolders (e.g. `data/Valve/Ball Valve Data Set/`).
+
+    `path_contains` optionally restricts matches to files whose full path
+    contains that fragment — used to disambiguate same-named files in different
+    subfolders (e.g. the Pune vs Mumbai `Valve_Code_Selector_Dashboard.xlsx`)."""
+    def _path_ok(p: Path) -> bool:
+        if path_contains is None:
+            return True
+        return path_contains in str(p).replace("\\", "/")
+
     candidates = [
         p for p in data_dir.rglob("*.xls*")
-        if file_substring in p.name and not p.name.startswith("~$")
+        if file_substring in p.name and not p.name.startswith("~$") and _path_ok(p)
     ]
     if not candidates:
+        scope = f" (path containing '{path_contains}')" if path_contains else ""
         raise FileNotFoundError(
-            f"No file matching '*{file_substring}*' under {data_dir}."
+            f"No file matching '*{file_substring}*'{scope} under {data_dir}."
         )
     candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     return candidates[0]
+
+
+def build_category_blocks(sections, planned_subgroups=None):
+    """Group section summaries into category -> ordered subgroups for the picker.
+
+    Each returned block: {"name": <category>, "subgroups": [
+        {"name": <subgroup>, "members": [<section>...], "placeholder": <str>}]}.
+
+    `planned_subgroups` (category -> [(subgroup_name, placeholder_text), ...])
+    appends subgroups that have no loaded members yet, carrying placeholder text
+    the template renders as a non-selectable row. A planned subgroup that already
+    has loaded members is left untouched (real data wins). Planned entries for a
+    category with no loaded sections are skipped — a placeholder needs a picker,
+    and the picker only exists when the category has at least one family.
+    """
+    planned_subgroups = planned_subgroups or {}
+    categories: "OrderedDict[str, OrderedDict[str, list]]" = OrderedDict()
+    for sec in sections:
+        cat_key = sec["category"]
+        if cat_key not in categories:
+            categories[cat_key] = OrderedDict()
+        sub = sec.get("subgroup") or ""
+        categories[cat_key].setdefault(sub, []).append(sec)
+
+    blocks = []
+    for cat_name, subgroups in categories.items():
+        block_subgroups = [
+            {"name": name, "members": members, "placeholder": ""}
+            for name, members in subgroups.items()
+        ]
+        for sub_name, placeholder in planned_subgroups.get(cat_name, []):
+            if sub_name in subgroups:
+                continue  # already has real members
+            block_subgroups.append(
+                {"name": sub_name, "members": [], "placeholder": placeholder}
+            )
+        blocks.append({"name": cat_name, "subgroups": block_subgroups})
+    return blocks
 
 
 def load_all(data_dir: Path) -> dict[str, Catalog]:
     out: dict[str, Catalog] = {}
     for cfg in VALVE_TYPES:
         try:
-            path = find_catalog_file(data_dir, cfg.file_substring)
+            path = find_catalog_file(data_dir, cfg.file_substring, cfg.path_contains)
         except FileNotFoundError:
             print(f"[valve-selector] Skipping {cfg.key}: no file matching '*{cfg.file_substring}*'.", flush=True)
             continue
         print(f"[valve-selector] Loading {cfg.key} catalog from {path.name}...", flush=True)
-        out[cfg.key] = Catalog(cfg, path)
+        out[cfg.key] = Catalog(cfg, path, data_dir)
         print(f"[valve-selector]   loaded {len(out[cfg.key].rows)} {cfg.key} rows.", flush=True)
     if not out:
         raise RuntimeError(f"No catalog files found in {data_dir}.")

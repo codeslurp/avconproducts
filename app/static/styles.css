@@ -50,7 +50,39 @@
   --c-shadow-md:  0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
   --c-shadow-lg:  0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
   --c-transition: 180ms ease-out;
+
+  /* ---- Responsive layout tokens (SINGLE SOURCE OF TRUTH) ----
+     Every centered block — header brand, picker row, workspace, footer, empty
+     prompt — uses BOTH of these for its width and side padding. Because they
+     all read the same two values, their left/right edges line up pixel-for-
+     pixel at ANY screen size. The header BACKGROUND bar stays full-width; only
+     the content inside is capped + guttered here.
+
+     These two values are then redefined PER SCREEN CLASS in the media block
+     right below — that is the "spec the screen auto-detects and applies":
+       big monitor → laptop → small laptop → tablet → phone.
+     To retune a whole device class, change its gutter in ONE place. */
+  --c-content: 1600px;   /* max width of centered content (caps big monitors) */
+  --c-gutter:  40px;     /* left/right breathing room (default: laptop/desktop) */
 }
+
+/* ---- Per-screen-class specs ----
+   CSS media queries read the LIVE viewport width and auto-apply the matching
+   spec on every resize (incl. dragging a window between a laptop and an
+   external monitor) — no JS, no manual switching. Ordered widest→narrowest so
+   that on overlap the smallest-screen rule wins (later = higher priority among
+   equal-specificity :root selectors). Only the gutter changes here; structural
+   changes (grid collapse, stacking) live in their own blocks below.
+
+   BIG MONITOR / DESKTOP / LAPTOP (>1280px): use the base 40px gutter. On a big
+   monitor the content is held to --c-content (1600px) and centered, so it fills
+   as much width as we allow without over-stretching line lengths — no extra
+   gutter inflation (that would only add wasted side space). To let big monitors
+   fill MORE of the screen, raise --c-content; to add side breathing room, raise
+   the base --c-gutter. The steps below only KICK IN as the screen narrows. */
+@media (max-width: 1280px) { :root { --c-gutter: 32px; } }   /* small laptop  */
+@media (max-width: 1024px) { :root { --c-gutter: 24px; } }   /* large tablet  */
+@media (max-width:  860px) { :root { --c-gutter: 16px; } }   /* phone / small tablet */
 
 * { box-sizing: border-box; }
 
@@ -79,13 +111,15 @@ html, body {
 header {
   background: var(--c-surface);
   border-bottom: 1px solid var(--c-border);
-  padding: 14px 40px;
-  max-width: 1280px;
-  margin: 0 auto;
+  padding: 14px 0;            /* full-width white bar — side padding moves to .brand */
   box-shadow: var(--c-shadow-sm);
 }
-/* Header layout: logo + title stacked to the LEFT edge of the header. */
+/* The white bar spans the full window; the brand content is centered to the same
+   width as the body below so the title/logo line up with the columns. */
 .brand {
+  max-width: var(--c-content);
+  margin: 0 auto;
+  padding: 0 var(--c-gutter);   /* shared gutter → lines up with picker row + workspace */
   display: flex;
   align-items: center;
   gap: 20px;
@@ -135,25 +169,10 @@ header .tagline {
 }
 
 @media (max-width: 720px) {
-  /* Keep the desktop "title left, logo right" layout on tablets/phones.
-     The text block shrinks to fit; logo stays anchored to the right edge via
-     the inherited `margin-left: auto`. Smaller logo + title so both fit one
-     row without the title wrapping under the logo. */
-  .brand { gap: 12px; }
-  .brand-logo { height: 48px; }
-  header h1 { font-size: 20px; }
-}
-
-@media (max-width: 480px) {
-  /* Very narrow phones: tighten further, keep logo on the right. */
-  header { padding: 18px 14px 14px; }
-  header h1 { font-size: 17px; line-height: 1.22; }
-  header .tagline { font-size: 11.5px; }
-  .brand-logo { height: 40px; }
-  .section-head .section-title { font-size: 19px; }
-  .picker-row { padding: 0 14px; gap: 10px; }
-  main { padding: 8px 14px 24px; }
-  .workspace { padding: 0 14px; }
+  /* On phones: logo CENTERED at the top, then title/tagline left-aligned below
+     (so the title still lines up with the pickers/columns). */
+  .brand { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .brand-logo { order: -1; align-self: center; margin: 0 0 2px; }
 }
 header code {
   background: var(--c-surface-3);
@@ -170,9 +189,9 @@ main {
   display: grid;
   grid-template-columns: 360px 1fr;
   gap: 20px;
-  padding: 8px 40px 24px;
+  padding: 8px var(--c-gutter) 24px;   /* token-tied (shadowed inside .workspace-col, but stays in sync if ever used standalone) */
   align-items: start;
-  max-width: 1280px;
+  max-width: var(--c-content);
   margin: 0 auto;
 }
 
@@ -412,10 +431,10 @@ table tbody tr:last-child td {
 /* ---------- Footer ---------- */
 footer {
   text-align: center;
-  padding: 14px 24px 18px;
+  padding: 14px var(--c-gutter) 18px;
   color: var(--c-text-subtle);
   font-size: 12.5px;
-  max-width: 1280px;
+  max-width: var(--c-content);
   margin: 0 auto;
   border-top: 1px solid var(--c-border);
   margin-top: 16px;
@@ -426,9 +445,12 @@ footer small { font-family: var(--c-font-sans); }
 @media (max-width: 860px) {
   main {
     grid-template-columns: 1fr;
-    padding: 8px 16px 24px;
+    padding: 8px var(--c-gutter) 24px;
   }
-  header { padding: 24px 16px 16px; }
+  /* Header stays a full-width bar; its brand content now inherits the shared
+     --c-gutter (16px at this breakpoint) automatically, so the title lines up
+     with the picker row + columns. Only the vertical padding needs setting. */
+  header { padding: 16px 0; }
   .codes { grid-template-columns: 1fr; }
 }
 
@@ -483,8 +505,8 @@ footer small { font-family: var(--c-font-sans); }
   margin-top: 8px;
 }
 .section-head {
-  padding: 0 40px;
-  max-width: 1280px;
+  padding: 0 var(--c-gutter);   /* token-tied (shadowed inside .workspace-col) */
+  max-width: var(--c-content);
   margin: 0 auto;
 }
 .section-head .section-title {
@@ -526,53 +548,26 @@ footer small { font-family: var(--c-font-sans); }
 }
 
 @media (max-width: 860px) {
-  .section-head { padding: 0 16px; }
+  .section-head { padding: 0 var(--c-gutter); }
 }
-
-/* ---------- Global Reset button ----------
-   Sits at the right end of .picker-row at ALL widths (the row is justify-end),
-   so it stays anchored top-right on both desktop and mobile. Outlined secondary
-   weight so it doesn't compete with the primary picker triggers. Label visible,
-   icon hidden. */
-.global-reset-btn {
-  flex: 0 0 auto;
-  align-self: center;
-  padding: 10px 18px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text-soft);
-  border-radius: var(--c-radius-md);
-  cursor: pointer;
-  font-family: var(--c-font-sans);
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: background var(--c-transition), border-color var(--c-transition), color var(--c-transition);
-}
-.global-reset-btn:hover {
-  background: var(--c-surface-2);
-  border-color: var(--c-text-subtle);
-  color: var(--c-text);
-}
-.global-reset-btn:focus-visible {
-  outline: none;
-  border-color: var(--c-accent);
-  box-shadow: 0 0 0 3px var(--c-accent-ring);
-}
-.global-reset-btn .global-reset-icon { display: none; }
 
 /* ---------- Type picker row (one picker per category, side-by-side) ---------- */
 .picker-row {
-  max-width: 1280px;
-  margin: 12px auto 4px;
-  padding: 0 40px;
+  max-width: var(--c-content);
+  margin: 18px auto 12px;
+  padding: 0 var(--c-gutter);   /* shared gutter → lines up with brand + workspace */
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+/* The category + accessories pickers wrap within this group; the global Reset
+   stays pinned to the top-right of the row beside it. */
+.pr-pickers {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  /* The picker-row now only holds the Reset button — pickers moved into their
-     respective workspace columns. Right-align Reset so it sits at the top-right
-     of the page, leaving the rest of the row empty. */
-  justify-content: flex-end;
 }
 
 /* ---------- Type picker (popover button) ---------- */
@@ -580,29 +575,6 @@ footer small { font-family: var(--c-font-sans); }
   position: relative;
   flex: 1 1 360px;
   min-width: 320px;
-}
-
-/* Type picker when placed inside a workspace column card (its new home — see
-   index.html). Overrides the picker-row flex sizing so the trigger button
-   stretches to the full card width and stacks vertically with the cascade
-   sections below. */
-.workspace-col .type-picker {
-  flex: none;
-  min-width: 0;
-  width: 100%;
-  margin: 4px 0 14px;
-}
-.workspace-col .type-picker-trigger {
-  width: 100%;
-  min-width: 0;
-}
-.workspace-col .type-picker-menu {
-  left: 0;
-  right: 0;
-  min-width: 0;
-  /* Sit above the cascade form panel that may render right below this picker
-     once a type is selected. */
-  z-index: 20;
 }
 
 .type-picker-trigger {
@@ -650,15 +622,9 @@ footer small { font-family: var(--c-font-sans); }
   font-family: var(--c-font-serif);
   font-size: 16px;
   font-weight: 500;
-  /* Teal in both placeholder ('Choose valve type') and selected
-     ('Butterfly Valve (Centric)') states per user preference — matches
-     the accessories family-filter dropdown for visual sync. */
-  color: var(--c-accent);
+  color: var(--c-text);
   text-align: left;
 }
-/* Kept as a no-op for explicitness: the selection state keeps the same
-   teal color as the placeholder. If a future preference splits the two
-   states, change this rule rather than the base one. */
 .type-picker.has-selection .type-picker-trigger-label {
   color: var(--c-accent);
 }
@@ -710,6 +676,183 @@ footer small { font-family: var(--c-font-sans); }
   border-top: none;
   padding-top: 6px;
 }
+/* Non-selectable "data pending" row for a declared-but-empty subgroup.
+   Deliberately NOT .type-picker-option so app.js never wires it for clicks. */
+.type-picker-placeholder {
+  padding: 10px 14px 12px;
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--c-text-subtle);
+  cursor: default;
+  user-select: none;
+}
+
+/* ---- Accessories picker (top-right popover: family -> item dropdown) ---- */
+.acc-menu {
+  left: auto;        /* right-anchor: this pill is rightmost in the row */
+  right: 0;
+  gap: 12px;
+  padding: 14px;
+  min-width: 340px;
+  transform-origin: top right;
+}
+.acc-field { display: flex; flex-direction: column; gap: 5px; }
+.acc-field-label { font-size: 12px; font-weight: 600; color: var(--c-text-soft); }
+.acc-menu select,
+.acc-menu input[type="search"] {
+  padding: 9px 11px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-md);
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  max-width: 100%;
+  box-sizing: border-box;
+  width: 100%;
+}
+.acc-menu input[type="search"]:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 2px var(--c-accent-ring);
+}
+.acc-menu select:disabled { color: var(--c-text-subtle); background: var(--c-surface-2); }
+.acc-add-btn {
+  align-self: flex-start;
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--c-radius-md);
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--c-transition);
+}
+.acc-add-btn:hover:not(:disabled) { background: var(--c-accent-hover); }
+.acc-add-btn:disabled { background: var(--c-border-strong); cursor: default; }
+.acc-selected { border-top: 1px solid var(--c-border); padding-top: 10px; }
+.acc-selected-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--c-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text-subtle);
+  margin-bottom: 8px;
+}
+.acc-clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--c-accent);
+  font-family: var(--c-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.acc-clear-btn:hover { color: var(--c-accent-hover); text-decoration: underline; }
+/* Global reset button (top-right of the picker row) */
+.global-reset-btn {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-lg);
+  background: var(--c-surface);
+  color: var(--c-text-soft);
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--c-transition);
+}
+.global-reset-btn:hover {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+  background: var(--c-danger-bg, rgba(178,58,46,0.08));
+}
+
+/* Combined product code — hero line directly under the summary title */
+.summary-combined {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 0 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--c-border);
+}
+.summary-combined-code {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--c-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--c-accent);
+  word-break: break-word;
+}
+.summary-combined-copy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--c-radius-md);
+  background: var(--c-surface);
+  color: var(--c-text-soft);
+  font-family: var(--c-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--c-transition);
+}
+.summary-combined-copy:hover { border-color: var(--c-accent); color: var(--c-accent); }
+.acc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.acc-chips:empty::after {
+  content: "None yet";
+  font-size: 12px;
+  font-style: italic;
+  color: var(--c-text-subtle);
+}
+.acc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent-ring);
+  border-radius: 999px;
+  padding: 4px 6px 4px 9px;
+  font-size: 12px;
+}
+.acc-chip-fam {
+  font-family: var(--c-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+.acc-chip-code { font-weight: 500; color: var(--c-text); }
+.acc-chip-x {
+  border: none;
+  background: transparent;
+  color: var(--c-text-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.acc-chip-x:hover { color: var(--c-danger); }
 @keyframes menu-pop {
   from { opacity: 0; transform: translateY(-6px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -791,9 +934,9 @@ footer small { font-family: var(--c-font-sans); }
 
 /* Empty state before a type is picked */
 .empty-prompt {
-  max-width: 1280px;
+  max-width: var(--c-content);
   margin: 24px auto 0;
-  padding: 60px 40px;
+  padding: 60px var(--c-gutter);
   text-align: center;
   color: var(--c-text-muted);
   font-style: italic;
@@ -801,13 +944,19 @@ footer small { font-family: var(--c-font-sans); }
 }
 
 @media (max-width: 860px) {
-  /* Row now holds only the Reset button; keep it horizontal so justify-end
-     anchors Reset to the top-right (the pickers live in the columns now). */
-  .picker-row { padding: 0 16px; gap: 12px; }
+  .picker-row { gap: 12px; flex-direction: column; }   /* gutter comes from --c-gutter; only stack + gap change here */
+  .pr-pickers { flex-direction: column; gap: 12px; }
   .type-picker { flex: 1 1 auto; min-width: 0; }
   .type-picker-menu { left: 0; right: 0; min-width: 0; }
+  .acc-menu { left: 0; right: 0; min-width: 0; }   /* accessories popover full-width on phones */
   .type-picker-trigger { min-width: 0; width: 100%; }
-  .empty-prompt { padding: 40px 16px; }
+  .global-reset-btn { align-self: stretch; justify-content: center; }
+  .empty-prompt { padding: 40px var(--c-gutter); }
+  /* Combined product code: stack the code above the Copy button; smaller text so
+     it doesn't overflow a phone width. */
+  .summary-combined { flex-direction: column; align-items: stretch; gap: 10px; }
+  .summary-combined-code { font-size: 17px; }
+  .summary-combined-copy { align-self: flex-start; }
 }
 
 /* ---------- Paired actuator panel ----------
@@ -968,9 +1117,20 @@ footer small { font-family: var(--c-font-sans); }
   font-family: var(--c-font-sans);
   font-size: 12.5px;
 }
+.paired-option-num {
+  font-weight: 600;
+  color: var(--c-text);
+}
 .paired-option-cat {
   color: var(--c-accent);
-  font-weight: 600;
+  font-weight: 500;
+  /* "—" separator before category */
+}
+.paired-option-cat::before {
+  content: "—";
+  margin-right: 6px;
+  color: var(--c-text-muted);
+  font-weight: 400;
 }
 .paired-chips {
   display: flex;
@@ -1053,14 +1213,6 @@ footer small { font-family: var(--c-font-sans); }
 .paired-chip[disabled]:hover .paired-chip-label {
   color: var(--c-text-subtle);
 }
-/* Empty position (no actuator at this pressure for this valve): neutral grey
-   '—' rather than the amber 'pending' treatment used for not-in-catalog. */
-.paired-chip--empty .paired-chip-code,
-.paired-chip--empty:hover .paired-chip-code {
-  color: var(--c-text-subtle);
-  font-style: normal;
-}
-.paired-chip--empty { opacity: 0.75; }
 
 /* ---------- Section title subgroup label (e.g. "Pneumatic" tag) ---------- */
 .section-subgroup {
@@ -1092,9 +1244,9 @@ footer small { font-family: var(--c-font-sans); }
    On narrow screens collapses to a single column.
    ============================================================ */
 .workspace {
-  max-width: 1400px;
+  max-width: var(--c-content);
   margin: 0 auto 32px;
-  padding: 0 24px;
+  padding: 0 var(--c-gutter);   /* shared gutter → columns line up with the pickers above (was 24px → caused a 16px offset) */
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-areas:
@@ -1110,15 +1262,13 @@ footer small { font-family: var(--c-font-sans); }
 .workspace-accessories     { grid-area: access; }
 
 /* Column shell: white card with subtle border so the two halves feel like
-   parallel rails. Card collapses to header + picker height when nothing is
-   selected (no large empty white space); grows as soon as a valve-section
-   becomes visible, since align-items: start on the workspace grid lets each
-   card take its natural content height instead of stretching to its sibling. */
+   parallel rails. */
 .workspace-col {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--c-radius-lg);
   padding: 18px 22px;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1196,13 +1346,9 @@ footer small { font-family: var(--c-font-sans); }
 }
 .workspace-col .valve-section main {
   /* Stack form + result vertically — half-width columns aren't wide enough
-     for the original 360px + 1fr side-by-side grid. `align-items: stretch`
-     is explicit here so the panels span the full column width; the parent
-     `main` rule sets `align-items: start` which, once display flips to flex
-     column, would otherwise shrink each panel to its content width. */
+     for the original 360px + 1fr side-by-side grid. */
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   gap: 16px;
   padding: 12px 4px 4px;
   grid-template-columns: none;
@@ -1239,83 +1385,21 @@ footer small { font-family: var(--c-font-sans); }
   color: var(--c-accent);
   font-size: 18px;
 }
-/* Copy-to-clipboard pill in the summary header. Same outlined-accent
-   treatment as the global Reset on desktop. Briefly shows a confirmation
-   state when text is successfully written to the clipboard. */
-.summary-copy-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid var(--c-accent);
-  background: var(--c-surface);
-  color: var(--c-accent);
-  border-radius: var(--c-radius-md);
-  cursor: pointer;
-  font-family: var(--c-font-sans);
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: background var(--c-transition), color var(--c-transition);
-}
-.summary-copy-btn:hover {
-  background: var(--c-accent);
-  color: var(--c-surface);
-}
-.summary-copy-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--c-accent-ring);
-}
-.summary-copy-btn.copied {
-  background: var(--c-accent);
-  color: var(--c-surface);
-  border-color: var(--c-accent);
-}
-.summary-copy-icon { font-size: 14px; line-height: 1; }
-
-/* Hero line: the consolidated full product code, Copy anchored to its right,
-   divider beneath separating it from the per-component breakdown. */
-.summary-fullcode-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 14px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--c-accent);
-}
-.summary-fullcode {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--c-font-mono);
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--c-accent);
-  letter-spacing: -0.005em;
-  line-height: 1.3;
-  overflow-wrap: anywhere;   /* long codes wrap instead of overflowing */
-  word-break: break-word;
-}
-.summary-copy-btn { flex: 0 0 auto; }
-
-/* Breakdown: one plain vertical row per component (no boxes). Each row is
-   "LABEL  code · name"; label is a fixed-width leading column. */
-.summary-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 .summary-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--c-radius-md);
+  padding: 14px 18px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 3px 12px;
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
+  flex-direction: column;
+  gap: 6px;
 }
 .summary-label {
-  flex: 0 0 92px;
   font-family: var(--c-font-sans);
   font-size: 11px;
   font-weight: 700;
@@ -1325,7 +1409,7 @@ footer small { font-family: var(--c-font-sans); }
 }
 .summary-code {
   font-family: var(--c-font-mono);
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--c-accent);
   letter-spacing: -0.005em;
@@ -1335,11 +1419,6 @@ footer small { font-family: var(--c-font-sans); }
   font-size: 13px;
   color: var(--c-text-soft);
   line-height: 1.35;
-}
-.summary-name::before {
-  content: "·";
-  margin-right: 8px;
-  color: var(--c-text-muted);
 }
 
 /* ---------- Accessories placeholder (bottom row) ---------- */
@@ -1479,8 +1558,6 @@ footer small { font-family: var(--c-font-sans); }
   font-family: var(--c-font-serif);
   font-size: 16px;
   font-weight: 500;
-  /* Teal in both placeholder and selected states — matches the Valves and
-     Actuators picker triggers per user preference. */
   color: var(--c-accent);
   cursor: pointer;
   padding-right: 24px;
@@ -1647,25 +1724,24 @@ footer small { font-family: var(--c-font-sans); }
   word-break: break-word;
 }
 
-/* ---------- Summary panel: accessories row ---------- */
-/* Keep the label centered against the (taller, stacked) capsules. */
-.summary-card--accessories { align-items: center; }
+/* ---------- Summary panel: accessories card ---------- */
+.summary-card--accessories {
+  margin-top: 14px;
+}
 .summary-acc-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  align-items: stretch;
+  gap: 6px;
+  align-items: center;
 }
-/* Each capsule stacks vertically: family tag on top, code below. */
 .summary-acc-chip {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 14px 7px;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
   background: var(--c-accent-soft);
   border: 1px solid var(--c-accent);
-  border-radius: 12px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 .summary-acc-chip-family {
@@ -1680,16 +1756,11 @@ footer small { font-family: var(--c-font-sans); }
   background: var(--c-accent);
   border-radius: 999px;
   line-height: 1.2;
-  /* Friendly names vary in length; let long ones wrap inside the pill rather
-     than widening the whole capsule (parent sets white-space: nowrap). */
-  white-space: normal;
-  text-align: center;
-  max-width: 150px;
 }
 .summary-acc-chip-code {
   font-family: var(--c-font-mono);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--c-accent);
 }
 
@@ -1702,7 +1773,11 @@ footer small { font-family: var(--c-font-sans); }
       "actuators"
       "access"
       "summary";
-    padding: 0 16px;
+    /* gutter comes from --c-gutter (keeps columns aligned with the pickers);
+       only the grid collapses here. */
+  }
+  .summary-grid {
+    grid-template-columns: 1fr;
   }
   .accessories-toolbar {
     flex-direction: column;

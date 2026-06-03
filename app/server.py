@@ -11,14 +11,13 @@ import os
 import sys
 import threading
 import webbrowser
-from collections import OrderedDict
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from catalog import load_all  # noqa: E402
+from catalog import load_all, build_category_blocks, PLANNED_SUBGROUPS  # noqa: E402
 from accessories import load_accessories  # noqa: E402
 
 PROJECT_ROOT = HERE.parent
@@ -76,27 +75,10 @@ def _section_summary(key: str, cat) -> dict:
 def index():
     sections = [_section_summary(k, c) for k, c in CATALOGS.items()]
 
-    # Group sections by category (preserves first-appearance order), then by
-    # subgroup within each category.
-    categories: "OrderedDict[str, dict]" = OrderedDict()
-    for sec in sections:
-        cat_key = sec["category"]
-        if cat_key not in categories:
-            categories[cat_key] = {"name": cat_key, "subgroups": OrderedDict()}
-        sub = sec["subgroup"] or ""
-        categories[cat_key]["subgroups"].setdefault(sub, []).append(sec)
-
-    # Flatten the OrderedDicts into lists for the Jinja loop
-    category_blocks = []
-    for cat in categories.values():
-        category_blocks.append({
-            "name": cat["name"],
-            "subgroups": [
-                # NB: avoid the key name "items" — Jinja resolves `.items` to the
-                # dict method first, shadowing any 'items' key in the data.
-                {"name": k, "members": v} for k, v in cat["subgroups"].items()
-            ],
-        })
+    # Group sections into category -> ordered subgroups, injecting any declared
+    # subgroups that have no data yet (e.g. Mumbai) as placeholders. See
+    # catalog.build_category_blocks / PLANNED_SUBGROUPS.
+    category_blocks = build_category_blocks(sections, PLANNED_SUBGROUPS)
 
     total_skus = sum(sec["row_count"] for sec in sections)
     return render_template(
