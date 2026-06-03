@@ -140,12 +140,12 @@ class CatalogEngine {
     // Earlier this engine put the label in the dedup key and emitted blank-code
     // "empty" placeholders, which over-listed chips and showed code-less slots
     // on GitHub Pages while the Flask app stayed correct (2026-06-03 fix).
-    // Show every UNIQUE recommendation slot — do NOT club by code alone.
-    // PRESSURE slots (label contains "@ … bar") stay distinct per pressure even
-    // when the same model repeats (a Double Acting actuator that is ACT-050D at
-    // 3.5/4/5.5 bar shows 3 chips). NON-pressure slots (generic alternatives,
-    // Electric, Linear) only ADD a model not already shown. Mirrors catalog.py
-    // Catalog.resolve().
+    // Dedup rule (mirrors catalog.py Catalog.resolve, user's choice 2026-06-04):
+    //   * DOUBLE-ACTING pressure slots (label has BOTH "Double Acting" and "@")
+    //     show every pressure even when the same code repeats (ACT-050D at
+    //     3.5/4/5.5 bar -> 3 chips).
+    //   * EVERYTHING ELSE (Spring-Return at any pressure, Electric, Linear,
+    //     generic alternatives) dedupes by code: one chip per distinct code.
     const seenModels = new Set();   // `${tt}|${model}`
     const seenSlots = new Set();    // `${tt}|${model}|${label}`
     const paired = [];
@@ -155,11 +155,11 @@ class CatalogEngine {
       const model = normalizePairedModel(String(raw).trim());
       if (model === "" || model === "#N/A") continue;
       const target_type = resolvePairedTargetType(pa, model);
-      if (pa.label.includes("@")) {                 // pressure slot — keep each pressure
+      if (pa.label.includes("Double Acting") && pa.label.includes("@")) {  // DA pressure slot
         const slot = `${target_type}|${model}|${pa.label}`;
         if (seenSlots.has(slot)) continue;
         seenSlots.add(slot);
-      } else if (seenModels.has(`${target_type}|${model}`)) {  // alternative — new codes only
+      } else if (seenModels.has(`${target_type}|${model}`)) {  // everything else — one per code
         continue;
       }
       seenModels.add(`${target_type}|${model}`);

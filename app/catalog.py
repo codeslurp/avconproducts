@@ -1341,17 +1341,18 @@ class Catalog:
             except (TypeError, ValueError):
                 detail["fos"] = None
         paired_list = []
-        # Show every UNIQUE recommendation slot — do NOT club by code alone.
-        #   * PRESSURE slots (label has "@ … bar", e.g. Ball's DA @3.5/@4/@5.5)
-        #     stay distinct per pressure even when the SAME model repeats: the
-        #     pressure is what makes them unique, so a valve whose Double Acting
-        #     actuator is ACT-050D at all three pressures shows THREE chips.
-        #   * NON-pressure slots (generic "alternative" columns, Electric,
-        #     Linear) carry no distinguishing pressure, so they only ADD a model
-        #     not already surfaced — this drops redundant bare repeats while
-        #     still surfacing genuinely new alternatives (e.g. ACT-063SR07).
+        # Dedup rule (user's choice 2026-06-04):
+        #   * DOUBLE-ACTING pressure slots (label has BOTH "Double Acting" and
+        #     "@ … bar", e.g. Ball's DA @3.5/@4/@5.5) show every pressure even
+        #     when the SAME model repeats — so a valve whose DA actuator is
+        #     ACT-050D at all three pressures shows THREE chips.
+        #   * EVERYTHING ELSE (Spring-Return at any pressure, Electric, Linear,
+        #     and the generic "alternative" columns) dedupes by code: one chip
+        #     per distinct (target_type, model). This keeps Spring-Return from
+        #     repeating the same code across pressures, while still surfacing
+        #     genuinely new alternatives (e.g. ACT-063SR07).
         seen_models = set()  # (target_type, model) shown so far
-        seen_slots = set()   # (target_type, model, label) — exact pressure-slot twins
+        seen_slots = set()   # (target_type, model, label) — exact DA pressure-slot twins
         for p in self.config.paired_actuators:
             paired_val = row.get(f"c{p.model_col}")
             if paired_val in (None, ""):
@@ -1362,12 +1363,12 @@ class Catalog:
             if model in ("", "#N/A"):
                 continue
             target_type = p.resolve_target_type(model)
-            if "@" in p.label:                       # pressure slot — keep each pressure
+            if "Double Acting" in p.label and "@" in p.label:   # DA pressure slot — keep each pressure
                 slot = (target_type, model, p.label)
                 if slot in seen_slots:
                     continue
                 seen_slots.add(slot)
-            elif (target_type, model) in seen_models:  # alternative — new codes only
+            elif (target_type, model) in seen_models:            # everything else — one chip per code
                 continue
             seen_models.add((target_type, model))
             paired_list.append({
