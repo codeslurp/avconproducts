@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20260603001242" />
+  <link rel="stylesheet" href="static/styles.css?v=20260603003838" />
 </head>
 <body>
   <header>
@@ -17,9 +17,9 @@
           <span class="title-line">BV&ndash;BFV&ndash;Actuator&ndash;Accessory</span>
           <span class="title-line">Product Code Finder</span>
         </h1>
-        <p class="tagline">53,238 AVCON SKUs. Infinite Specs. One Click.</p>
+        <p class="tagline">53,627 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20260603001242" alt="AVCON Controls" class="brand-logo" />
+      <img src="static/avcon-logo.png?v=20260603003838" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
@@ -131,6 +131,42 @@
           </span>
         </button>
         
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_cy">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">CY Series</span>
+            <span class="option-meta">98 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_k">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">K Series</span>
+            <span class="option-meta">143 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_m">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">M Series</span>
+            <span class="option-meta">8 SKUs</span>
+          </span>
+        </button>
+        
         
         
         
@@ -146,7 +182,38 @@
           </span>
           <span class="option-text">
             <span class="option-title">Rotary</span>
+            <span class="option-meta">96 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="electrical_linear">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Linear</span>
             <span class="option-meta">40 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+        
+        <div class="type-picker-subheader">Manual</div>
+        
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="manual_handwheel">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Manual Handwheel (MPW)</span>
+            <span class="option-meta">44 SKUs</span>
           </span>
         </button>
         
@@ -814,6 +881,237 @@
     
       
         
+    <article class="valve-section" data-valve-type="pneumatic_cy" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pneumatic</span>
+          CY Series
+        </h2>
+        <p class="section-meta">
+          98 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-pneumatic_cy-model">Model</label>
+              
+              <input id="f-pneumatic_cy-model" name="model" data-key="model"
+                     list="pneumatic_cy-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pneumatic_cy-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="action">
+              <label for="f-pneumatic_cy-action">Action</label>
+              
+              <select id="f-pneumatic_cy-action" name="action" data-key="action">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="pneumatic_k" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pneumatic</span>
+          K Series
+        </h2>
+        <p class="section-meta">
+          143 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-pneumatic_k-model">Model</label>
+              
+              <input id="f-pneumatic_k-model" name="model" data-key="model"
+                     list="pneumatic_k-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pneumatic_k-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="action">
+              <label for="f-pneumatic_k-action">Action</label>
+              
+              <select id="f-pneumatic_k-action" name="action" data-key="action">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-pneumatic_k-body_material">Body Material</label>
+              
+              <select id="f-pneumatic_k-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="pneumatic_m" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pneumatic</span>
+          M Series
+        </h2>
+        <p class="section-meta">
+          8 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-pneumatic_m-model">Model</label>
+              
+              <input id="f-pneumatic_m-model" name="model" data-key="model"
+                     list="pneumatic_m-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pneumatic_m-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
     <article class="valve-section" data-valve-type="electrical_rotary" data-category="Actuators" hidden>
       <div class="section-head">
         <h2 class="section-title">
@@ -821,7 +1119,7 @@
           Rotary
         </h2>
         <p class="section-meta">
-          40 actuator SKUs
+          96 actuator SKUs
         </p>
       </div>
 
@@ -844,6 +1142,169 @@
               <label for="f-electrical_rotary-voltage">Voltage</label>
               
               <select id="f-electrical_rotary-voltage" name="voltage" data-key="voltage">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="electrical_linear" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Electrical</span>
+          Linear
+        </h2>
+        <p class="section-meta">
+          40 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-electrical_linear-model">Model</label>
+              
+              <input id="f-electrical_linear-model" name="model" data-key="model"
+                     list="electrical_linear-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="electrical_linear-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="voltage">
+              <label for="f-electrical_linear-voltage">Voltage</label>
+              
+              <select id="f-electrical_linear-voltage" name="voltage" data-key="voltage">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="variant">
+              <label for="f-electrical_linear-variant">Variant</label>
+              
+              <select id="f-electrical_linear-variant" name="variant" data-key="variant">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Model to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Model</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="manual_handwheel" data-category="Actuators" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Manual</span>
+          Manual Handwheel (MPW)
+        </h2>
+        <p class="section-meta">
+          44 actuator SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="model">
+              <label for="f-manual_handwheel-model">Model</label>
+              
+              <input id="f-manual_handwheel-model" name="model" data-key="model"
+                     list="manual_handwheel-model-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="manual_handwheel-model-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="variant">
+              <label for="f-manual_handwheel-variant">Type</label>
+              
+              <select id="f-manual_handwheel-variant" name="variant" data-key="variant">
                 <option value="">— select —</option>
               </select>
               
@@ -932,7 +1393,7 @@
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20260603001242"></script>
-  <script src="static/app.js?v=20260603001242"></script>
+  <script src="static/catalog-engine.js?v=20260603003838"></script>
+  <script src="static/app.js?v=20260603003838"></script>
 </body>
 </html>

@@ -728,7 +728,11 @@ ELECTRICAL_ROTARY = ValveTypeConfig(
     label="Rotary",
     category="Actuators",
     subgroup="Electrical",
-    file_substring="Electrical Actuator",
+    # Was "Electrical Actuator" — too broad: it also matched the newer
+    # "Electrical Actuator Linear..." file, which (being newest) hijacked this
+    # catalog. Anchored to "Rotory" (the source-file spelling) so Rotary and
+    # Linear load as separate families. See ELECTRICAL_LINEAR below.
+    file_substring="Electrical Actuator Rotory",
     sheet_marker="Electrical Actuator",
     primary_label="Code", primary_col=1,
     secondary_label="Model", secondary_col=5,
@@ -759,13 +763,147 @@ ELECTRICAL_ROTARY = ValveTypeConfig(
 )
 
 
+ELECTRICAL_LINEAR = ValveTypeConfig(
+    key="electrical_linear",
+    label="Linear",
+    category="Actuators",
+    subgroup="Electrical",
+    file_substring="Electrical Actuator Linear",
+    sheet_marker="Electrical Actuator",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=5,
+    show_bto_fos=False,
+    # 40 rows. Model (8 distinct) + Voltage (5) are the only meaningful
+    # disambiguators; "Additional Sp 1" (ONF vs with-Potentiometer) added so
+    # potentiometer variants don't collide on Model+Voltage.
+    cascade=[
+        ("model",   5, "Model"),
+        ("voltage", 6, "Voltage"),
+        ("variant", 18, "Variant"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Actuator"), (3, "Make"), (4, "Type"), (5, "Model"),
+        (6, "Voltage"), (8, "Body Material"), (10, "Temperature Rating"),
+        (11, "Power Consumption (W)"), (12, "Open-to-Close Time (s)"),
+        (13, "Enclosure Protection"), (15, "Application"), (16, "Painting"),
+        (17, "Certification"), (18, "Variant"),
+        (22, "Maximum Stroke (mm)"), (24, "Weight (kg)"), (25, "Force (kN)"),
+    ],
+)
+
+
+PNEUMATIC_CY = ValveTypeConfig(
+    key="pneumatic_cy",
+    label="CY Series",
+    category="Actuators",
+    subgroup="Pneumatic",
+    file_substring="CY Series",
+    sheet_marker="Sheet2",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=5,
+    show_bto_fos=False,
+    # 98 rows; Model is effectively unique. Action (NC/NO) is the only other
+    # varying field — everything else is uniform across the series.
+    cascade=[
+        ("model",  5, "Model"),
+        ("action", 4, "Action"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Actuator Type"), (3, "Make"), (4, "Action"),
+        (5, "Model"), (7, "Movement"), (8, "Body/Bonnet Material"),
+        (9, "O-Ring Material"), (10, "Temperature Rating"),
+        (11, "Min Pneumatic Supply"), (12, "Max Pneumatic Supply"),
+        (13, "Pneumatic Connections"), (18, "Leakage Class"),
+    ],
+)
+
+
+PNEUMATIC_K = ValveTypeConfig(
+    key="pneumatic_k",
+    label="K Series",
+    category="Actuators",
+    subgroup="Pneumatic",
+    file_substring="K Series",
+    sheet_marker="K-Series",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=5,
+    show_bto_fos=False,
+    # 143 rows; Model is unique. Action (NC/NO) and Body Material (3 grades)
+    # narrow the model list. Col 2 carries 4 handwheel-variant descriptions.
+    cascade=[
+        ("model",         5, "Model"),
+        ("action",        4, "Action"),
+        ("body_material", 8, "Body Material"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Actuator"), (3, "Make"), (4, "Action"), (5, "Model"),
+        (7, "Movement"), (8, "Body/Bonnet Material"), (9, "O-Ring Material"),
+        (10, "Temperature Rating"), (11, "Min Pneumatic Supply"),
+        (12, "Max Pneumatic Supply"), (13, "Pneumatic Connections"),
+    ],
+)
+
+
+PNEUMATIC_M = ValveTypeConfig(
+    key="pneumatic_m",
+    label="M Series",
+    category="Actuators",
+    subgroup="Pneumatic",
+    file_substring="M Series",
+    sheet_marker="Sheet2",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=5,
+    show_bto_fos=False,
+    # 8 rows; only Model varies (all other columns uniform).
+    cascade=[
+        ("model", 5, "Model"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Actuator"), (3, "Make"), (4, "Type"), (5, "Model"),
+        (7, "Movement"), (8, "Body/Bonnet Material"), (9, "O-Ring Material"),
+        (10, "Temperature Rating"), (11, "Min Pneumatic Supply"),
+        (12, "Max Pneumatic Supply"), (13, "Pneumatic Connections"),
+    ],
+)
+
+
+MANUAL_HANDWHEEL = ValveTypeConfig(
+    key="manual_handwheel",
+    label="Manual Handwheel (MPW)",
+    category="Actuators",
+    subgroup="Manual",
+    file_substring="Manual Handwheel",
+    sheet_marker="Sheet2",
+    primary_label="Code", primary_col=1,
+    secondary_label="Model", secondary_col=5,
+    show_bto_fos=False,
+    # 44 rows; Model is unique. Type (Plastic vs Stainless Steel handwheel) is
+    # the one other varying field. This family realizes the planned "Manual"
+    # subgroup placeholder under Actuators.
+    cascade=[
+        ("model",   5, "Model"),
+        ("variant", 2, "Type"),
+    ],
+    detail_columns=[
+        (1, "Code"), (2, "Actuator"), (3, "Make"), (4, "Type"), (5, "Model"),
+        (7, "Movement"), (8, "Body/Bonnet Material"), (9, "O-Ring Material"),
+        (10, "Temperature Rating"),
+    ],
+)
+
+
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
     BUTTERFLY_VALVE,
     PHARMA_VALVE,
     PNEUMATIC_RACK_PINION,
     PNEUMATIC_SCOTCH_YOKE,
+    PNEUMATIC_CY,
+    PNEUMATIC_K,
+    PNEUMATIC_M,
     ELECTRICAL_ROTARY,
+    ELECTRICAL_LINEAR,
+    MANUAL_HANDWHEEL,
 ]
 
 
