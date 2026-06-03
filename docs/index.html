@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20260529151313" />
+  <link rel="stylesheet" href="static/styles.css?v=20260603001242" />
 </head>
 <body>
   <header>
@@ -17,23 +17,184 @@
           <span class="title-line">BV&ndash;BFV&ndash;Actuator&ndash;Accessory</span>
           <span class="title-line">Product Code Finder</span>
         </h1>
-        <p class="tagline">49,289 AVCON SKUs. Infinite Specs. One Click.</p>
+        <p class="tagline">53,238 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20260529151313" alt="AVCON Controls" class="brand-logo" />
+      <img src="static/avcon-logo.png?v=20260603001242" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
-  
-  
-
-  
+  <!-- One picker widget per category. Independent selections. -->
   <div class="picker-row">
+    <div class="pr-pickers">
     
-    <button type="button" id="global-reset-btn" class="global-reset-btn" aria-label="Reset all">
-      <span class="global-reset-label">Reset all</span>
-      <span class="global-reset-icon" aria-hidden="true">&#x21BB;</span>
+    <nav class="type-picker" data-category="Valves">
+      <button type="button" class="type-picker-trigger"
+              aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">Valves</span>
+        <span class="type-picker-trigger-label">Choose valve type</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu" role="menu" hidden>
+        
+        
+        <div class="type-picker-subheader">Pune</div>
+        
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="ball">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Ball Valve</span>
+            <span class="option-meta">3,892 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="butterfly">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Butterfly Valve (Centric)</span>
+            <span class="option-meta">43,200 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+        
+        <div class="type-picker-subheader">Mumbai</div>
+        
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pharma">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Pharma Valve</span>
+            <span class="option-meta">4,005 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+      </div>
+    </nav>
+    
+    <nav class="type-picker" data-category="Actuators">
+      <button type="button" class="type-picker-trigger"
+              aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">Actuators</span>
+        <span class="type-picker-trigger-label">Choose actuator type</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu" role="menu" hidden>
+        
+        
+        <div class="type-picker-subheader">Pneumatic</div>
+        
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_rp">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Rack &amp; Pinion</span>
+            <span class="option-meta">1,620 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_sy">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Scotch Yoke</span>
+            <span class="option-meta">481 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+        
+        <div class="type-picker-subheader">Electrical</div>
+        
+        
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="electrical_rotary">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Rotary</span>
+            <span class="option-meta">40 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+      </div>
+    </nav>
+    
+
+    
+    
+    <nav class="type-picker acc-picker" id="acc-picker">
+      <button type="button" class="type-picker-trigger" aria-haspopup="true" aria-expanded="false">
+        <span class="type-picker-trigger-prefix">Accessories</span>
+        <span class="type-picker-trigger-label">Add accessory</span>
+        <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="type-picker-menu acc-menu" role="menu" hidden>
+        <label class="acc-field"><span class="acc-field-label">Family</span>
+          <select id="acc-family"><option value="">All families</option></select>
+        </label>
+        <label class="acc-field"><span class="acc-field-label">Search &amp; add</span>
+          <input type="search" id="acc-search" list="acc-item-list"
+                 placeholder="Type code or attribute…" autocomplete="off" spellcheck="false" />
+          <datalist id="acc-item-list"></datalist>
+        </label>
+        <div class="acc-selected">
+          <div class="acc-selected-h">
+            <span><span id="acc-selected-count">0</span> selected</span>
+            <button type="button" class="acc-clear-btn" id="acc-clear" hidden>Clear all</button>
+          </div>
+          <div class="acc-chips" id="acc-selected-chips"></div>
+        </div>
+      </div>
+    </nav>
+    
+    </div>
+
+    
+    <button type="button" class="global-reset-btn" id="global-reset" title="Clear all selections">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      Reset
     </button>
   </div>
+
+  <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
 
   
   <div class="workspace">
@@ -45,57 +206,15 @@
         <span class="workspace-col-icon" aria-hidden="true">◐</span>
         Valves
       </h2>
-      
-      
-        
-  <nav class="type-picker" data-category="Valves">
-    <button type="button" class="type-picker-trigger"
-            aria-haspopup="true" aria-expanded="false">
-      <span class="type-picker-trigger-prefix">Valves</span>
-      <span class="type-picker-trigger-label">Choose valve type</span>
-      <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
-        <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <div class="type-picker-menu" role="menu" hidden>
-      
-      
-      
-      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="ball">
-        <span class="option-icon" aria-hidden="true">
-          
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
-          
-        </span>
-        <span class="option-text">
-          <span class="option-title">Ball Valve</span>
-          <span class="option-meta">3,892 SKUs</span>
-        </span>
-      </button>
-      
-      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="butterfly">
-        <span class="option-icon" aria-hidden="true">
-          
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-          
-        </span>
-        <span class="option-text">
-          <span class="option-title">Butterfly Valve (Centric)</span>
-          <span class="option-meta">43,200 SKUs</span>
-        </span>
-      </button>
-      
-      
-    </div>
-  </nav>
-  
-      
+      <p class="column-placeholder">
+        Pick a <strong>valve type</strong> from the menu above.
+      </p>
       
         
     <article class="valve-section" data-valve-type="ball" data-category="Valves" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          
+          <span class="section-subgroup">Pune</span>
           Ball Valve
         </h2>
         <p class="section-meta">
@@ -181,6 +300,9 @@
               
             </div>
             
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
           </form>
         </section>
 
@@ -232,7 +354,7 @@
     <article class="valve-section" data-valve-type="butterfly" data-category="Valves" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          
+          <span class="section-subgroup">Pune</span>
           Butterfly Valve (Centric)
         </h2>
         <p class="section-meta">
@@ -309,6 +431,140 @@
               
             </div>
             
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Series to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Bare Valve Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Catalogue Code</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+            <div class="code-card">
+              <div class="code-label">BTO (N·m)</div>
+              <div class="code-value bto">—</div>
+            </div>
+            <div class="code-card">
+              <div class="code-label">FOS = BTO × 1.5</div>
+              <div class="code-value fos">—</div>
+            </div>
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="pharma" data-category="Valves" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Mumbai</span>
+          Pharma Valve
+        </h2>
+        <p class="section-meta">
+          4,005 valve SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="series">
+              <label for="f-pharma-series">Series</label>
+              
+              <input id="f-pharma-series" name="series" data-key="series"
+                     list="pharma-series-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="pharma-series-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="size">
+              <label for="f-pharma-size">Valve Size</label>
+              
+              <select id="f-pharma-size" name="size" data-key="size">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-pharma-body_material">Body Material</label>
+              
+              <select id="f-pharma-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="ball_material">
+              <label for="f-pharma-ball_material">Ball Material</label>
+              
+              <select id="f-pharma-ball_material" name="ball_material" data-key="ball_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="seat_material">
+              <label for="f-pharma-seat_material">Seat Material</label>
+              
+              <select id="f-pharma-seat_material" name="seat_material" data-key="seat_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="end_connection">
+              <label for="f-pharma-end_connection">End Connections</label>
+              
+              <select id="f-pharma-end_connection" name="end_connection" data-key="end_connection">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="ball_type">
+              <label for="f-pharma-ball_type">Ball Type</label>
+              
+              <select id="f-pharma-ball_type" name="ball_type" data-key="ball_type">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
           </form>
         </section>
 
@@ -363,69 +619,9 @@
         <span class="workspace-col-icon" aria-hidden="true">◑</span>
         Actuators
       </h2>
-      
-        
-  <nav class="type-picker" data-category="Actuators">
-    <button type="button" class="type-picker-trigger"
-            aria-haspopup="true" aria-expanded="false">
-      <span class="type-picker-trigger-prefix">Actuators</span>
-      <span class="type-picker-trigger-label">Choose actuator type</span>
-      <svg class="type-picker-chevron" viewBox="0 0 12 8" aria-hidden="true">
-        <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <div class="type-picker-menu" role="menu" hidden>
-      
-      
-      <div class="type-picker-subheader">Pneumatic</div>
-      
-      
-      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_rp">
-        <span class="option-icon" aria-hidden="true">
-          
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1"/><circle cx="12" cy="12" r="2.5"/></svg>
-          
-        </span>
-        <span class="option-text">
-          <span class="option-title">Rack &amp; Pinion</span>
-          <span class="option-meta">1,620 SKUs</span>
-        </span>
-      </button>
-      
-      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="pneumatic_sy">
-        <span class="option-icon" aria-hidden="true">
-          
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="8" width="10" height="8" rx="1"/><line x1="15" y1="12" x2="20" y2="12"/><circle cx="20" cy="12" r="1.5"/></svg>
-          
-        </span>
-        <span class="option-text">
-          <span class="option-title">Scotch Yoke</span>
-          <span class="option-meta">481 SKUs</span>
-        </span>
-      </button>
-      
-      
-      
-      <div class="type-picker-subheader">Electrical</div>
-      
-      
-      <button type="button" class="type-picker-option" role="menuitem" data-valve-type="electrical_rotary">
-        <span class="option-icon" aria-hidden="true">
-          
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>
-          
-        </span>
-        <span class="option-text">
-          <span class="option-title">Rotary</span>
-          <span class="option-meta">96 SKUs</span>
-        </span>
-      </button>
-      
-      
-    </div>
-  </nav>
-  
-      
+      <p class="column-placeholder">
+        Pick an <strong>actuator type</strong>, or use a valve's recommendation.
+      </p>
       
         
     <article class="valve-section" data-valve-type="pneumatic_rp" data-category="Actuators" hidden>
@@ -481,6 +677,9 @@
               
             </div>
             
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
           </form>
         </section>
 
@@ -573,6 +772,9 @@
               
             </div>
             
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
           </form>
         </section>
 
@@ -619,7 +821,7 @@
           Rotary
         </h2>
         <p class="section-meta">
-          96 actuator SKUs
+          40 actuator SKUs
         </p>
       </div>
 
@@ -647,6 +849,9 @@
               
             </div>
             
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
           </form>
         </section>
 
@@ -688,69 +893,36 @@
     </div>
 
     
-    <div class="workspace-accessories" id="workspace-accessories">
-      <h2 class="accessories-title">
-        <span class="accessories-icon" aria-hidden="true">+</span>
-        Accessories
-        
-        <span class="accessories-count">162 items · 13 families</span>
-        
-      </h2>
-
-      
-      <div class="accessories-toolbar">
-        <label class="accessories-filter">
-          <span class="accessories-filter-label">ACCESSORIES</span>
-          <select id="accessories-family-filter">
-            <option value="">Choose family</option>
-          </select>
-        </label>
-        <label class="accessories-search">
-          <span class="accessories-search-label">Search</span>
-          <input type="search" id="accessories-search-input"
-                 placeholder="Filter by code or attribute…" autocomplete="off" />
-        </label>
-        <div class="accessories-selected-summary" id="accessories-selected-summary">
-          <span class="selected-count" id="accessories-selected-count">0 selected</span>
-          <button type="button" class="accessories-clear-btn" id="accessories-clear-btn" hidden>
-            Clear all
-          </button>
-        </div>
-      </div>
-
-      <div class="accessories-list" id="accessories-list" role="list">
-        <div class="accessories-loading">Loading accessories…</div>
-      </div>
-      
-    </div>
 
     
     <div class="workspace-summary" id="workspace-summary" hidden>
       <h2 class="summary-title">Your Product Code is</h2>
+
       
-      <div class="summary-fullcode-row">
-        <span class="summary-fullcode" id="summary-fullcode">—</span>
-        <button type="button" id="summary-copy-btn" class="summary-copy-btn" aria-label="Copy full product code to clipboard">
-          <span class="summary-copy-icon" aria-hidden="true">&#x29C9;</span>
-          <span class="summary-copy-label">Copy</span>
+      <div class="summary-combined" id="summary-combined" hidden>
+        <div class="summary-combined-code" id="summary-combined-code">—</div>
+        <button type="button" class="summary-combined-copy" id="summary-combined-copy" title="Copy to clipboard">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
         </button>
       </div>
-      
-      <div class="summary-breakdown">
+
+      <div class="summary-grid">
         <div class="summary-card summary-card--valve" data-summary-category="Valves" hidden>
-          <span class="summary-label">Valve</span>
-          <span class="summary-code">—</span>
-          <span class="summary-name">—</span>
+          <div class="summary-label">Valve</div>
+          <div class="summary-code">—</div>
+          <div class="summary-name">—</div>
         </div>
         <div class="summary-card summary-card--actuator" data-summary-category="Actuators" hidden>
-          <span class="summary-label">Actuator</span>
-          <span class="summary-code">—</span>
-          <span class="summary-name">—</span>
+          <div class="summary-label">Actuator</div>
+          <div class="summary-code">—</div>
+          <div class="summary-name">—</div>
         </div>
-        <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
-          <span class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</span>
-          <span class="summary-acc-list">—</span>
-        </div>
+      </div>
+      
+      <div class="summary-card summary-card--accessories" id="summary-accessories" hidden>
+        <div class="summary-label">Accessories (<span class="summary-acc-count">0</span>)</div>
+        <div class="summary-acc-list">—</div>
       </div>
     </div>
 
@@ -760,7 +932,7 @@
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20260529151313"></script>
-  <script src="static/app.js?v=20260529151313"></script>
+  <script src="static/catalog-engine.js?v=20260603001242"></script>
+  <script src="static/app.js?v=20260603001242"></script>
 </body>
 </html>

@@ -55,6 +55,7 @@ class Picker {
     this.pairedActuatorEl = sectionEl.querySelector(".paired-actuator");
     this.detailsWrap = sectionEl.querySelector(".details-wrap");
     this.detailsTable = sectionEl.querySelector(".details tbody");
+    this.resetBtn = sectionEl.querySelector(".reset-btn");
 
     Picker.instances.set(this.valveType, this);
     this._wire();
@@ -71,15 +72,11 @@ class Picker {
         });
       }
     }
-  }
-
-  /* Public reset: clear all cascade selections in this picker, then re-run
-     options + resolution so the UI returns to its initial state. Called by
-     the global "Reset all" handler at the bottom of this file. */
-  async reset() {
-    for (const f of this.fields) f.value = "";
-    await this.refreshOptions();
-    await this.refreshResolution();
+    this.resetBtn.addEventListener("click", async () => {
+      for (const f of this.fields) f.value = "";
+      await this.refreshOptions();
+      await this.refreshResolution();
+    });
   }
 
   _isTypeahead(field) { return field.tagName === "INPUT"; }
@@ -136,7 +133,7 @@ class Picker {
     try {
       opts = await dataAPI.options(this.valveType, picks);
     } catch (e) {
-      this.statusEl.textContent = "Error loading catalog data.";
+      this.statusEl.textContent = "Server error loading options.";
       return;
     }
     for (const f of this.fields) {
@@ -169,13 +166,7 @@ class Picker {
       this._emitClearedEvent();
       return;
     }
-    let data;
-    try {
-      data = await dataAPI.resolve(this.valveType, picks);
-    } catch (e) {
-      this.statusEl.textContent = "Error resolving catalog match.";
-      return;
-    }
+    const data = await dataAPI.resolve(this.valveType, picks);
     if (!data.matched) {
       this.statusEl.textContent = "No SKU matches this combination.";
       this.codesEl.hidden = true;
@@ -225,13 +216,13 @@ class Picker {
       return;
     }
 
-    // Group by category — pneumatic_* → "Pneumatic", electrical_* → "Electrical".
+    // Group by category — pneumatic_* → "Pneumatic", electrical_* → "Electric".
     // Preserves the order the entries appear in (so Pneumatic Option 1 comes
-    // before Electrical Option 2 when both exist).
+    // before Electric Option 2 when both exist).
     const groups = new Map();
     for (const paired of list) {
       const category = paired.target_type === "electrical_rotary"
-        ? "Electrical"
+        ? "Electric"
         : "Pneumatic";
       if (!groups.has(category)) groups.set(category, []);
       groups.get(category).push(paired);
@@ -248,18 +239,20 @@ class Picker {
     header.textContent = "Recommended Actuator";
     section.appendChild(header);
 
+    let optionNum = 1;
     for (const [category, items] of groups) {
       const group = document.createElement("div");
       group.className = "paired-option-group";
 
-      // Heading is just the category name (Pneumatic / Electrical). Numbering
-      // ('Option 1', 'Option 2') was removed per user feedback — with only
-      // two groups the prefix didn't add information.
       const label = document.createElement("div");
       label.className = "paired-option-label";
+      const optionEl = document.createElement("span");
+      optionEl.className = "paired-option-num";
+      optionEl.textContent = `Option ${optionNum}`;
       const catEl = document.createElement("span");
       catEl.className = "paired-option-cat";
       catEl.textContent = category;
+      label.appendChild(optionEl);
       label.appendChild(catEl);
       group.appendChild(label);
 
@@ -272,6 +265,7 @@ class Picker {
 
       group.appendChild(chipsRow);
       section.appendChild(group);
+      optionNum++;
     }
 
     this.pairedActuatorEl.appendChild(section);
@@ -284,9 +278,6 @@ class Picker {
      column header (e.g. "Double Acting @ 3.5 bar"), stripped of the
      redundant category prefix since the group heading already shows it. */
   _renderPairedChip(paired) {
-    // `empty` = the valve has no actuator at this position (blank/0 in source);
-    // render it as a greyed, disabled 'not available' slot so all positions show.
-    const isEmpty = paired.empty === true;
     const isUnavailable = paired.not_in_catalog === true;
 
     const chip = document.createElement("button");
@@ -295,12 +286,14 @@ class Picker {
 
     const codeEl = document.createElement("span");
     codeEl.className = "paired-chip-code";
-    codeEl.textContent = isEmpty ? "—" : paired.model;
+    codeEl.textContent = paired.model;
     chip.appendChild(codeEl);
 
     // paired.label is e.g. "Pneumatic — Double Acting @ 3.5 bar".
     // Strip the category prefix since the group heading already shows it.
-    const positionLabel = stripPairLabelPrefix(paired.label);
+    const positionLabel = (paired.label || "").replace(
+      /^(Pneumatic|Electric)\s*—\s*/, ""
+    );
     if (positionLabel) {
       const labelEl = document.createElement("span");
       labelEl.className = "paired-chip-label";
@@ -309,26 +302,20 @@ class Picker {
     }
 
     // Tooltip: friendly actuator name (from destination catalog lookup) or
-    // unavailable/empty note. The position label is already visible.
-    if (isEmpty) {
-      chip.title = "Not available for this valve";
-    } else if (isUnavailable) {
+    // unavailable note. The position label is already visible, no need to
+    // repeat it.
+    if (isUnavailable) {
       chip.title = "Data Not Available — catalog entry pending";
     } else if (paired.name) {
       chip.title = paired.name;
     }
 
-    if (isEmpty) {
-      chip.classList.add("paired-chip--empty");
-      chip.disabled = true;
-    } else if (isUnavailable) {
+    if (isUnavailable) {
       chip.classList.add("paired-chip--unavailable");
       chip.disabled = true;
     } else {
       chip.addEventListener("click", () => {
-        // Pass the position label so the actuator breakdown row can show the
-        // specific function (Fail-Close @ 3.5 bar) that isn't in actuator data.
-        viewMatchingActuator(paired.target_type, paired.target_field, paired.model, paired.label);
+        viewMatchingActuator(paired.target_type, paired.target_field, paired.model);
       });
     }
     return chip;
@@ -379,9 +366,6 @@ class Picker {
     // "Pneumatic Rack & Pinion Actuator") if present.
     const actuatorField = (d.fields || []).find((f) => f.label === "Actuator");
     const typeField     = (d.fields || []).find((f) => f.label === "Type");
-    // The valve breakdown row shows the descriptive Catalogue Code (col 2)
-    // instead of the bare valve code; pull it from the detail fields.
-    const catalogueField = (d.fields || []).find((f) => f.label === "Catalogue Code");
 
     this.section.dispatchEvent(new CustomEvent("valve-selector:resolved", {
       bubbles: true,
@@ -391,7 +375,6 @@ class Picker {
         sectionLabel: sectionLabel,
         primary: d.primary,
         secondary: d.secondary,
-        catalogueCode: catalogueField ? catalogueField.value : null,
         actuatorName: actuatorField ? actuatorField.value : null,
         actuatorType: typeField ? typeField.value : null,
       },
@@ -523,7 +506,9 @@ class TypePicker {
   }
 }
 
-document.querySelectorAll(".type-picker").forEach((p) => new TypePicker(p));
+// The Accessories picker (.acc-picker) is driven by AccessoryPicker, not
+// TypePicker — it has dropdowns, not type options.
+document.querySelectorAll(".type-picker:not(.acc-picker)").forEach((p) => new TypePicker(p));
 
 /* ---------- Cross-section: jump to the catalog-paired actuator ----------
    When a valve resolves, the result panel shows a "Configure matching
@@ -536,10 +521,7 @@ document.querySelectorAll(".type-picker").forEach((p) => new TypePicker(p));
         Picker.setFieldValue, which auto-fills any single-option upstream
         fields and leaves the customer-driven attrs blank for the salesperson.
      3. Scrolls the section into view. */
-async function viewMatchingActuator(targetType, targetField, value, label = null) {
-  // Stash the pairing label (if provided) so the actuator breakdown row can
-  // show this model's specific function; null falls back to the generic name.
-  pairedActuatorContext = label ? { model: value, label } : null;
+async function viewMatchingActuator(targetType, targetField, value) {
   const targetSection = document.querySelector(
     `.valve-section[data-valve-type="${targetType}"]`
   );
@@ -558,21 +540,6 @@ async function viewMatchingActuator(targetType, targetField, value, label = null
 
   targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-/* Strip the leading category prefix from a paired-actuator label, leaving the
-   descriptive part. "Pneumatic — Spring Return Fail-Close @ 3.5 bar" ->
-   "Spring Return Fail-Close @ 3.5 bar"; "Electrical" -> "Electrical". Shared by
-   the recommended-actuator chips and the actuator breakdown row. */
-function stripPairLabelPrefix(label) {
-  return (label || "").replace(/^(Pneumatic|Electric(?:al)?)\s*—\s*/, "");
-}
-
-/* When the user opens an actuator via a "Recommended Actuator" chip, we stash
-   the chip's {model, label} here. The summary breakdown reads it to show the
-   pairing-specific function (e.g. "Spring Return Fail-Close @ 3.5 bar") which
-   is NOT stored in the actuator's own catalog. Matched by model on resolve, so
-   a later manual actuator change cleanly falls back to the generic name. */
-let pairedActuatorContext = null;
 
 /* ---------- Summary panel ----------
    Center band that shows the resolved valve + actuator codes once at least
@@ -607,35 +574,18 @@ class SummaryPanel {
     if (!card) return;
     this.activeKeyByCategory.set(detail.category, detail.key);
 
-    // The hero "full product code" always uses the compact primary code (bare
-    // valve code / actuator code), regardless of what this breakdown row shows
-    // below. Stash it on the card for computeFullCode() to read.
-    card.cardEl.dataset.fullcode = detail.primary ?? "";
+    card.codeEl.textContent = detail.primary ?? "—";
 
-    // Breakdown row display differs from the hero, per category:
-    //   Valves    -> Catalogue Code (descriptive) · type name ("Ball Valve")
-    //   Actuators -> model code (e.g. ACT-075D) · actuator description
-    let displayCode, name;
-    if (detail.category === "Valves") {
-      displayCode = detail.catalogueCode || detail.primary || "—";
-      name = detail.sectionLabel || "";
-    } else if (detail.category === "Actuators") {
-      displayCode = detail.secondary || detail.primary || "—";
-      name = detail.actuatorName || detail.sectionLabel || "";
-      // If this actuator was opened from a recommended chip, append the
-      // pairing-specific function (e.g. "Spring Return Fail-Close @ 3.5 bar")
-      // — not stored in the actuator catalog. Matched by model so a later
-      // manual actuator change falls back to the generic name.
-      if (pairedActuatorContext && pairedActuatorContext.model &&
-          detail.secondary === pairedActuatorContext.model) {
-        const fn = stripPairLabelPrefix(pairedActuatorContext.label);
-        if (fn) name = name ? `${name} · ${fn}` : fn;
-      }
-    } else {
-      displayCode = detail.primary ?? "—";
-      name = detail.sectionLabel || "";
+    // Compose a short descriptive name. Different shape per category:
+    //   Valves    -> section label (e.g. "Butterfly Valve (Centric)")
+    //   Actuators -> "<Model> · <Actuator description>" when both exist
+    let name = detail.sectionLabel || "";
+    if (detail.category === "Actuators") {
+      const parts = [];
+      if (detail.secondary) parts.push(detail.secondary);
+      if (detail.actuatorName) parts.push(detail.actuatorName);
+      if (parts.length) name = parts.join(" · ");
     }
-    card.codeEl.textContent = displayCode;
     card.nameEl.textContent = name || "—";
 
     card.cardEl.hidden = false;
@@ -664,332 +614,6 @@ class SummaryPanel {
 const summaryRoot = document.getElementById("workspace-summary");
 if (summaryRoot) new SummaryPanel(summaryRoot);
 
-/* ---------- Accessory browser ----------
-   Multi-select list of all accessories — NO recommendation, no cascade. The
-   user explicitly browses, ticks the items they want, and the summary panel
-   echoes the running selection. Filtering by family + free-text search is
-   client-side (the full list is small enough to ship once).
-
-   By default the list area shows a placeholder prompt; items render only
-   after the user picks a specific family from the dropdown OR types a
-   search query. This mirrors the Valves/Actuators "pick a type to expand"
-   UX and avoids dumping ~160 items into a long scrollable area.
-
-   Selection state lives in `selected` (a Set of codes) and is rebroadcast
-   on every change via `accessories:selected-changed`, which a dedicated
-   AccessorySummary instance below listens for and renders into the
-   summary panel. */
-/* ---------- Accessory family metadata ----------
-   Human-readable name + single-letter abbreviation for each accessory family.
-
-   KEYED BY THE `family` VALUE IN accessories.json (NOT the display name), so
-   the lookup in the render paths below hits directly off `row.family`. Two
-   families carry a data key that differs from the spoken name:
-     "Silencer" -> "Silencer / Bug Screen",  "FITTING" -> "Tube & Fittings".
-
-   `abbr` is the letter the accessory contributes to the final product code.
-   It is STORED here for that upcoming feature but is NOT yet wired into
-   computeFullCode() (which still joins full SKU codes). Abbreviation clashes
-   are flagged inline — they must be made unique before abbr drives the code.
-
-   Families without an entry (e.g. "THW FOR MSD", awaiting a name) fall back to
-   their raw family string via accessoryLabel(). */
-const ACCESSORY_META = {
-  // --- present in accessories.json (key === data family value) ---
-  "ALR":            { name: "Air Lock Relay",              abbr: "A" },
-  "BKT":            { name: "Bracket Mount",               abbr: "B" }, // abbr B clashes with Silencer
-  "CFLG":           { name: "Companion Flange",            abbr: "C" },
-  "FCV":            { name: "Flow Control Valve",          abbr: "F" }, // abbr F clashes with AFR, FRG
-  "FITTING":        { name: "Tube & Fittings",             abbr: "T" },
-  "FRG":            { name: "Filter Regulator with Gauge", abbr: "F" }, // abbr F clashes with AFR, FCV
-  "Gland":          { name: "Gland",                       abbr: "G" },
-  "LSB":            { name: "Limit Switch",                abbr: "L" },
-  "MOR":            { name: "Manual Override",             abbr: "M" },
-  "QEV":            { name: "Quarter Turn Electric Valve", abbr: "Q" },
-  "Silencer":       { name: "Silencer / Bug Screen",       abbr: "B" }, // abbr B clashes with BKT
-  "Volume Booster": { name: "Volume Booster",              abbr: "V" },
-  // "THW FOR MSD"  -> name pending from user
-
-  // --- not yet in the data (no rows). Recorded so they activate automatically
-  //     once rows with these family values land. ---
-  "SV":           { name: "Solenoid Valve",              abbr: "S" },
-  "EVP":          { name: "Electronic Valve Positioner", abbr: "E" },
-  "PTR":          { name: "Position Transmitter",        abbr: "P" }, // abbr P clashes with Plug
-  "MHG":          { name: "Manual Hand Gear",            abbr: "" },  // abbr pending (M is taken by MOR)
-  "AFR":          { name: "Air Filter Regulator",        abbr: "F" }, // abbr F clashes with FCV, FRG
-  "Plug":         { name: "Plug",                         abbr: "P" }, // abbr P clashes with PTR
-  "Direct Mount": { name: "Direct Mount",                abbr: "D" },
-};
-
-/* Friendly display name for a family value; falls back to the raw value so an
-   unmapped family (or future data) still renders sensibly. */
-function accessoryLabel(family) {
-  const meta = ACCESSORY_META[family];
-  return meta ? meta.name : family;
-}
-
-/* ---------- Accessories browser ----------
-   Multi-select list of all accessories — NO recommendation, no cascade.
-   See ACCESSORY_META above for the family display-name/abbr lookup. */
-class AccessoryBrowser {
-  constructor(rootEl) {
-    this.root = rootEl;
-    this.listEl = rootEl.querySelector("#accessories-list");
-    this.familyFilterEl = rootEl.querySelector("#accessories-family-filter");
-    this.searchInputEl = rootEl.querySelector("#accessories-search-input");
-    this.selectedCountEl = rootEl.querySelector("#accessories-selected-count");
-    this.clearBtnEl = rootEl.querySelector("#accessories-clear-btn");
-
-    this.allRows = [];      // [{code, family, attrs}]
-    this.families = [];     // [{name, count}]
-    this.selected = new Set();
-    this.familyFilter = "";
-    this.searchText = "";
-    // Lookup maps for the one-per-family constraint:
-    //   codeToRow  — O(1) lookup of {family, attrs} when we only have a code
-    //   itemEls    — DOM refs for currently-rendered rows, so when the user
-    //                picks a new item we can uncheck the prior same-family
-    //                row's checkbox AND remove its visual selected state.
-    this.codeToRow = new Map();
-    this.itemEls = new Map();
-
-    if (this.familyFilterEl) {
-      this.familyFilterEl.addEventListener("change", () => {
-        this.familyFilter = this.familyFilterEl.value;
-        this._render();
-      });
-    }
-    if (this.searchInputEl) {
-      this.searchInputEl.addEventListener("input", () => {
-        this.searchText = this.searchInputEl.value.trim().toLowerCase();
-        this._render();
-      });
-    }
-    if (this.clearBtnEl) {
-      this.clearBtnEl.addEventListener("click", () => this._clearAll());
-    }
-    // Global "Reset all" wipes accessory selections AND the family / search
-    // state, so the panel returns to its initial 'Choose family…' prompt.
-    document.addEventListener("valve-selector:reset-all", () => {
-      this.familyFilter = "";
-      this.searchText = "";
-      if (this.familyFilterEl) this.familyFilterEl.value = "";
-      if (this.searchInputEl) this.searchInputEl.value = "";
-      this._clearAll();
-      this._render();
-    });
-
-    this._fetch();
-  }
-
-  async _fetch() {
-    try {
-      const data = await dataAPI.accessories();
-      this.allRows = data.rows || [];
-      this.families = data.families || [];
-      this.codeToRow.clear();
-      for (const r of this.allRows) this.codeToRow.set(r.code, r);
-      this._populateFamilyFilter();
-      this._render();
-    } catch (e) {
-      if (this.listEl) {
-        this.listEl.textContent = "Failed to load accessories.";
-      }
-    }
-  }
-
-  _populateFamilyFilter() {
-    if (!this.familyFilterEl) return;
-    for (const fam of this.families) {
-      const opt = document.createElement("option");
-      // value stays the raw family code (filtering compares against row.family);
-      // only the visible label becomes the friendly name.
-      opt.value = fam.name;
-      opt.textContent = `${accessoryLabel(fam.name)} (${fam.count})`;
-      this.familyFilterEl.appendChild(opt);
-    }
-  }
-
-  _matches(row) {
-    if (this.familyFilter && row.family !== this.familyFilter) return false;
-    if (!this.searchText) return true;
-    // Search in code + family (raw + friendly name) + any attribute value
-    if (row.code.toLowerCase().includes(this.searchText)) return true;
-    if (row.family.toLowerCase().includes(this.searchText)) return true;
-    if (accessoryLabel(row.family).toLowerCase().includes(this.searchText)) return true;
-    for (const a of row.attrs) {
-      if (String(a.value).toLowerCase().includes(this.searchText)) return true;
-    }
-    return false;
-  }
-
-  _render() {
-    if (!this.listEl) return;
-    this.listEl.replaceChildren();
-    this.itemEls.clear();
-
-    // Collapsed-by-default: no family picked AND no search → show the prompt
-    // instead of the full ~160-item list. Mirrors how Valves/Actuators hide
-    // their cascade panels until a type is picked.
-    if (!this.familyFilter && !this.searchText) {
-      const prompt = document.createElement("div");
-      prompt.className = "accessories-empty";
-      prompt.textContent = "Choose a family above to browse accessories, or type in the search box.";
-      this.listEl.appendChild(prompt);
-      this._updateSelectedSummary();
-      return;
-    }
-
-    const filtered = this.allRows.filter((r) => this._matches(r));
-    if (filtered.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "accessories-empty";
-      empty.textContent = "No accessories match the current filter.";
-      this.listEl.appendChild(empty);
-      this._updateSelectedSummary();
-      return;
-    }
-
-    // Group filtered rows by family — preserves the natural grouping the
-    // source file already organizes data by.
-    const byFamily = new Map();
-    for (const r of filtered) {
-      if (!byFamily.has(r.family)) byFamily.set(r.family, []);
-      byFamily.get(r.family).push(r);
-    }
-
-    for (const [familyName, rows] of byFamily) {
-      const group = document.createElement("div");
-      group.className = "acc-group";
-
-      const groupHead = document.createElement("div");
-      groupHead.className = "acc-group-head";
-      const groupName = document.createElement("span");
-      groupName.className = "acc-group-name";
-      groupName.textContent = accessoryLabel(familyName);
-      const groupCount = document.createElement("span");
-      groupCount.className = "acc-group-count";
-      groupCount.textContent = `${rows.length} item${rows.length === 1 ? "" : "s"}`;
-      groupHead.appendChild(groupName);
-      groupHead.appendChild(groupCount);
-      group.appendChild(groupHead);
-
-      for (const row of rows) {
-        group.appendChild(this._renderRow(row));
-      }
-      this.listEl.appendChild(group);
-    }
-
-    this._updateSelectedSummary();
-  }
-
-  _renderRow(row) {
-    const item = document.createElement("label");
-    item.className = "acc-item";
-    item.setAttribute("role", "listitem");
-    if (this.selected.has(row.code)) item.classList.add("acc-item--selected");
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.className = "acc-checkbox";
-    cb.checked = this.selected.has(row.code);
-    cb.addEventListener("change", () => {
-      if (cb.checked) {
-        // One-per-family constraint: any prior selection in this row's
-        // family gets deselected when a new one is picked.
-        this._deselectSameFamily(row.family, row.code);
-        this.selected.add(row.code);
-        item.classList.add("acc-item--selected");
-      } else {
-        this.selected.delete(row.code);
-        item.classList.remove("acc-item--selected");
-      }
-      this._updateSelectedSummary();
-      this._broadcast();
-    });
-
-    // Register so _deselectSameFamily can uncheck this row's DOM later if
-    // a sibling in the same family is selected.
-    this.itemEls.set(row.code, { item, cb });
-
-    const body = document.createElement("span");
-    body.className = "acc-item-body";
-
-    const code = document.createElement("span");
-    code.className = "acc-item-code";
-    code.textContent = row.code;
-    body.appendChild(code);
-
-    if (row.attrs.length) {
-      const attrs = document.createElement("span");
-      attrs.className = "acc-item-attrs";
-      // Compact attribute summary: first 4 attrs joined with " · "
-      const shown = row.attrs.slice(0, 4).map((a) => a.value).join(" · ");
-      attrs.textContent = shown;
-      body.appendChild(attrs);
-    }
-
-    item.appendChild(cb);
-    item.appendChild(body);
-    return item;
-  }
-
-  /* Enforce "at most one selected per family". Called BEFORE adding the
-     new selection. Removes any currently-selected code in the same family
-     (other than `keepCode`) from `this.selected`, and — if that code's
-     DOM row is currently rendered — unchecks its checkbox and removes the
-     selected highlight. Off-screen rows still get removed from state, so
-     re-rendering them later picks up the correct unchecked state. */
-  _deselectSameFamily(family, keepCode) {
-    const toRemove = [];
-    for (const code of this.selected) {
-      if (code === keepCode) continue;
-      const r = this.codeToRow.get(code);
-      if (r && r.family === family) toRemove.push(code);
-    }
-    for (const code of toRemove) {
-      this.selected.delete(code);
-      const els = this.itemEls.get(code);
-      if (els) {
-        els.cb.checked = false;
-        els.item.classList.remove("acc-item--selected");
-      }
-    }
-  }
-
-  _updateSelectedSummary() {
-    const n = this.selected.size;
-    if (this.selectedCountEl) {
-      this.selectedCountEl.textContent = `${n} selected`;
-    }
-    if (this.clearBtnEl) {
-      this.clearBtnEl.hidden = n === 0;
-    }
-  }
-
-  _clearAll() {
-    this.selected.clear();
-    // Uncheck all visible checkboxes + remove visual selected state
-    for (const cb of this.listEl.querySelectorAll(".acc-checkbox")) {
-      cb.checked = false;
-    }
-    for (const item of this.listEl.querySelectorAll(".acc-item--selected")) {
-      item.classList.remove("acc-item--selected");
-    }
-    this._updateSelectedSummary();
-    this._broadcast();
-  }
-
-  _broadcast() {
-    // Push the current selection out for the summary panel to render.
-    // Look up the full row for each selected code so the summary can
-    // display family + a short label, not just the bare code.
-    const selectedRows = this.allRows.filter((r) => this.selected.has(r.code));
-    document.dispatchEvent(new CustomEvent("accessories:selected-changed", {
-      detail: { rows: selectedRows },
-    }));
-  }
-}
 
 /* Listens for the accessory selection broadcast and renders the
    accessories card inside the summary panel. Independent of SummaryPanel
@@ -1023,7 +647,7 @@ class AccessorySummary {
 
           const familyEl = document.createElement("span");
           familyEl.className = "summary-acc-chip-family";
-          familyEl.textContent = accessoryLabel(r.family);
+          familyEl.textContent = r.tag || r.family;
           chip.appendChild(familyEl);
 
           const codeEl = document.createElement("span");
@@ -1031,7 +655,7 @@ class AccessorySummary {
           codeEl.textContent = r.code;
           chip.appendChild(codeEl);
 
-          chip.title = `${accessoryLabel(r.family)} — ${r.attrs.slice(0, 3).map(a => a.value).join(" · ")}`;
+          chip.title = `${r.tag || r.family} — ${r.attrs.slice(0, 3).map(a => a.value).join(" · ")}`;
           this.listEl.appendChild(chip);
         }
       }
@@ -1049,110 +673,260 @@ class AccessorySummary {
   }
 }
 
-const accessoriesRoot = document.getElementById("workspace-accessories");
-if (accessoriesRoot && accessoriesRoot.querySelector("#accessories-list")) {
-  new AccessoryBrowser(accessoriesRoot);
+/* ---------- Accessory picker (top-right, in the picker row) ----------
+   Pick a Family to scope, then type-to-search the item (datalist). Selecting an
+   item adds it — SINGLE-SELECT PER FAMILY: choosing another item in the same
+   family replaces the prior one (a config needs one filter regulator, one
+   positioner, etc.). Chosen accessories show as removable chips + a "Clear all";
+   they broadcast via `accessories:selected-changed` (AccessorySummary renders
+   them in the summary). Open/close handled here — excluded from TypePicker. */
+class AccessoryPicker {
+  constructor(root) {
+    this.root = root;
+    this.trigger = root.querySelector(".type-picker-trigger");
+    this.menu = root.querySelector(".type-picker-menu");
+    this.labelEl = root.querySelector(".type-picker-trigger-label");
+    this.familySel = root.querySelector("#acc-family");
+    this.searchInput = root.querySelector("#acc-search");
+    this.datalist = root.querySelector("#acc-item-list");
+    this.clearBtn = root.querySelector("#acc-clear");
+    this.chipsEl = root.querySelector("#acc-selected-chips");
+    this.countEl = root.querySelector("#acc-selected-count");
+    this.byFamily = new Map();        // family (data key) -> [rows]
+    this.byCode = new Map();          // code -> row
+    this.byOptionValue = new Map();   // "CODE — label" -> code (datalist resolution)
+    this.selected = new Map();        // family (data key) -> row  (one accessory per family)
+    this.familyByKey = new Map();     // family key -> {key,tag,letter,label,count,pending}
+
+    this._onOutside = (ev) => { if (!this.root.contains(ev.target)) this.close(); };
+    this._onKey = (ev) => { if (ev.key === "Escape") this.close(); };
+    this.trigger.addEventListener("click", (ev) => { ev.stopPropagation(); this.toggle(); });
+    this.familySel.addEventListener("change", () => { this.searchInput.value = ""; this._onFamilyChange(); });
+    // A datalist pick fires "input"; Enter on an exact match fires "change".
+    this.searchInput.addEventListener("input", () => this._trySelectFromSearch());
+    this.searchInput.addEventListener("change", () => this._trySelectFromSearch());
+    this.clearBtn.addEventListener("click", () => this.clearAll());
+    this._fetch();
+  }
+
+  open() {
+    this.menu.hidden = false;
+    this.root.classList.add("open");
+    this.trigger.setAttribute("aria-expanded", "true");
+    setTimeout(() => document.addEventListener("click", this._onOutside), 0);
+    document.addEventListener("keydown", this._onKey);
+    this.searchInput.focus();
+  }
+  close() {
+    this.menu.hidden = true;
+    this.root.classList.remove("open");
+    this.trigger.setAttribute("aria-expanded", "false");
+    document.removeEventListener("click", this._onOutside);
+    document.removeEventListener("keydown", this._onKey);
+  }
+  toggle() { this.menu.hidden ? this.open() : this.close(); }
+
+  async _fetch() {
+    try {
+      const data = await dataAPI.accessories();
+      for (const r of (data.rows || [])) {
+        this.byCode.set(r.code, r);
+        if (!this.byFamily.has(r.family)) this.byFamily.set(r.family, []);
+        this.byFamily.get(r.family).push(r);
+      }
+      this.familySel.replaceChildren();
+      const famAll = document.createElement("option");
+      famAll.value = "";
+      famAll.textContent = "All families";
+      this.familySel.appendChild(famAll);
+      this.familyByKey.clear();
+      for (const fam of (data.families || [])) {
+        this.familyByKey.set(fam.key, fam);
+        const o = document.createElement("option");
+        o.value = fam.key;
+        // Show BOTH abbreviations: "SV · S — Solenoid Valve (60)".
+        const abbr = fam.letter ? `${fam.tag} · ${fam.letter}` : fam.tag;
+        o.textContent = fam.pending
+          ? `${abbr} — ${fam.label} (data pending)`
+          : `${abbr} — ${fam.label} (${fam.count})`;
+        this.familySel.appendChild(o);
+      }
+      this._fillDatalist();
+    } catch (e) {
+      if (this.labelEl) this.labelEl.textContent = "Accessories unavailable";
+    }
+  }
+
+  /* React to a family change: a 'data pending' family (EVP, Plug, Direct Mount)
+     has no items, so disable the search and show a pending hint instead of an
+     empty type-ahead. */
+  _onFamilyChange() {
+    const fam = this.familyByKey.get(this.familySel.value);
+    const pending = !!(fam && fam.pending);
+    this.searchInput.disabled = pending;
+    this.searchInput.placeholder = pending
+      ? "Data pending — catalog coming soon"
+      : "Type code or attribute…";
+    this._fillDatalist();
+  }
+
+  /* Populate the type-ahead datalist with items in the chosen family (or all).
+     Option value is "CODE — attr · attr", so typing a code OR an attribute
+     substring narrows it; we map that value back to the code on selection. */
+  _fillDatalist() {
+    const fam = this.familySel.value;
+    const rows = fam ? (this.byFamily.get(fam) || []) : [...this.byCode.values()];
+    this.datalist.replaceChildren();
+    this.byOptionValue.clear();
+    for (const r of rows) {
+      const label = r.attrs.slice(0, 4).map((a) => a.value).join(" · ");
+      const val = label ? `${r.code} — ${label}` : r.code;
+      this.byOptionValue.set(val, r.code);
+      const o = document.createElement("option");
+      o.value = val;
+      this.datalist.appendChild(o);
+    }
+  }
+
+  _trySelectFromSearch() {
+    const raw = this.searchInput.value.trim();
+    if (!raw) return;
+    // Resolve: exact datalist value, else a bare code typed directly.
+    let code = this.byOptionValue.get(raw);
+    if (!code) {
+      const head = raw.split(" — ")[0].trim();
+      if (this.byCode.has(head)) code = head;
+    }
+    if (!code) return;                 // partial / no match yet — wait for more typing
+    const row = this.byCode.get(code);
+    if (!row) return;
+    this.selected.set(row.family, row);   // SINGLE per family — replaces any prior
+    this.searchInput.value = "";
+    this._renderChips();
+    this._broadcast();
+  }
+
+  clearAll() {
+    if (this.selected.size === 0) return;
+    this.selected.clear();
+    this._renderChips();
+    this._broadcast();
+  }
+
+  _renderChips() {
+    this.chipsEl.replaceChildren();
+    for (const [family, row] of this.selected) {
+      const chip = document.createElement("span");
+      chip.className = "acc-chip";
+      const fam = document.createElement("span");
+      fam.className = "acc-chip-fam";
+      fam.textContent = row.tag || family;
+      const c = document.createElement("span");
+      c.className = "acc-chip-code";
+      c.textContent = row.code;
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "acc-chip-x";
+      x.setAttribute("aria-label", `Remove ${row.code}`);
+      x.textContent = "×";
+      x.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this.selected.delete(family);
+        this._renderChips();
+        this._broadcast();
+      });
+      chip.append(fam, c, x);
+      this.chipsEl.appendChild(chip);
+    }
+    const n = this.selected.size;
+    if (this.countEl) this.countEl.textContent = String(n);
+    if (this.clearBtn) this.clearBtn.hidden = n === 0;
+    if (this.labelEl) this.labelEl.textContent = n ? `${n} selected` : "Add accessory";
+    this.root.classList.toggle("has-selection", n > 0);
+  }
+
+  _broadcast() {
+    document.dispatchEvent(new CustomEvent("accessories:selected-changed", {
+      detail: { rows: [...this.selected.values()] },
+    }));
+  }
 }
+
+const accPickerRoot = document.getElementById("acc-picker");
+const accPicker = accPickerRoot ? new AccessoryPicker(accPickerRoot) : null;
 new AccessorySummary();
 
-/* ---------- Global Reset ----------
-   One button at the top wipes the entire configurator:
-     1. Type pickers (Valves, Actuators) — closes/deselects, hides sections
-     2. Every Picker's cascade fields — clear values, refresh options/result
-     3. Accessory selections — via the custom event listened to in
-        AccessoryBrowser._fetch wiring
-     4. The summary panel hides itself automatically once every section
-        emits a "cleared" event (Picker.reset triggers this through
-        refreshResolution when no picks are present). */
-const globalResetBtn = document.getElementById("global-reset-btn");
-if (globalResetBtn) {
-  globalResetBtn.addEventListener("click", async () => {
-    // 1. Close + deselect both type pickers, hide their sections.
-    for (const tp of TypePicker.instances) tp.reset();
-    // 2. Show the empty prompt that lives between the picker row and the
-    //    workspace (TypePicker.reset doesn't re-show it on its own).
-    const prompt = document.getElementById("empty-prompt");
-    if (prompt) prompt.hidden = false;
-    // 3. Wipe each cascade picker so its next opening starts fresh.
-    await Promise.all(
-      Array.from(Picker.instances.values()).map((p) => p.reset())
-    );
-    // 4. Tell the AccessoryBrowser to clear its selection set.
-    document.dispatchEvent(new CustomEvent("valve-selector:reset-all"));
-  });
-}
-
-/* ---------- Full product code (hero line) + Copy ----------
-   The summary panel's hero line is one consolidated product code in the
-   grouped format:  <valve> - <actuator> - <acc1>+<acc2>+…
-   Missing components drop out cleanly (no dangling dashes). It is recomputed
-   from the breakdown rows by a MutationObserver on the breakdown subtree, so
-   it stays correct across every update path (resolve / clear / reset /
-   accessory change) without coupling to each one. Copy writes this one line. */
-function computeFullCode() {
-  const seg = [];
-
-  // Read the stashed compact code (data-fullcode), NOT the visible breakdown
-  // code — the breakdown shows descriptive Catalogue/model codes, but the hero
-  // product code stays the compact bare-valve / actuator code.
-  const valveCard = document.querySelector(".summary-card--valve");
-  if (valveCard && !valveCard.hidden) {
-    const code = (valveCard.dataset.fullcode || "").trim();
-    if (code && code !== "—") seg.push(code);
+/* ---------- Combined product code ----------
+   Assembles one orderable string matching the prior build's format:
+     <Bare Valve Code> - <Actuator Code> - <Acc1>+<Acc2>+...
+   Sections joined with " - " (space-hyphen-space); accessories joined with "+". */
+class CombinedCode {
+  constructor() {
+    this.wrap = document.getElementById("summary-combined");
+    this.codeEl = document.getElementById("summary-combined-code");
+    this.copyBtn = document.getElementById("summary-combined-copy");
+    if (!this.wrap || !this.codeEl) return;
+    this.valve = null;        // {key, code}  (code = Bare Valve Code)
+    this.actuator = null;     // {key, code}  (code = actuator Code)
+    this.accessories = [];    // [code, ...]
+    document.addEventListener("valve-selector:resolved", (e) => this._onResolved(e.detail));
+    document.addEventListener("valve-selector:cleared", (e) => this._onCleared(e.detail));
+    document.addEventListener("accessories:selected-changed", (e) => {
+      // Product code uses each family's single LETTER (S/L/E/T/M/…); fall back
+      // to the full accessory code for families with no letter (e.g. THW FOR MSD).
+      this.accessories = (e.detail.rows || [])
+        .map((r) => (r.letter && String(r.letter).trim()) ? String(r.letter).trim() : r.code)
+        .filter(Boolean);
+      this._render();
+    });
+    if (this.copyBtn) this.copyBtn.addEventListener("click", () => this._copy());
   }
-
-  const actuatorCard = document.querySelector(".summary-card--actuator");
-  if (actuatorCard && !actuatorCard.hidden) {
-    const code = (actuatorCard.dataset.fullcode || "").trim();
-    if (code && code !== "—") seg.push(code);
+  _onResolved(d) {
+    // Valve part = Bare Valve Code (primary); Actuator part = its Code (primary).
+    if (d.category === "Valves") this.valve = { key: d.key, code: d.primary };
+    else if (d.category === "Actuators") this.actuator = { key: d.key, code: d.primary };
+    this._render();
   }
-
-  // All selected accessory codes collapse into ONE segment joined by '+'.
-  const accCard = document.getElementById("summary-accessories");
-  if (accCard && !accCard.hidden) {
-    const codes = Array.from(accCard.querySelectorAll(".summary-acc-chip-code"))
-      .map(el => el.textContent.trim())
-      .filter(Boolean);
-    if (codes.length) seg.push(codes.join("+"));
+  _onCleared(d) {
+    if (d.category === "Valves" && this.valve && this.valve.key === d.key) this.valve = null;
+    if (d.category === "Actuators" && this.actuator && this.actuator.key === d.key) this.actuator = null;
+    this._render();
   }
+  _render() {
+    // <Bare Valve Code> - <Actuator Code> - <Acc1>+<Acc2>...
+    const segs = [];
+    if (this.valve && this.valve.code) segs.push(String(this.valve.code).trim());
+    if (this.actuator && this.actuator.code) segs.push(String(this.actuator.code).trim());
+    if (this.accessories.length) segs.push(this.accessories.map((c) => String(c).trim()).join("+"));
+    if (!segs.length) { this.wrap.hidden = true; return; }
+    this.codeEl.textContent = segs.join(" - ");
+    this.wrap.hidden = false;
+  }
+  _copy() {
+    const text = this.codeEl.textContent;
+    if (!text || !navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const prev = this.copyBtn.textContent;
+      this.copyBtn.textContent = "Copied";
+      setTimeout(() => { this.copyBtn.textContent = prev; }, 1200);
+    }).catch(() => {});
+  }
+}
+new CombinedCode();
 
-  return seg.join(" - ");
+/* ---------- Global reset (top-right) ----------
+   Clears every valve/actuator cascade section AND all accessories at once. */
+function globalReset() {
+  for (const picker of Picker.instances.values()) {
+    for (const f of picker.fields) f.value = "";
+    picker.refreshOptions();
+    picker.refreshResolution();
+  }
+  for (const tp of TypePicker.instances) tp.reset();
+  const prompt = document.getElementById("empty-prompt");
+  if (prompt) prompt.hidden = false;
+  if (accPicker) accPicker.clearAll();
 }
 
-const summaryFullCodeEl = document.getElementById("summary-fullcode");
-const summaryBreakdownEl = document.querySelector(".summary-breakdown");
-function renderFullCode() {
-  if (summaryFullCodeEl) summaryFullCodeEl.textContent = computeFullCode() || "—";
-}
-if (summaryFullCodeEl && summaryBreakdownEl) {
-  // Observe the breakdown (NOT the hero line we write to — avoids a loop).
-  new MutationObserver(renderFullCode).observe(summaryBreakdownEl, {
-    subtree: true,
-    childList: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ["hidden", "data-fullcode"],
-  });
-  renderFullCode();
-}
-
-const summaryCopyBtn = document.getElementById("summary-copy-btn");
-if (summaryCopyBtn) {
-  const labelEl = summaryCopyBtn.querySelector(".summary-copy-label");
-  const originalLabel = labelEl ? labelEl.textContent : "Copy";
-  summaryCopyBtn.addEventListener("click", async () => {
-    const text = (summaryFullCodeEl?.textContent || "").trim();
-    if (!text || text === "—") return;
-    try {
-      await navigator.clipboard.writeText(text);
-      if (labelEl) labelEl.textContent = "Copied!";
-      summaryCopyBtn.classList.add("copied");
-    } catch (e) {
-      if (labelEl) labelEl.textContent = "Copy failed";
-    }
-    setTimeout(() => {
-      if (labelEl) labelEl.textContent = originalLabel;
-      summaryCopyBtn.classList.remove("copied");
-    }, 1800);
-  });
-}
+const globalResetBtn = document.getElementById("global-reset");
+if (globalResetBtn) globalResetBtn.addEventListener("click", globalReset);
