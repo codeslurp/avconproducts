@@ -59,12 +59,12 @@ def _clean_family(raw: str) -> str:
 # column, row 1 = headers). Each becomes ONE accessory family appended to the
 # consolidated list. Added 2026-06-02: Positioner + Solenoid Valve.
 EXTRA_ACCESSORY_SOURCES = [
-    # EVP and PTR are two split workbooks that BOTH contain the substring
-    # "Positioner" (the EVP file is "EVP Positioner Data Sheet Structure...").
-    # The PTR source therefore EXCLUDES any file whose name contains "EVP", so
-    # the two don't collide on the most-recently-modified pick.
-    {"file_substring": "EVP Positioner",  "sheet": "Positioner", "family": "EVP",            "code_col": 1},
-    {"file_substring": "Positioner", "exclude": "EVP", "sheet": "Positioner", "family": "Positioner", "code_col": 1},
+    # Two valve-positioner workbooks, renamed 2026-06-04 to unambiguous names:
+    #   "Electronic Valve Positioner.xlsx" (ED codes)   -> family "EVP"
+    #   "Pneumatic Valve Positioner.xlsx"  (PS/PD codes) -> family "Positioner" (shown as PVP)
+    # The old "…Positioner Data Sheet…" name collision and its exclude trick are gone.
+    {"file_substring": "Electronic Valve Positioner", "sheet": "Positioner", "family": "EVP",            "code_col": 1},
+    {"file_substring": "Pneumatic Valve Positioner",  "sheet": "Positioner", "family": "Positioner",     "code_col": 1},
     {"file_substring": "Solenoid Valve",  "sheet": "Sheet1",     "family": "Solenoid Valve", "code_col": 1},
     # THW FOR MSD now has its own dedicated file (cleaner columns: Suitable
     # Actuator Model, Material, …). Loaded here and SKIPPED from the consolidated
@@ -85,14 +85,14 @@ EXTRA_ACCESSORY_SOURCES = [
 #               unique across families; e.g. Silencer uses 'Z' because 'S' is
 #               taken by Solenoid Valve).
 #   display_name = full human name.
-# NOTE: "Positioner" (the 119-row Positioner Data Sheet Structure file, loaded
-# via EXTRA_ACCESSORY_SOURCES) maps to PTR (Positioner Transmitter) per the
-# data owner. EVP (Electronic Valve Positioner) has no source yet → placeholder.
+# NOTE: data_key "Positioner" is the PNEUMATIC valve positioner (PS/PD codes),
+# shown as PVP. The earlier "PTR / Positioner Transmitter" label was a mislabel
+# (no transmitter data exists). EVP = Electronic Valve Positioner (ED codes).
 ACCESSORY_FAMILY_ORDER: list[tuple[str | None, str, str, str]] = [
     ("Solenoid Valve",  "SV",                  "S", "Solenoid Valve"),
     ("LSB",             "LSB",                 "L", "Limit Switch"),
     ("EVP",             "EVP",                 "E", "Electronic Valve Positioner"),
-    ("Positioner",      "PTR",                 "T", "Positioner Transmitter"),
+    ("Positioner",      "PVP",                 "T", "Pneumatic Valve Positioner"),
     ("MOR",             "MOR",                 "M", "Manual Override"),
     ("FRG",             "AFR",                 "R", "Air Filter Regulator"),
     ("CFLG",            "CFLG",                "C", "Companion Flange"),
@@ -363,7 +363,7 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
         flush=True,
     )
 
-    # Append single-family extra sources (Positioner→PTR, Solenoid Valve→SV) —
+    # Append single-family extra sources (Positioner→PVP, Solenoid Valve→SV) —
     # each its own file/family, merged into the same flat list the UI browses.
     acc_dir = data_dir / "Accessories"
     for esrc in EXTRA_ACCESSORY_SOURCES:
