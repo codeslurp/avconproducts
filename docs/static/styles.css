@@ -1852,3 +1852,16 @@ footer small { font-family: var(--c-font-sans); }
     width: 100%;
   }
 }
+
+/* Accessory validation notice (transient, shown on actuator-gated auto-clear). */
+.acc-notice {
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #7a3b00;
+  background: #fff4e5;
+  border: 1px solid #ffd8a8;
+  border-radius: 6px;
+}
+.acc-notice[hidden] { display: none; }
