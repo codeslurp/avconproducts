@@ -1,7 +1,7 @@
 # Design — Actuator-gated accessory validation
 
-**Date:** 2026-06-04
-**Status:** Approved (approach + shape). Two data slots pending (see §8).
+**Date:** 2026-06-04 (rev 2)
+**Status:** Approved (approach + shape). Positioner identity RESOLVED (§2a). One data slot pending: Electric allowlist (§8).
 **Area:** Product Code Finder — accessories picker.
 
 ---
@@ -30,24 +30,34 @@ accessory families may be chosen; the rest are locked out. The same applies to
 - **Scope:** Pneumatic **and** Electric rulesets. (Electric allowlist values pending —
   §8.)
 
-### 2a. Positioner relabel (DEFERRED to user)
+### 2a. Positioner identity — RESOLVED 2026-06-04
 
-Investigation of the actual files established that the family currently labeled
-**"PTR / Positioner Transmitter"** (`Positioner Data Sheet Structure_Final _R2.xlsx`,
-`PS/PD` codes, "Electro-Pneumatic Positioner") is really the **Pneumatic Valve
-Positioner** — there is **no genuine "Positioner Transmitter" dataset** anywhere
-(neither a dedicated file nor a family in `Dashboard accessories.xlsx`). The other
-file (`EVP Positioner Data Sheet…`, `ED` codes, "Electric Controller Card") is the
-**Electronic Valve Positioner**. Source of the wrong label: `app/accessories.py:95`,
-`("Positioner", "PTR", "T", "Positioner Transmitter")`, assigned during the
-2026-06-03 split of the original 119-row positioner workbook.
+Investigation of the files plus user confirmation established:
 
-**The user is separating PTR/PVP and renaming the files themselves.** This design
-therefore leaves the **positioner families as a slot** (§5, §8) and does not perform
-the rename. Intended end-state once the user's split lands:
+- **There are NO "Positioner Transmitter" (PTR) values.** The entire family currently
+  labeled "PTR / Positioner Transmitter" (`Positioner Data Sheet Structure_Final
+  _R2.xlsx`, 57 `PS/PD` rows, "Electro-Pneumatic Positioner") is the **Pneumatic Valve
+  Positioner (PVP)**. The wrong "PTR" label was applied at `app/accessories.py:95` during
+  the 2026-06-03 split of the original 119-row positioner workbook.
+- The `EVP` family (`EVP Positioner Data Sheet…`, `ED` codes, "Electric Controller
+  Card") is the **Electronic Valve Positioner** — already correct.
 
-- **Pneumatic actuator** → allow **Pneumatic Valve Positioner**, block Electronic.
-- **Electric actuator** → allow **Electronic Valve Positioner (EVP)**, block Pneumatic.
+**Relabel is in scope (no split needed):**
+- `app/accessories.py` `ACCESSORY_FAMILY_ORDER` entry
+  `("Positioner", "PTR", "T", "Positioner Transmitter")` →
+  `("Positioner", "PVP", "<letter TBD>", "Pneumatic Valve Positioner")`.
+  (`data_key` stays `"Positioner"` to match the loaded family; letter TBD — `T` is now
+  free since PTR is removed; user to confirm.)
+- Optional but recommended: rename the source file to `Pneumatic Valve Positioner.xlsx`
+  and `EVP Positioner….xlsx` → `Electronic Valve Positioner.xlsx`, then simplify the
+  loader's `EXTRA_ACCESSORY_SOURCES` matching (`app/accessories.py:66-67`) to clean
+  `Electronic Valve Positioner` / `Pneumatic Valve Positioner` substrings (drops the
+  fragile `exclude:"EVP"` trick).
+- Deploy parity: the static build's `docs/data/accessories.json` and the
+  hand-maintained `docs/static/catalog-engine.js` must reflect the relabel too.
+
+Class mapping: **Pneumatic actuator → allow PVP, block EVP. Electric actuator → allow
+EVP, block PVP.**
 
 ## 3. Approach
 
@@ -87,9 +97,9 @@ Logic:
 1. `actuatorClass == null` → **all families allowed** (accessory-only / no-actuator gate).
 2. else → `allowed = new Set(RULESET[actuatorClass].allow)`, then apply conditionals:
    - `cflgNeedsValve`: if `!valvePresent`, remove `CFLG` (reason: "needs a valve").
-   - `svExcludesPositioner`: if `SV ∈ selectedFamilies`, remove the positioner family;
-     if positioner ∈ selectedFamilies, remove `SV`. (reason: "SV and positioner are
-     mutually exclusive").
+   - `svExcludesPositioner`: if `SV ∈ selectedFamilies`, remove the positioner family
+     (`Positioner`/PVP under Pneumatic, `EVP` under Electric); if the positioner ∈
+     selectedFamilies, remove `SV`. (reason: "SV and positioner are mutually exclusive").
 3. `reasons` carries a human string per blocked family for the UI.
 
 This function is pure and side-effect free (testable — §7).
@@ -117,28 +127,27 @@ is dynamic).
 ```js
 const ACCESSORY_RULESETS = {
   Pneumatic: {
-    allow: ["SV", "LSB", "FRG", "CFLG", "Gland", "Silencer",
-            "FCV", "ALR", "QEV", "BKT", "THW FOR MSD",
-            /* + Pneumatic Valve Positioner — SLOT (§8) */],
+    allow: ["SV", "LSB", "Positioner" /* = PVP */, "FRG", "CFLG", "Gland",
+            "Silencer", "FCV", "ALR", "QEV", "BKT", "THW FOR MSD"],
     conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
   },
   Electric: {
-    allow: [ /* PENDING Electric allowlist (§8) */
-             /* + Electronic Valve Positioner (EVP) */ ],
+    allow: ["EVP" /* Electronic Valve Positioner */
+            /* + PENDING rest of Electric allowlist (§8) */],
     conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
   },
 };
 ```
 Family keys are the `data_key`s from `ACCESSORY_FAMILY_ORDER` (`app/accessories.py:91`).
-`FRG`→shown as AFR, `THW FOR MSD`→shown as THW, etc.
+`FRG`→shown as AFR, `Positioner`→shown as PVP after relabel, `THW FOR MSD`→shown as THW.
 
 ## 6. Pneumatic truth table (for verification)
 
 | Family (data_key) | Pneumatic | Note |
 |---|---|---|
-| SV | ✅ | mutually exclusive with positioner |
+| SV | ✅ | mutually exclusive with PVP |
 | LSB | ✅ | |
-| Pneumatic Valve Positioner | ✅ (slot) | mutually exclusive with SV |
+| Positioner (→ PVP, Pneumatic Valve Positioner) | ✅ | mutually exclusive with SV |
 | FRG (AFR) | ✅ | |
 | CFLG | ✅* | only if valve present |
 | Gland | ✅ | |
@@ -161,25 +170,23 @@ The evaluator is pure JS; the repo has **no JS test runner** (tests are Python).
 Plan:
 - **Manual test matrix** (documented in the implementation plan): no-actuator →
   all open; Pneumatic → table in §6; Pneumatic + valve vs actuator-only (CFLG);
-  SV then positioner and vice-versa (auto-clear + lockout); switch Pneumatic→Electric
+  SV then PVP and vice-versa (auto-clear + lockout); switch Pneumatic→Electric
   with selections present (auto-clear).
 - **Optional (not in scope unless requested):** a small Node script under `tools/`
   importing `evaluateFamilies` for automated assertions.
 
-## 8. Open slots (pending user input)
+## 8. Open slot (pending user input)
 
 1. **Electric allowlist** — which families are allowed under an Electric actuator
-   (plus confirmation the two conditionals carry over). Until provided, the Electric
-   ruleset is an empty slot and Electric actuators behave as "block everything except
-   the slot" — so **do not ship Electric** until this is filled.
-2. **Positioner family keys** — the user's PTR/PVP split + rename. Once done, fill the
-   "Pneumatic Valve Positioner" slot in the Pneumatic ruleset, the "Electronic Valve
-   Positioner (EVP)" entry in the Electric ruleset, and point `svExcludesPositioner`
-   at the correct key per class.
+   (plus confirmation the two conditionals carry over; EVP is allowed). Until provided,
+   **do not ship the Electric ruleset**. The Pneumatic ruleset is fully specified and
+   can ship independently.
+
+(Resolved since rev 1: the positioner identity / PTR→PVP relabel — §2a.)
 
 ## 9. Out of scope
-- The positioner file rename/relabel (user-owned).
 - Any change to valve/actuator resolution beyond adding `actuatorClass` to the event.
-- Backend/static-engine rule duplication.
+- Backend/static-engine rule duplication (rule data is frontend-only by design; the
+  PVP relabel data, however, must be mirrored into `catalog-engine.js` + `accessories.json`
+  for deploy parity — §2a).
 </content>
-</invoke>
