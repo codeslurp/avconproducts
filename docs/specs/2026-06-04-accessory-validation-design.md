@@ -1,8 +1,25 @@
 # Design — Actuator-gated accessory validation
 
-**Date:** 2026-06-04 (rev 2)
-**Status:** Approved (approach + shape). Positioner identity RESOLVED (§2a). One data slot pending: Electric allowlist (§8).
+**Date:** 2026-06-04 (rev 3 — as shipped)
+**Status:** Implemented, verified in-browser (Flask + static), and deployed 2026-06-04.
 **Area:** Product Code Finder — accessories picker.
+
+---
+
+## Rev 3 — as shipped (supersedes the body where they differ)
+
+- **Electric ruleset = "all except PVP"** (user, 2026-06-04): every family is allowed
+  under an Electric actuator **except** `Positioner` (the pneumatic valve positioner).
+  Encoded as `Electric: { block: ["Positioner"], conditionals: [...] }`. Both
+  conditionals carry over (CFLG-needs-valve, SV ⇄ **EVP** under Electric).
+- **Rule keys are `data_key`s, not tags.** Solenoid Valve's key is `"Solenoid Valve"`
+  (not `"SV"`), Tube & Fittings is `"FITTING"`, Silencer is `"Silencer"`, THW is
+  `"THW FOR MSD"`. Constants: `SV_KEY = "Solenoid Valve"`,
+  `POSITIONER_KEY = { Pneumatic: "Positioner", Electric: "EVP" }`.
+- `evaluateFamilies` takes `allFamilyKeys` (for the Electric block-form) and supports
+  either `allow` (Pneumatic) or `block` (Electric).
+- Verified: 7/7 logic cases + live DOM enforcement (dropdown disable, auto-clear +
+  notice, CFLG gating) in both Flask and static (`CatalogEngine`) modes.
 
 ---
 
