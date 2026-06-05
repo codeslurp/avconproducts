@@ -31,6 +31,16 @@ const dataAPI = {
   },
 };
 
+/* Classify an actuator section key into the class the accessory rules use.
+   Section keys are like "pneumatic_rp", "electrical_rotary", "manual_lever"
+   (see catalog.py). Valves and manual actuators return null (no ruleset). */
+function actuatorClassFromKey(key) {
+  if (typeof key !== "string") return null;
+  if (key.startsWith("pneumatic_")) return "Pneumatic";
+  if (key.startsWith("electrical_")) return "Electric";
+  return null;
+}
+
 class Picker {
   // valveType -> Picker, populated by the constructor. Lets the "View matching
   // actuator" button on one section drive the picker in another section.
@@ -377,6 +387,9 @@ class Picker {
         secondary: d.secondary,
         actuatorName: actuatorField ? actuatorField.value : null,
         actuatorType: typeField ? typeField.value : null,
+        actuatorClass: this.section.dataset.category === "Actuators"
+          ? actuatorClassFromKey(this.valveType)
+          : null,
       },
     }));
   }
@@ -686,6 +699,59 @@ class AccessorySummary {
    positioner, etc.). Chosen accessories show as removable chips + a "Clear all";
    they broadcast via `accessories:selected-changed` (AccessorySummary renders
    them in the summary). Open/close handled here — excluded from TypePicker. */
+
+/* ---------- Accessory validation rules ----------
+   Keys below are the data_keys from ACCESSORY_FAMILY_ORDER (accessories.py) —
+   NOT the UI tags. (Solenoid Valve's key is "Solenoid Valve", not "SV";
+   Tube & Fittings is "FITTING"; Silencer is "Silencer"; THW is "THW FOR MSD".) */
+const SV_KEY = "Solenoid Valve";
+const POSITIONER_KEY = { Pneumatic: "Positioner", Electric: "EVP" };
+
+const ACCESSORY_RULESETS = {
+  Pneumatic: {
+    allow: ["Solenoid Valve", "LSB", "Positioner", "FRG", "CFLG", "Gland",
+            "Silencer", "FCV", "ALR", "QEV", "BKT", "THW FOR MSD"],
+    conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
+  },
+  Electric: {
+    // "All except PVP": everything allowed except the pneumatic positioner.
+    block: ["Positioner"],
+    conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
+  },
+};
+
+/* Pure, DOM-free. Returns { allowed, reasons }:
+     allowed === null  -> unrestricted (no actuator class / no ruleset).
+     allowed: Set<familyKey> of families that may be selected.
+     reasons: Map<familyKey, string> for specific conditional blocks. */
+function evaluateFamilies({ actuatorClass, valvePresent, selectedFamilies, allFamilyKeys }) {
+  const reasons = new Map();
+  const rs = actuatorClass && ACCESSORY_RULESETS[actuatorClass];
+  if (!rs) return { allowed: null, reasons };
+
+  const allowed = rs.allow
+    ? new Set(rs.allow)
+    : new Set((allFamilyKeys || []).filter((k) => !rs.block.includes(k)));
+  const sel = new Set(selectedFamilies || []);
+
+  if (rs.conditionals.includes("cflgNeedsValve") && !valvePresent) {
+    allowed.delete("CFLG");
+    reasons.set("CFLG", "needs a valve");
+  }
+  if (rs.conditionals.includes("svExcludesPositioner")) {
+    const posKey = POSITIONER_KEY[actuatorClass];
+    if (sel.has(SV_KEY) && posKey) {
+      allowed.delete(posKey);
+      reasons.set(posKey, "mutually exclusive with Solenoid Valve");
+    }
+    if (posKey && sel.has(posKey)) {
+      allowed.delete(SV_KEY);
+      reasons.set(SV_KEY, "mutually exclusive with the positioner");
+    }
+  }
+  return { allowed, reasons };
+}
+
 class AccessoryPicker {
   constructor(root) {
     this.root = root;
@@ -704,6 +770,18 @@ class AccessoryPicker {
     this.selected = new Map();        // family (data key) -> row  (one accessory per family)
     this.familyByKey = new Map();     // family key -> {key,tag,letter,label,count,pending}
 
+    // Actuator-gated validation state.
+    this.actuatorClass = null;   // null | "Pneumatic" | "Electric"
+    this.valvePresent = false;
+    this._allowed = null;        // Set<familyKey> | null (null = unrestricted)
+    this._reasons = new Map();
+    this._noticeTimer = null;
+    this.noticeEl = document.createElement("div");
+    this.noticeEl.className = "acc-notice";
+    this.noticeEl.hidden = true;
+    this.noticeEl.setAttribute("role", "status");
+    this.root.appendChild(this.noticeEl);
+
     this._onOutside = (ev) => { if (!this.root.contains(ev.target)) this.close(); };
     this._onKey = (ev) => { if (ev.key === "Escape") this.close(); };
     this.trigger.addEventListener("click", (ev) => { ev.stopPropagation(); this.toggle(); });
@@ -712,7 +790,24 @@ class AccessoryPicker {
     this.searchInput.addEventListener("input", () => this._trySelectFromSearch());
     this.searchInput.addEventListener("change", () => this._trySelectFromSearch());
     this.clearBtn.addEventListener("click", () => this.clearAll());
+    // React to actuator/valve resolve+clear so the allowlist re-evaluates live.
+    document.addEventListener("valve-selector:resolved", (e) => this._onActuatorChange(e.detail));
+    document.addEventListener("valve-selector:cleared", (e) => this._onActuatorChange(e.detail, true));
     this._fetch();
+  }
+
+  /* Track actuator class + valve presence from resolve/clear events (keyed on
+     the section's category), then re-run validation. */
+  _onActuatorChange(detail, cleared = false) {
+    if (!detail) return;
+    if (detail.category === "Actuators") {
+      this.actuatorClass = cleared ? null : (detail.actuatorClass || null);
+    } else if (detail.category === "Valves") {
+      this.valvePresent = !cleared;
+    } else {
+      return;
+    }
+    this._applyValidation();
   }
 
   open() {
@@ -758,6 +853,7 @@ class AccessoryPicker {
         this.familySel.appendChild(o);
       }
       this._fillDatalist();
+      this._applyValidation();
     } catch (e) {
       if (this.labelEl) this.labelEl.textContent = "Accessories unavailable";
     }
@@ -781,7 +877,8 @@ class AccessoryPicker {
      substring narrows it; we map that value back to the code on selection. */
   _fillDatalist() {
     const fam = this.familySel.value;
-    const rows = fam ? (this.byFamily.get(fam) || []) : [...this.byCode.values()];
+    let rows = fam ? (this.byFamily.get(fam) || []) : [...this.byCode.values()];
+    if (this._allowed) rows = rows.filter((r) => this._allowed.has(r.family));
     this.datalist.replaceChildren();
     this.byOptionValue.clear();
     for (const r of rows) {
@@ -806,10 +903,18 @@ class AccessoryPicker {
     if (!code) return;                 // partial / no match yet — wait for more typing
     const row = this.byCode.get(code);
     if (!row) return;
+    if (this._allowed && !this._allowed.has(row.family)) return; // family blocked
+    // SV <-> positioner mutual exclusion: the new pick wins, drop the other.
+    if (this.actuatorClass) {
+      const posKey = POSITIONER_KEY[this.actuatorClass];
+      if (row.family === SV_KEY && posKey) this.selected.delete(posKey);
+      if (posKey && row.family === posKey) this.selected.delete(SV_KEY);
+    }
     this.selected.set(row.family, row);   // SINGLE per family — replaces any prior
     this.searchInput.value = "";
     this._renderChips();
     this._broadcast();
+    this._applyValidation();
   }
 
   clearAll() {
@@ -817,6 +922,7 @@ class AccessoryPicker {
     this.selected.clear();
     this._renderChips();
     this._broadcast();
+    this._applyValidation();
   }
 
   _renderChips() {
@@ -840,6 +946,7 @@ class AccessoryPicker {
         this.selected.delete(family);
         this._renderChips();
         this._broadcast();
+        this._applyValidation();
       });
       chip.append(fam, c, x);
       this.chipsEl.appendChild(chip);
@@ -855,6 +962,56 @@ class AccessoryPicker {
     document.dispatchEvent(new CustomEvent("accessories:selected-changed", {
       detail: { rows: [...this.selected.values()] },
     }));
+  }
+
+  /* Recompute the allowed family set for the current actuator/valve/selection and
+     enforce it: grey out blocked dropdown options, filter the datalist, and
+     auto-clear any selected accessory that is now blocked. */
+  _applyValidation() {
+    const { allowed, reasons } = evaluateFamilies({
+      actuatorClass: this.actuatorClass,
+      valvePresent: this.valvePresent,
+      selectedFamilies: [...this.selected.keys()],
+      allFamilyKeys: [...this.familyByKey.keys()],
+    });
+    this._allowed = allowed;
+    this._reasons = reasons;
+
+    // Grey out blocked options in the family dropdown (skip "All families").
+    for (const opt of this.familySel.options) {
+      if (!opt.value) { opt.disabled = false; continue; }
+      opt.disabled = !!(allowed && !allowed.has(opt.value));
+    }
+    // If the active dropdown family just became blocked, fall back to "All".
+    if (allowed && this.familySel.value && !allowed.has(this.familySel.value)) {
+      this.familySel.value = "";
+      this._onFamilyChange();   // calls _fillDatalist
+    } else {
+      this._fillDatalist();
+    }
+
+    // Auto-clear any selected accessory whose family is now blocked.
+    if (allowed) {
+      const removed = [];
+      for (const fam of [...this.selected.keys()]) {
+        if (!allowed.has(fam)) { this.selected.delete(fam); removed.push(fam); }
+      }
+      if (removed.length) {
+        const n = removed.length;
+        this._showNotice(
+          `${n} accessor${n > 1 ? "ies" : "y"} removed — not valid for ${this.actuatorClass} actuators`
+        );
+        this._renderChips();
+        this._broadcast();
+      }
+    }
+  }
+
+  _showNotice(msg) {
+    this.noticeEl.textContent = msg;
+    this.noticeEl.hidden = false;
+    if (this._noticeTimer) clearTimeout(this._noticeTimer);
+    this._noticeTimer = setTimeout(() => { this.noticeEl.hidden = true; }, 4000);
   }
 }
 
