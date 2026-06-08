@@ -708,14 +708,19 @@ const SV_KEY = "Solenoid Valve";
 const POSITIONER_KEY = { Pneumatic: "Positioner", Electric: "EVP" };
 
 const ACCESSORY_RULESETS = {
+  // Explicit allow-lists, EXHAUSTIVE: any family not listed is BLOCKED. Keys are
+  // data_keys, not UI tags. Confirmed with the data owner 2026-06-07.
   Pneumatic: {
-    allow: ["Solenoid Valve", "LSB", "Positioner", "FRG", "CFLG", "Gland",
-            "Silencer", "FCV", "ALR", "QEV", "BKT", "THW FOR MSD"],
+    // Everything except EVP (the electronic positioner — electric-only).
+    allow: ["Solenoid Valve", "LSB", "Positioner", "MOR", "FRG", "CFLG", "Gland",
+            "Plug", "Silencer", "Volume Booster", "FITTING", "FCV", "ALR",
+            "Direct Mount", "BKT", "QEV", "THW FOR MSD"],
     conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
   },
   Electric: {
-    // "All except PVP": everything allowed except the pneumatic positioner.
-    block: ["Positioner"],
+    // EVP, LSB, MOR, CFLG, Gland, Plug, FCV, BKT, Direct Mount only.
+    // (THW = Pneumatic-only; SV/PVP/Volume Booster/Tube&Fittings/QEV blocked.)
+    allow: ["EVP", "LSB", "MOR", "CFLG", "Gland", "Plug", "FCV", "BKT", "Direct Mount"],
     conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
   },
 };

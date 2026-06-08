@@ -1,8 +1,26 @@
 # Design — Actuator-gated accessory validation
 
-**Date:** 2026-06-04 (rev 3 — as shipped)
-**Status:** Implemented, verified in-browser (Flask + static), and deployed 2026-06-04.
+**Date:** 2026-06-07 (rev 4 — final rulesets)
+**Status:** Implemented, verified, deployed. Rev 4 finalizes the allow-lists.
 **Area:** Product Code Finder — accessories picker.
+
+---
+
+## Rev 4 — final rulesets (2026-06-07, supersedes Rev 3)
+
+Both classes are now **explicit, EXHAUSTIVE allow-lists** (any family not listed is
+blocked). Confirmed with the data owner. Keys are `data_key`s.
+
+- **Pneumatic** = every family **except EVP** (the electronic positioner):
+  `Solenoid Valve, LSB, Positioner(PVP), MOR, FRG(AFR), CFLG, Gland, Plug, Silencer,
+  Volume Booster, FITTING, FCV, ALR, Direct Mount, BKT, QEV, THW FOR MSD`.
+- **Electric** = `EVP, LSB, MOR, CFLG, Gland, Plug, FCV, BKT, Direct Mount` only.
+  Blocked: SV, PVP, Volume Booster, FITTING, QEV, **and** the unlisted FRG/Silencer/ALR/THW.
+- **THW FOR MSD**: Pneumatic-allow, Electric-block.
+- Electric changed from the Rev 3 `block:["Positioner"]` ("all-except-PVP") form to an
+  explicit `allow` list. Conditionals unchanged (`cflgNeedsValve`, `svExcludesPositioner`).
+- "PSW"/"TSW" considered but **dropped** — no such families/data exist.
+- QEV display name corrected "Quarter turn Electric Valve" → **"Quick Exhaust Valve"**.
 
 ---
 
