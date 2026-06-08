@@ -69,8 +69,16 @@ EXTRA_ACCESSORY_SOURCES = [
     # THW FOR MSD now has its own dedicated file (cleaner columns: Suitable
     # Actuator Model, Material, …). Loaded here and SKIPPED from the consolidated
     # Dashboard sheet (see `dedicated_families` in load_accessories) so it isn't
-    # loaded twice.
-    {"file_substring": "THW FOR MSD",     "sheet": "THW FOR MSD", "family": "THW FOR MSD",    "code_col": 1},
+    # loaded twice. The R1_Updated export renamed the sheet "THW FOR MSD" ->
+    # "Sheet1"; both are listed so whichever THW file wins the most-recent pick
+    # still loads.
+    {"file_substring": "THW FOR MSD",     "sheet": ["Sheet1", "THW FOR MSD"], "family": "THW FOR MSD", "code_col": 1},
+    # Migrated 2026-06-07 from the consolidated Dashboard sheet to dedicated
+    # "New Structure" single-family files (cleaner per-family column schemas).
+    # Each is skipped from the consolidated load via `dedicated_families`.
+    # (Tube & Fittings deferred — source row count under review.)
+    {"file_substring": "Gland Data",      "sheet": "Gland Data",   "family": "Gland",   "code_col": 1},
+    {"file_substring": "Manual Override", "sheet": "MOR",          "family": "MOR",     "code_col": 1},
 ]
 
 
@@ -220,11 +228,16 @@ def _load_extra_family(acc_dir: Path, src: dict) -> list[dict[str, Any]]:
             tmp_path = tmp_dir / path.name
             shutil.copyfile(path, tmp_path)
             wb = openpyxl.load_workbook(tmp_path, data_only=True, keep_vba=False, read_only=True)
-    if src["sheet"] not in wb.sheetnames:
+    # `sheet` may be a single name or a list of candidate names (sources whose
+    # sheet got renamed across exports list both — e.g. THW's R1_Updated renamed
+    # "THW FOR MSD" -> "Sheet1"). Use the first candidate present in the file.
+    wanted = src["sheet"] if isinstance(src["sheet"], (list, tuple)) else [src["sheet"]]
+    sheet_name = next((s for s in wanted if s in wb.sheetnames), None)
+    if sheet_name is None:
         wb.close()
-        print(f"[valve-selector] Accessories: no '{src['sheet']}' sheet in {path.name}; skipping.", flush=True)
+        print(f"[valve-selector] Accessories: none of {wanted} found in {path.name}; skipping.", flush=True)
         return []
-    raw_rows = list(wb[src["sheet"]].iter_rows(values_only=True))
+    raw_rows = list(wb[sheet_name].iter_rows(values_only=True))
     wb.close()
     if not raw_rows:
         return []
