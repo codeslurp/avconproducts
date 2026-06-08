@@ -852,9 +852,11 @@ class AccessoryPicker {
         o.value = fam.key;
         // Show BOTH abbreviations: "SV · S — Solenoid Valve (60)".
         const abbr = fam.letter ? `${fam.tag} · ${fam.letter}` : fam.tag;
-        o.textContent = fam.pending
-          ? `${abbr} — ${fam.label} (data pending)`
-          : `${abbr} — ${fam.label} (${fam.count})`;
+        o.textContent = fam.flag
+          ? `${abbr} — ${fam.label}`
+          : fam.pending
+            ? `${abbr} — ${fam.label} (data pending)`
+            : `${abbr} — ${fam.label} (${fam.count})`;
         this.familySel.appendChild(o);
       }
       this._fillDatalist();
@@ -869,12 +871,33 @@ class AccessoryPicker {
      empty type-ahead. */
   _onFamilyChange() {
     const fam = this.familyByKey.get(this.familySel.value);
+    if (fam && fam.flag) { this._addFlag(fam); return; }
     const pending = !!(fam && fam.pending);
     this.searchInput.disabled = pending;
     this.searchInput.placeholder = pending
       ? "Data pending — catalog coming soon"
       : "Type code or attribute…";
     this._fillDatalist();
+  }
+
+  /* Flag families (e.g. Direct Mount) have no SKUs — picking one in the dropdown
+     adds it directly as a codeless chip; its LETTER feeds the combined product
+     code. Respects the actuator gate, then resets the dropdown to "All". */
+  _addFlag(fam) {
+    if (this._allowed && !this._allowed.has(fam.key)) {
+      this._showNotice(`${fam.tag} not valid for ${this.actuatorClass} actuators`);
+    } else {
+      this.selected.set(fam.key, { code: "", family: fam.key, tag: fam.tag, letter: fam.letter, attrs: [] });
+      this._renderChips();
+      this._broadcast();
+      this._showNotice(`${fam.tag} added`);
+    }
+    this.familySel.value = "";
+    this.searchInput.value = "";
+    this.searchInput.disabled = false;
+    this.searchInput.placeholder = "Type code or attribute…";
+    this._fillDatalist();
+    this._applyValidation();
   }
 
   /* Populate the type-ahead datalist with items in the chosen family (or all).
@@ -953,7 +976,8 @@ class AccessoryPicker {
         this._broadcast();
         this._applyValidation();
       });
-      chip.append(fam, c, x);
+      if (row.code) chip.append(fam, c, x);
+      else chip.append(fam, x);   // codeless flag family (e.g. Direct Mount)
       this.chipsEl.appendChild(chip);
     }
     const n = this.selected.size;

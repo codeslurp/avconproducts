@@ -119,6 +119,13 @@ ACCESSORY_FAMILY_ORDER: list[tuple[str | None, str, str, str]] = [
 ]
 
 
+# "Flag" families have no SKU catalog by nature — they're a yes/no option (e.g.
+# a mounting style). They are ADDABLE (contribute their letter to the combined
+# product code) but carry no data, so they must NOT render as "data pending".
+# Keyed by family key (= data_key, or the tag for data_key=None entries).
+FLAG_FAMILIES = {"Direct Mount"}
+
+
 def _meta_by_data_key() -> dict[str, tuple[str, str, str]]:
     """data_key -> (tag, letter, display_name) for families that have data."""
     return {
@@ -137,13 +144,17 @@ def _build_ordered_families(counts: dict[str, int]) -> list[dict[str, Any]]:
     families: list[dict[str, Any]] = []
     for data_key, tag, letter, label in ACCESSORY_FAMILY_ORDER:
         count = counts.get(data_key, 0) if data_key else 0
+        key = data_key if data_key else tag
+        is_flag = key in FLAG_FAMILIES
         families.append({
-            "key": data_key if data_key else tag,
+            "key": key,
             "tag": tag,
             "letter": letter,
             "label": label,
             "count": count,
-            "pending": (data_key is None) or count == 0,
+            # Flag families are addable-but-codeless: never "pending".
+            "pending": (not is_flag) and ((data_key is None) or count == 0),
+            "flag": is_flag,
         })
         if data_key:
             used.add(data_key)
@@ -152,7 +163,7 @@ def _build_ordered_families(counts: dict[str, int]) -> list[dict[str, Any]]:
             continue
         families.append({
             "key": data_key, "tag": data_key, "letter": "",
-            "label": data_key, "count": count, "pending": False,
+            "label": data_key, "count": count, "pending": False, "flag": False,
         })
     return families
 
