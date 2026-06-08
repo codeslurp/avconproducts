@@ -111,7 +111,7 @@ ACCESSORY_FAMILY_ORDER: list[tuple[str | None, str, str, str]] = [
     ("FITTING",         "Tube & Fittings",     "N", "Tube & Fittings"),
     ("FCV",             "FCV",                 "F", "Flow Control Valve"),
     ("ALR",             "ALR",                 "A", "Air Lock Relay"),
-    ("QEV",             "QEV",                 "Q", "Quarter turn Electric Valve"),
+    ("QEV",             "QEV",                 "Q", "Quick Exhaust Valve"),
     (None,              "Direct Mount",        "D", "Direct Mount"),
     ("BKT",             "BKT",                 "B", "Bracket Mount"),
     ("THW FOR MSD",     "THW",                 "H", "THW for MSD"),  # data_key (elem 0) must match the loaded family; display name = "THW for MSD"
