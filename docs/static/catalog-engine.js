@@ -14,6 +14,20 @@
      CatalogEngine.metadata()                  -- list of all known types
 */
 
+/* Cache-bust data fetches with the SAME build version this script was loaded
+   with (index.html loads it as `catalog-engine.js?v=BUILD_VERSION`). A new
+   deploy => new version => browsers refetch the JSON instead of serving a stale
+   cached copy; within one build the JSON still caches normally. Without this,
+   data changes (e.g. a new accessory family) don't reach returning users until
+   their cache expires. */
+const DATA_VERSION = (() => {
+  try {
+    const src = document.currentScript && document.currentScript.src;
+    const v = src && new URL(src).searchParams.get("v");
+    return v ? `?v=${v}` : "";
+  } catch (_) { return ""; }
+})();
+
 const CATALOG_KEYS = [
   "ball", "butterfly", "pneumatic_rp", "pneumatic_sy", "electrical_rotary",
 ];
@@ -54,7 +68,7 @@ class CatalogEngine {
   /* Returns a promise resolving the loaded+indexed catalog. */
   async load(key) {
     if (this._cache.has(key)) return this._cache.get(key);
-    const p = fetch(`./data/${key}.json`).then(async (resp) => {
+    const p = fetch(`./data/${key}.json${DATA_VERSION}`).then(async (resp) => {
       if (!resp.ok) throw new Error(`load ${key}: HTTP ${resp.status}`);
       const cat = await resp.json();
       cat.colIndex = new Map(cat.columns_used.map((c, i) => [c, i]));
@@ -217,7 +231,7 @@ class CatalogEngine {
 
   async accessories() {
     if (this._accessories) return this._accessories;
-    this._accessories = fetch("./data/accessories.json").then((r) => r.json());
+    this._accessories = fetch(`./data/accessories.json${DATA_VERSION}`).then((r) => r.json());
     return this._accessories;
   }
 }
