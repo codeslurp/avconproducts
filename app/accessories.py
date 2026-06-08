@@ -79,6 +79,7 @@ EXTRA_ACCESSORY_SOURCES = [
     # (Tube & Fittings deferred — source row count under review.)
     {"file_substring": "Gland Data",      "sheet": "Gland Data",   "family": "Gland",   "code_col": 1},
     {"file_substring": "Manual Override", "sheet": "MOR",          "family": "MOR",     "code_col": 1},
+    {"file_substring": "Plug Data",       "sheet": "Plug Data",    "family": "Plug",    "code_col": 1},
 ]
 
 
@@ -105,7 +106,7 @@ ACCESSORY_FAMILY_ORDER: list[tuple[str | None, str, str, str]] = [
     ("FRG",             "AFR",                 "R", "Air Filter Regulator"),
     ("CFLG",            "CFLG",                "C", "Companion Flange"),
     ("Gland",           "Gland",               "G", "Gland"),
-    (None,              "Plug",                "P", "Plug"),
+    ("Plug",            "Plug",                "P", "Plug"),
     ("Silencer",        "Silencer/Bug Screen", "Z", "Silencer/Bug Screen"),
     ("Volume Booster",  "Volume Booster",      "V", "Volume Booster"),
     ("FITTING",         "Tube & Fittings",     "N", "Tube & Fittings"),
