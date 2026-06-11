@@ -951,13 +951,22 @@ CONTROL_VALVE = ValveTypeConfig(
     primary_label="Bare Valve Code", primary_col=2,
     secondary_label="Catalogue Code", secondary_col=3,
     show_bto_fos=False,
-    # 16,406 rows → 1,991 Catalogue specs (≈8 Bare serials each). Control valves
-    # are high-dimensional: this 16-field spec cascade resolves the Catalogue
-    # code UNIQUELY (0 ambiguous); within a spec, up to ~5 Bare serials remain
-    # (they differ only in test/cost columns not exposed here). Fewer fields
-    # leaves catalogues ambiguous; trim only if some attributes are redundant in
-    # AVCON's workflow. NOTE: cost/pricing columns (56-59) are deliberately
-    # excluded from cascade AND detail so they never reach the public JSON.
+    # 17,681 rows → 1,831 Catalogue specs. This 8-field cascade resolves the
+    # Catalogue code UNIQUELY (0 ambiguous), matching Ball Valve's depth. It was
+    # trimmed from 16 fields (2026-06-11) after a data-driven dependency analysis:
+    # the dropped 8 fields are each either 1:1 with a kept field or fully implied
+    # by Series, so removing them as SELECTORS doesn't reintroduce ambiguity —
+    #   valve_type/port_size/num_ports/body_style/plug_type  <- implied by series
+    #   bonnet_material                                       <- 1:1 with body_material
+    #   stem_material                                         <- implied by trim_material
+    #   flow_direction                                        <- redundant for uniqueness
+    # All 8 dropped fields STILL appear in detail_columns (shown in the result),
+    # so no spec information is lost — only the number of dropdowns shrinks.
+    # `Type Of Bonnet` is load-bearing and CANNOT be dropped: it's the only field
+    # that distinguishes otherwise-identical catalogues (e.g. Bellow Seal vs
+    # Standard) — verified that no 0-ambiguous set exists without it.
+    # NOTE: cost/pricing columns (56-59) are deliberately excluded from cascade
+    # AND detail so they never reach the public JSON.
     cascade=[
         ("series",          5, "Series"),
         ("size",            6, "Valve Size"),
@@ -966,15 +975,7 @@ CONTROL_VALVE = ValveTypeConfig(
         ("seat_material",   9, "Seat Material"),
         ("characteristics", 10, "Characteristics"),
         ("end_connection",  11, "End Connections"),
-        ("valve_type",      12, "Valve Type"),
-        ("port_size",       15, "Port Size (mm)"),
-        ("num_ports",       16, "No. Of Ports"),
-        ("body_style",      18, "Body Style"),
-        ("flow_direction",  19, "Flow Direction"),
-        ("bonnet_material", 20, "Bonnet Material"),
         ("bonnet_type",     21, "Type Of Bonnet"),
-        ("stem_material",   22, "Stem Material"),
-        ("plug_type",       23, "Plug Type"),
     ],
     detail_columns=[
         (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),
