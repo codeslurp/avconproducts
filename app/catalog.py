@@ -986,7 +986,16 @@ CONTROL_VALVE = ValveTypeConfig(
         (36, "Seat Leakage Test Pressure (barg)"), (37, "Seat Leakage Test Media"),
         (38, "Product Group"), (39, "Certification"), (40, "Thrust (kN)"),
         (41, "Torque (N·m)"), (42, "Mounting PCD"), (43, "Stroke (mm)"),
-        (44, "Stem Diameter"), (55, "Bare Valve Weight (kg)"),
+        (44, "Stem Diameter"),
+        # cols 45-48: AVCON's R2 drop named these 4 spec slots (were the generic
+        # "Additional Specification 1-4", dropped in R1). Consolidation normalises
+        # the series-varying source headers by position; see
+        # tools/consolidate_control_valve.py SPEC_SLOTS.
+        (45, "Max Shut-off Pressure"),
+        (46, "Fail Safe Close / A-Port Close"),
+        (47, "Fail Safe Open / B-Port Close"),
+        (48, "Control Pressure"),
+        (55, "Bare Valve Weight (kg)"),
     ],
 )
 
