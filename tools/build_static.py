@@ -85,6 +85,7 @@ def _serialize_catalog(key: str, catalog) -> dict:
             "label": pa.label,
             "target_type": pa.target_type,
             "target_by_prefix": [list(t) for t in pa.target_type_by_prefix] or None,
+            "require_prefix": pa.require_prefix,
         })
 
     return {

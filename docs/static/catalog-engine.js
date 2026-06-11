@@ -34,6 +34,8 @@ const CATALOG_KEYS = [
 
 const PAIRED_DASH_PREFIXES = ["SYA"];
 const EA_QM_SLASH_RE = /^(EA|QM)-(\d+)([A-Z])$/;
+// Control valve "Fail Safe" cells: "MSD-200 E" / "MSD-250D" -> family "MSD-200".
+const MSD_FAMILY_RE = /^(MSD-\d+)\s*[A-Za-z]?$/;
 
 function normalizePairedModel(model) {
   // Pattern 1: insert missing dash after letter prefix (SYA065 -> SYA-065).
@@ -46,6 +48,9 @@ function normalizePairedModel(model) {
   // Pattern 2: insert missing slash before trailing letter (EA-21D -> EA-21/D).
   const m = EA_QM_SLASH_RE.exec(model);
   if (m) return `${m[1]}-${m[2]}/${m[3]}`;
+  // Pattern 3: MSD model + variant letter -> family (MSD-200 E -> MSD-200).
+  const msd = MSD_FAMILY_RE.exec(model);
+  if (msd) return msd[1];
   return model;
 }
 
@@ -168,6 +173,9 @@ class CatalogEngine {
       if (raw === null || raw === undefined || raw === "") continue;
       const model = normalizePairedModel(String(raw).trim());
       if (model === "" || model === "#N/A") continue;
+      // Dual-use column guard (mirrors catalog.py): skip non-model values
+      // (e.g. control valve Fail-Safe cells holding a pressure or 0).
+      if (pa.require_prefix && !model.startsWith(pa.require_prefix)) continue;
       const target_type = resolvePairedTargetType(pa, model);
       if (pa.label.includes("Double Acting") && pa.label.includes("@")) {  // DA pressure slot
         const slot = `${target_type}|${model}|${pa.label}`;

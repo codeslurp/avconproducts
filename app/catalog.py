@@ -46,6 +46,12 @@ class PairedActuator:
     label: str                   # heading shown above the card
     target_type: str | None = None
     target_type_by_prefix: tuple[tuple[str, str], ...] = ()
+    # When set, a recommendation cell whose (normalized) value does NOT start
+    # with this prefix is ignored entirely — no card. Used for dual-use columns
+    # that mix actuator model codes with other content (e.g. the control valve
+    # "Fail Safe" columns hold MSD-* models OR a pressure/0). Default None keeps
+    # the historical behaviour (every non-empty cell becomes a card).
+    require_prefix: str | None = None
 
     def __post_init__(self) -> None:
         if bool(self.target_type) == bool(self.target_type_by_prefix):
@@ -997,6 +1003,26 @@ CONTROL_VALVE = ValveTypeConfig(
         (48, "Control Pressure"),
         (55, "Bare Valve Weight (kg)"),
     ],
+    # Recommended actuator (from AVCON's R2 drop, 2026-06-11). The Fail-Safe
+    # columns name the MSD linear actuator the valve pairs with — but as a
+    # model+variant ("MSD-200 E") and only on ~64% of rows (the rest hold a
+    # pressure or 0). require_prefix="MSD-" drops the non-model cells; the
+    # _MSD_FAMILY_PATTERN normaliser maps "MSD-200 E" -> the MSD `model`
+    # family "MSD-200" for the picker prefill (bore/spring variant is lost —
+    # user selects it in the MSD catalog). Cols 46/47 are also detail columns,
+    # so they're already loaded. Close = normally-closed, Open = normally-open;
+    # 2-way valves name the same model in both (dedup -> one card), 3-way valves
+    # may differ (two cards).
+    paired_actuators=(
+        PairedActuator(
+            model_col=46, target_field="model", target_type="pneumatic_msd",
+            require_prefix="MSD-", label="Fail-Safe Close (Normally Closed)",
+        ),
+        PairedActuator(
+            model_col=47, target_field="model", target_type="pneumatic_msd",
+            require_prefix="MSD-", label="Fail-Safe Open (Normally Open)",
+        ),
+    ),
 )
 
 
@@ -1140,6 +1166,10 @@ import re
 # yet cleaned the source files. Remove when source data is consistent.
 _PAIRED_MODEL_DASH_PREFIXES = ("SYA",)
 _EA_QM_SLASH_PATTERN = re.compile(r"^(EA|QM)-(\d+)([A-Z])$")
+# Control valve "Fail Safe" cells name an MSD model + bore/spring variant letter
+# ("MSD-200 E", "MSD-250D"); the pneumatic_msd catalog's `model` field is just
+# the family ("MSD-200"). Strip the optional space + single trailing letter.
+_MSD_FAMILY_PATTERN = re.compile(r"^(MSD-\d+)\s*[A-Za-z]?$")
 
 
 def _normalize_paired_model(model: str) -> str:
@@ -1154,6 +1184,10 @@ def _normalize_paired_model(model: str) -> str:
     m = _EA_QM_SLASH_PATTERN.match(model)
     if m:
         return f"{m.group(1)}-{m.group(2)}/{m.group(3)}"
+    # Pattern 3: MSD model + variant letter -> family (MSD-200 E -> MSD-200)
+    m = _MSD_FAMILY_PATTERN.match(model)
+    if m:
+        return m.group(1)
     return model
 
 
@@ -1464,6 +1498,10 @@ class Catalog:
             # `#N/A` is an Excel error string from broken VLOOKUP cells in the
             # source — treat as no recommendation (see 2026-05-27 report).
             if model in ("", "#N/A"):
+                continue
+            # Dual-use column guard: skip values that aren't actuator models
+            # (e.g. control valve Fail-Safe cells holding a pressure or 0).
+            if p.require_prefix and not model.startswith(p.require_prefix):
                 continue
             target_type = p.resolve_target_type(model)
             if "Double Acting" in p.label and "@" in p.label:   # DA pressure slot — keep each pressure
