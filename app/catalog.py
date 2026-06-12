@@ -951,9 +951,10 @@ CONTROL_VALVE = ValveTypeConfig(
     primary_label="Bare Valve Code", primary_col=2,
     secondary_label="Catalogue Code", secondary_col=3,
     show_bto_fos=False,
-    # 17,681 rows → 1,831 Catalogue specs. This 8-field cascade resolves the
-    # Catalogue code UNIQUELY (0 ambiguous), matching Ball Valve's depth. It was
-    # trimmed from 16 fields (2026-06-11) after a data-driven dependency analysis:
+    # 17,681 rows → 1,831 Catalogue specs. This cascade resolves the Catalogue
+    # code UNIQUELY (0 ambiguous). It was trimmed 16→8 (2026-06-11), then 3 fields
+    # were re-added by user request (8→11, 2026-06-12; see UPDATE note below).
+    # The 2026-06-11 trim rationale (still valid — adding selectors only refines):
     # the dropped 8 fields are each either 1:1 with a kept field or fully implied
     # by Series, so removing them as SELECTORS doesn't reintroduce ambiguity —
     #   valve_type/port_size/num_ports/body_style/plug_type  <- implied by series
@@ -967,6 +968,13 @@ CONTROL_VALVE = ValveTypeConfig(
     # Standard) — verified that no 0-ambiguous set exists without it.
     # NOTE: cost/pricing columns (56-59) are deliberately excluded from cascade
     # AND detail so they never reach the public JSON.
+    # UPDATE 2026-06-12 (user request): re-added 3 dropdowns after End Connections
+    # — Face to Face (14), Port Size (15), Certification (39) — and moved the
+    # existing Type Of Bonnet (21) ahead of Certification. Now 11 fields. Adding
+    # selectors can only refine matches, so 0-ambiguous still holds (re-verified).
+    # Caveat: Certification (39) is ~37% populated; its dropdown is empty for
+    # valves with no cert data, but resolution is progressive so it never
+    # dead-ends the picker (verified: app.js resolves on current picks).
     cascade=[
         ("series",          5, "Series"),
         ("size",            6, "Valve Size"),
@@ -975,7 +983,10 @@ CONTROL_VALVE = ValveTypeConfig(
         ("seat_material",   9, "Seat Material"),
         ("characteristics", 10, "Characteristics"),
         ("end_connection",  11, "End Connections"),
+        ("face_to_face",    14, "Face to Face"),
+        ("port_size",       15, "Port Size (mm)"),
         ("bonnet_type",     21, "Type Of Bonnet"),
+        ("certification",   39, "Certification"),
     ],
     detail_columns=[
         (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),
