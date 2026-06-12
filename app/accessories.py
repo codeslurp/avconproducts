@@ -61,7 +61,7 @@ def _clean_family(raw: str) -> str:
 EXTRA_ACCESSORY_SOURCES = [
     # Two valve-positioner workbooks, renamed 2026-06-04 to unambiguous names:
     #   "Electronic Valve Positioner.xlsx" (ED codes)   -> family "EVP"
-    #   "Pneumatic Valve Positioner.xlsx"  (PS/PD codes) -> family "Positioner" (shown as PVP)
+    #   "Pneumatic Valve Positioner.xlsx"  (PS/PD codes) -> family "Positioner" (shown as EPP)
     # The old "…Positioner Data Sheet…" name collision and its exclude trick are gone.
     {"file_substring": "Electronic Valve Positioner", "sheet": "Positioner", "family": "EVP",            "code_col": 1},
     {"file_substring": "Pneumatic Valve Positioner",  "sheet": "Positioner", "family": "Positioner",     "code_col": 1},
@@ -95,18 +95,21 @@ EXTRA_ACCESSORY_SOURCES = [
 #               taken by Solenoid Valve).
 #   display_name = full human name.
 # NOTE: data_key "Positioner" is the PNEUMATIC valve positioner (PS/PD codes),
-# shown as PVP. The earlier "PTR / Positioner Transmitter" label was a mislabel
-# (no transmitter data exists). EVP = Electronic Valve Positioner (ED codes).
+# shown as EPP — "Electronic Pneumatic Positioner". data_key "EVP" (ED codes) is
+# shown as ECC — "Electronic Control Card". Renamed 2026-06-11 from PVP/EVP (tag,
+# letter, and display_name only); data_keys are kept stable so the data load and
+# the actuator-gating rulesets (POSITIONER_KEY / allow-lists in app.js, which key
+# on data_keys) still match. EPP took letter 'P'; Plug moved 'P' -> 'U'.
 ACCESSORY_FAMILY_ORDER: list[tuple[str | None, str, str, str]] = [
     ("Solenoid Valve",  "SV",                  "S", "Solenoid Valve"),
     ("LSB",             "LSB",                 "L", "Limit Switch"),
-    ("EVP",             "EVP",                 "E", "Electronic Valve Positioner"),
-    ("Positioner",      "PVP",                 "T", "Pneumatic Valve Positioner"),
+    ("EVP",             "ECC",                 "E", "Electronic Control Card"),
+    ("Positioner",      "EPP",                 "P", "Electronic Pneumatic Positioner"),
     ("MOR",             "MOR",                 "M", "Manual Override"),
     ("FRG",             "AFR",                 "R", "Air Filter Regulator"),
     ("CFLG",            "CFLG",                "C", "Companion Flange"),
     ("Gland",           "Gland",               "G", "Gland"),
-    ("Plug",            "Plug",                "P", "Plug"),
+    ("Plug",            "Plug",                "U", "Plug"),
     ("Silencer",        "Silencer/Bug Screen", "Z", "Silencer/Bug Screen"),
     ("Volume Booster",  "Volume Booster",      "V", "Volume Booster"),
     ("FITTING",         "Tube & Fittings",     "N", "Tube & Fittings"),
@@ -388,7 +391,7 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
         flush=True,
     )
 
-    # Append single-family extra sources (Positioner→PVP, Solenoid Valve→SV) —
+    # Append single-family extra sources (Positioner→EPP, Solenoid Valve→SV) —
     # each its own file/family, merged into the same flat list the UI browses.
     acc_dir = data_dir / "Accessories"
     for esrc in EXTRA_ACCESSORY_SOURCES:

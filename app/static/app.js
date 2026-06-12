@@ -719,7 +719,7 @@ const ACCESSORY_RULESETS = {
   },
   Electric: {
     // EVP, LSB, MOR, CFLG, Gland, Plug, FCV, BKT, Direct Mount only.
-    // (THW = Pneumatic-only; SV/PVP/Volume Booster/Tube&Fittings/QEV blocked.)
+    // (THW = Pneumatic-only; SV/EPP/Volume Booster/Tube&Fittings/QEV blocked.)
     allow: ["EVP", "LSB", "MOR", "CFLG", "Gland", "Plug", "FCV", "BKT", "Direct Mount"],
     conditionals: ["cflgNeedsValve", "svExcludesPositioner"],
   },
