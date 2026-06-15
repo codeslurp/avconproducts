@@ -1005,14 +1005,18 @@ CONTROL_VALVE = ValveTypeConfig(
         (38, "Product Group"), (39, "Certification"), (40, "Thrust (kN)"),
         (41, "Torque (N·m)"), (42, "Mounting PCD"), (43, "Stroke (mm)"),
         (44, "Stem Diameter"),
-        # cols 45-48: AVCON's R2 drop named these 4 spec slots (were the generic
-        # "Additional Specification 1-4", dropped in R1). Consolidation normalises
+        # cols 45-49: AVCON's R2 drop named these spec slots (were the generic
+        # "Additional Specification 1-5", dropped in R1). Consolidation normalises
         # the series-varying source headers by position; see
         # tools/consolidate_control_valve.py SPEC_SLOTS.
+        # col 49 (2026-06-14 re-drop): 5012A/B split control pressure by fail-safe
+        # mode — col 48 holds the Fail-Safe-Close value, col 49 the Open value.
+        # Populated only on 5012A/B; blank on the other series.
         (45, "Max Shut-off Pressure"),
         (46, "Fail Safe Close / A-Port Close"),
         (47, "Fail Safe Open / B-Port Close"),
         (48, "Control Pressure"),
+        (49, "Control Pressure (Fail Safe Open)"),
         (55, "Bare Valve Weight (kg)"),
     ],
     # Recommended actuator (from AVCON's R2 drop, 2026-06-11). The Fail-Safe

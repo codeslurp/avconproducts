@@ -20,10 +20,20 @@ R2 keeps every bare code, row count, and *exposed* column value identical to R1
 "Additional Specification" slots (source positions 43-46) were given real,
 *series-varying* names -- 5012 uses "Fail Safe Close"/"Open"; the 3-way/double
 families use "Fail Safe A/B Port Close". Because the engine reads by position
-and a consolidated sheet has one header row, this script normalises those four
+and a consolidated sheet has one header row, this script normalises those
 slots to ONE canonical header set BY POSITION (see SPEC_SLOT_NAMES), guarded by
-the stable anchor columns (43 ~ shut-off, 46 ~ control). These four columns are
-now surfaced in the control-valve detail panel (catalog.py detail_columns 45-48).
+the stable anchor columns (43 ~ shut-off, 46 ~ control). These columns are
+now surfaced in the control-valve detail panel (catalog.py detail_columns 45-49).
+
+R2 re-drop (2026-06-14)
+-----------------------
+5012A/B split Control Pressure by fail-safe mode: source col 46 became the
+"...Fail Safe Close condition" value and source col 47 (previously the empty
+"Additional Specification 5") became the "...Open condition" value. We promote
+source position 47 to a 5th canonical spec slot, "Control Pressure (Fail Safe
+Open)" — populated only on 5012A/B, blank on the other series (their col 47 is a
+confirmed-empty Additional Spec slot). 5061A also relabelled its fail-safe
+headers Close/Open (cosmetic; handled by the same positional normalisation).
 
 It is deliberately strict: it FAILS (non-zero exit, no file written) if any
 canonical column is missing from a source sheet or the spec-slot anchors are not
@@ -46,18 +56,33 @@ CV_DIR = (
 SRC_DIR = CV_DIR / "source_R2"
 OUT = CV_DIR / "Control Valve Dashboard_V2.xlsx"
 
-# R2 named the first four "Additional Specification" slots (source positions
-# 43-46, 0-based) with real but series-varying labels. The engine reads by
-# position, so we collapse them to ONE canonical header set keyed by position.
-# Order MUST match source positions 43,44,45,46. Surfaced in the detail panel
-# via catalog.py CONTROL_VALVE.detail_columns (1-based cols 45-48).
-SPEC_SLOTS = (43, 44, 45, 46)
+# R2 named the "Additional Specification" slots (source positions 43+, 0-based)
+# with real but series-varying labels. The engine reads by position, so we
+# collapse them to ONE canonical header set keyed by position. Order MUST match
+# source positions 43,44,45,46,47. Surfaced in the detail panel via catalog.py
+# CONTROL_VALVE.detail_columns (1-based cols 45-49).
+#
+# 2026-06-14 re-drop: 5012A/B split Control Pressure by fail-safe mode — src 46
+# became "Control Pressure when Fail Safe Close condition" and src 47 (was the
+# empty "Additional Specification 5") became "...Open condition". All other
+# series keep a single generic Control Pressure at 46 and an empty slot at 47
+# (verified 0% filled), so promoting 47 to a real column only adds data for 5012
+# and leaves the rest blank — no data loss.
+SPEC_SLOTS = (43, 44, 45, 46, 47)
 SPEC_SLOT_NAMES = [
-    "Max Shut-off Pressure",           # src 43 (was Additional Specification 1)
-    "Fail Safe Close / A-Port Close",  # src 44 (was Additional Specification 2)
-    "Fail Safe Open / B-Port Close",   # src 45 (was Additional Specification 3)
-    "Control Pressure",                # src 46 (was Additional Specification 4)
+    "Max Shut-off Pressure",            # src 43 (was Additional Specification 1)
+    "Fail Safe Close / A-Port Close",   # src 44 (was Additional Specification 2)
+    "Fail Safe Open / B-Port Close",    # src 45 (was Additional Specification 3)
+    "Control Pressure",                 # src 46 (was Additional Specification 4)
+    "Control Pressure (Fail Safe Open)",  # src 47 (was Additional Specification 5);
+                                          # populated only on 5012A/B, blank elsewhere
 ]
+
+# Stable anchor positions present in EVERY series (used to guard the positional
+# rename — do NOT key these off SPEC_SLOTS, which now reaches the series-varying
+# col 47). 43 ~ shut-off, 46 ~ control pressure: both present in all six series.
+SPEC_ANCHOR_SHUTOFF = 43
+SPEC_ANCHOR_CONTROL = 46
 
 # Canonical data-column order = Dashboard_V1 'Control Valve' header row, positions
 # 1..58 (position 0 is the Power-Query name column, re-added per row below). The
@@ -77,10 +102,12 @@ CANON = [
     "Seat Leakage Test Pressure (barg)", "Seat Leakage Test Media",
     "Product Group", "Certification", "Thrust (KN)", "Torque (Nm)",
     "Mounting PCD", "Stroke (mm)", "Stem Diameter",
-    # positions 43-46: R2 named spec slots (normalised by position, see SPEC_SLOTS)
+    # positions 43-47: R2 named spec slots (normalised by position, see SPEC_SLOTS).
+    # Position 47 (formerly "Additional Specification 5") now carries the 5012A/B
+    # fail-safe-open control pressure; blank for the other series.
     "Max Shut-off Pressure", "Fail Safe Close / A-Port Close",
     "Fail Safe Open / B-Port Close", "Control Pressure",
-    "Additional Specification 5", "Additional Specification 6",
+    "Control Pressure (Fail Safe Open)", "Additional Specification 6",
     "Additional Specification 7", "Additional Specification 8",
     "Additional Specification 9", "Additional Specification 10",
     "Bare Valve Weight (kg)", "BOM Cost Rate (INR)",
@@ -156,16 +183,19 @@ def main() -> int:
         # "Additional Specification 1-4"; refuse to guess if the stable anchor
         # columns (43 ~ shut-off, 46 ~ control) aren't where we expect them.
         cols = list(df.columns)
-        a43 = cols[SPEC_SLOTS[0]].lower() if len(cols) > SPEC_SLOTS[-1] else ""
-        a46 = cols[SPEC_SLOTS[-1]].lower() if len(cols) > SPEC_SLOTS[-1] else ""
+        have_slots = len(cols) > SPEC_SLOTS[-1]
+        a43 = cols[SPEC_ANCHOR_SHUTOFF].lower() if have_slots else ""
+        a46 = cols[SPEC_ANCHOR_CONTROL].lower() if have_slots else ""
         legacy = a43.startswith("additional specification")
         anchored = "shut" in a43 and "control" in a46
         if not (legacy or anchored):
             failed = True
+            got43 = cols[SPEC_ANCHOR_SHUTOFF] if have_slots else "<out of range>"
+            got46 = cols[SPEC_ANCHOR_CONTROL] if have_slots else "<out of range>"
             print(
                 f"[FAIL] {tag}: spec-slot anchors not found at positions "
-                f"{SPEC_SLOTS[0]}/{SPEC_SLOTS[-1]} (got {cols[SPEC_SLOTS[0]]!r}/"
-                f"{cols[SPEC_SLOTS[-1]]!r}) — refusing to guess."
+                f"{SPEC_ANCHOR_SHUTOFF}/{SPEC_ANCHOR_CONTROL} (got {got43!r}/"
+                f"{got46!r}) — refusing to guess."
             )
             continue
         for pos, name in zip(SPEC_SLOTS, SPEC_SLOT_NAMES):
