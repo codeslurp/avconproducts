@@ -975,6 +975,12 @@ CONTROL_VALVE = ValveTypeConfig(
     # Caveat: Certification (39) is ~37% populated; its dropdown is empty for
     # valves with no cert data, but resolution is progressive so it never
     # dead-ends the picker (verified: app.js resolves on current picks).
+    # UPDATE 2026-06-14 (user request): re-added Flow Direction (19) after
+    # Characteristics — it was dropped in the 16→8 cut as "redundant for
+    # uniqueness", but the user wants it selectable. 100% populated; for 2-way
+    # series it's uniformly "Flow to Open" (single-option dropdown), only the
+    # 3-way series (5016/5066) offer Diverting/Mixing. Now 12 fields; monotonic,
+    # 0-ambiguous re-verified.
     cascade=[
         ("series",          5, "Series"),
         ("size",            6, "Valve Size"),
@@ -982,6 +988,7 @@ CONTROL_VALVE = ValveTypeConfig(
         ("trim_material",   8, "Trim Material"),
         ("seat_material",   9, "Seat Material"),
         ("characteristics", 10, "Characteristics"),
+        ("flow_direction",  19, "Flow Direction"),
         ("end_connection",  11, "End Connections"),
         ("face_to_face",    14, "Face to Face"),
         ("port_size",       15, "Port Size (mm)"),
