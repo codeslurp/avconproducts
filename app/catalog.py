@@ -528,6 +528,12 @@ BUTTERFLY_DOUBLE_OFFSET = ValveTypeConfig(
         ("body_material",   7,  "Body Material"),
         ("disc_material",   8,  "Disc Material"),
         ("seat_material",   9,  "Seat Material"),
+        # Stem Material (c22) added as a selector 2026-07-06 (user request). 100%
+        # populated, 7 distinct grades; it's the field that otherwise left two
+        # SKUs sharing all other picks (e.g. SS304 vs 17-4 PH), so surfacing it
+        # lets the picker resolve to a single catalogue. Placed with the other
+        # material dropdowns.
+        ("stem_material",   22, "Stem Material"),
         ("characteristics", 10, "Characteristics"),
         ("end_connection",  11, "End Connections"),
     ],
