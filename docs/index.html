@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20260614221713" />
+  <link rel="stylesheet" href="static/styles.css?v=20260705222203" />
 </head>
 <body>
   <header>
@@ -17,9 +17,9 @@
           <span class="title-line">Valve&ndash;Actuator&ndash;Accessory</span>
           <span class="title-line">Product Code Finder</span>
         </h1>
-        <p class="tagline">71,607 AVCON SKUs. Infinite Specs. One Click.</p>
+        <p class="tagline">73,371 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20260614221713" alt="AVCON Controls" class="brand-logo" />
+      <img src="static/avcon-logo.png?v=20260705222203" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
@@ -67,6 +67,18 @@
           <span class="option-text">
             <span class="option-title">Butterfly Valve (Centric)</span>
             <span class="option-meta">43,200 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="butterfly_double_offset">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="10" rx="7.5" ry="1.5"/><ellipse cx="12" cy="14" rx="7.5" ry="1.5"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Butterfly Valve (Double Offset)</span>
+            <span class="option-meta">1,764 SKUs</span>
           </span>
         </button>
         
@@ -585,6 +597,137 @@
               <label for="f-butterfly-end_connection">End Connections</label>
               
               <select id="f-butterfly-end_connection" name="end_connection" data-key="end_connection">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row actions">
+              <button type="button" class="reset-btn">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="result-panel">
+          <h2>Your Match</h2>
+          <div class="status">Pick Series to begin.</div>
+
+          <div class="codes" hidden>
+            <div class="code-card">
+              <div class="code-label">Bare Valve Code</div>
+              <div class="code-value primary-code">—</div>
+            </div>
+            
+            <div class="code-card">
+              <div class="code-label">Catalogue Code</div>
+              <div class="code-value secondary-code">—</div>
+            </div>
+            
+            
+            <div class="code-card">
+              <div class="code-label">BTO (N·m)</div>
+              <div class="code-value bto">—</div>
+            </div>
+            <div class="code-card">
+              <div class="code-label">FOS = BTO × 1.5</div>
+              <div class="code-value fos">—</div>
+            </div>
+            
+          </div>
+
+          <div class="alt-note" hidden></div>
+
+          <!-- Populated by JS only when the resolve response includes a
+               `paired_actuator` block. -->
+          <div class="paired-actuator" hidden></div>
+
+          <details class="details-wrap" hidden>
+            <summary>All attributes</summary>
+            <table class="details">
+              <tbody></tbody>
+            </table>
+          </details>
+        </section>
+      </main>
+    </article>
+    
+      
+        
+    <article class="valve-section" data-valve-type="butterfly_double_offset" data-category="Valves" hidden>
+      <div class="section-head">
+        <h2 class="section-title">
+          <span class="section-subgroup">Pune</span>
+          Butterfly Valve (Double Offset)
+        </h2>
+        <p class="section-meta">
+          1,764 valve SKUs
+        </p>
+      </div>
+
+      <main>
+        <section class="form-panel">
+          <h2>Selection</h2>
+          <form class="picker" autocomplete="off">
+            
+            <div class="row" data-field="series">
+              <label for="f-butterfly_double_offset-series">Series</label>
+              
+              <input id="f-butterfly_double_offset-series" name="series" data-key="series"
+                     list="butterfly_double_offset-series-options" autocomplete="off" spellcheck="false"
+                     placeholder="Type to search…" />
+              <datalist id="butterfly_double_offset-series-options"></datalist>
+              
+            </div>
+            
+            <div class="row" data-field="size">
+              <label for="f-butterfly_double_offset-size">Valve Size</label>
+              
+              <select id="f-butterfly_double_offset-size" name="size" data-key="size">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="body_material">
+              <label for="f-butterfly_double_offset-body_material">Body Material</label>
+              
+              <select id="f-butterfly_double_offset-body_material" name="body_material" data-key="body_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="disc_material">
+              <label for="f-butterfly_double_offset-disc_material">Disc Material</label>
+              
+              <select id="f-butterfly_double_offset-disc_material" name="disc_material" data-key="disc_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="seat_material">
+              <label for="f-butterfly_double_offset-seat_material">Seat Material</label>
+              
+              <select id="f-butterfly_double_offset-seat_material" name="seat_material" data-key="seat_material">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="characteristics">
+              <label for="f-butterfly_double_offset-characteristics">Characteristics</label>
+              
+              <select id="f-butterfly_double_offset-characteristics" name="characteristics" data-key="characteristics">
+                <option value="">— select —</option>
+              </select>
+              
+            </div>
+            
+            <div class="row" data-field="end_connection">
+              <label for="f-butterfly_double_offset-end_connection">End Connections</label>
+              
+              <select id="f-butterfly_double_offset-end_connection" name="end_connection" data-key="end_connection">
                 <option value="">— select —</option>
               </select>
               
@@ -1981,7 +2124,7 @@
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20260614221713"></script>
-  <script src="static/app.js?v=20260614221713"></script>
+  <script src="static/catalog-engine.js?v=20260705222203"></script>
+  <script src="static/app.js?v=20260705222203"></script>
 </body>
 </html>

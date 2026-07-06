@@ -496,6 +496,111 @@ BUTTERFLY_VALVE = ValveTypeConfig(
 )
 
 
+# Double-Offset (double-eccentric) butterfly — a SEPARATE family from the Centric
+# type above (different disc geometry, its own 4026B/4027B/4028B series). Ships
+# from a consolidated dashboard built by tools/consolidate_butterfly_double_offset.py:
+# the drop's SKU sheet (Pharma-style +1 layout: leading Power-Query "Name" col, so
+# Bare Valve Code is c2) plus size-based actuator SELECTION CHARTS. The tool joins
+# each SKU's valve size to the charts and bakes 9 recommended actuator models into
+# cols 60-68 (3 Double-Acting + 3 Spring-Return Fail-Close + 3 Fail-Open, at
+# 3.5/4/5.5 bar). No electric chart exists for double-offset, so no electric chips.
+# 18" SKUs (126 of 1,764) have no chart row -> no actuator recommendation (blank).
+BUTTERFLY_DOUBLE_OFFSET = ValveTypeConfig(
+    key="butterfly_double_offset",
+    label="Butterfly Valve (Double Offset)",
+    category="Valves",
+    subgroup="Pune",
+    file_substring="Butterfly Double Offset Dashboard",
+    path_contains="Pune",
+    sheet_marker="Butterfly Double Offset",
+    # +1 vs the Centric layout: a leading Power-Query "Name" column (c1) pushes
+    # Bare Valve Code to c2 and every other field down one (same shape as Pharma/
+    # Control Valve). FOS torque uses BTO at c40 (ETO/BTC/ETC/Run are empty).
+    primary_label="Bare Valve Code", primary_col=2,
+    secondary_label="Catalogue Code", secondary_col=3,
+    show_bto_fos=True, bto_col=40,
+    # Disc Type (c23), Port Size (c15), No. of Ports (c16) are empty across all
+    # 1,764 rows, so they're omitted from the cascade (a dropdown for them would
+    # dead-end every selection) — same reasoning as the Centric "Disc Type" note.
+    cascade=[
+        ("series",          5,  "Series"),
+        ("size",            6,  "Valve Size"),
+        ("body_material",   7,  "Body Material"),
+        ("disc_material",   8,  "Disc Material"),
+        ("seat_material",   9,  "Seat Material"),
+        ("characteristics", 10, "Characteristics"),
+        ("end_connection",  11, "End Connections"),
+    ],
+    # Cols 60-68 hold the actuator models baked in by the consolidation tool;
+    # they also feed the recommended-actuator chips (paired_actuators below).
+    paired_actuators=(
+        # Double Acting — 3 pressure variants (dedup by (target_type, model)
+        # collapses a model repeated across pressures to one chip).
+        PairedActuator(model_col=60, target_field="model",
+                       label="Pneumatic — Double Acting @ 3.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=61, target_field="model",
+                       label="Pneumatic — Double Acting @ 4 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=62, target_field="model",
+                       label="Pneumatic — Double Acting @ 5.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        # Spring Return Fail-Close — 3 pressure variants
+        PairedActuator(model_col=63, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 3.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=64, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 4 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=65, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 5.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        # Spring Return Fail-Open — 3 pressure variants
+        PairedActuator(model_col=66, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 3.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=67, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 4 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=68, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 5.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+    ),
+    detail_columns=[
+        (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),
+        (5, "Series"), (6, "Valve Size"), (7, "Body Material"),
+        (8, "Disc Material"), (9, "Seat Material"), (10, "Characteristics"),
+        (11, "End Connections"), (12, "Valve Type"), (13, "Design Standard"),
+        (14, "Face to Face"), (15, "Port Size"), (16, "No. of Ports"),
+        (17, "Valve Kv (m³/hr)"), (18, "Body Style"), (19, "Flow Direction"),
+        (20, "Bonnet Material"), (21, "Type of Bonnet"), (22, "Stem Material"),
+        (24, "Gland Packing"), (25, "Body Packing"),
+        (26, "Flange Dimensions"), (27, "Flange Drilling"),
+        (28, "Pressure Rating"), (29, "Operating Temp Range (°C)"),
+        (30, "Hardware"), (31, "Valve Paint"),
+        (32, "Testing Standard"), (33, "Leakage Class"),
+        (34, "Body Test Pressure (barg)"), (35, "Body Test Media"),
+        (36, "Seat Leakage Test Pressure (barg)"), (37, "Seat Leakage Test Media"),
+        (38, "Product Group"), (39, "Certification"),
+        (40, "BTO"), (41, "ETO"), (42, "BTC"), (43, "ETC"), (44, "Run"),
+        (45, "Top PCD"), (46, "Stem Shape"), (47, "Stem Dimension"),
+        (48, "Stem Orientation"), (49, "Stem Protrusion (mm)"),
+        (50, "Additional Specification 1"), (51, "Additional Specification 2"),
+        (52, "Additional Specification 3"), (53, "Additional Specification 4"),
+        (54, "Additional Specification 5"), (55, "Bare Valve Weight (kg)"),
+        # Actuator models baked in from the size-based selection charts.
+        (60, "Double Acting @ 3.5 bar"), (61, "Double Acting @ 4 bar"),
+        (62, "Double Acting @ 5.5 bar"),
+        (63, "Spring Return Fail-Close @ 3.5 bar"),
+        (64, "Spring Return Fail-Close @ 4 bar"),
+        (65, "Spring Return Fail-Close @ 5.5 bar"),
+        (66, "Spring Return Fail-Open @ 3.5 bar"),
+        (67, "Spring Return Fail-Open @ 4 bar"),
+        (68, "Spring Return Fail-Open @ 5.5 bar"),
+    ],
+)
+
+
 PHARMA_VALVE = ValveTypeConfig(
     key="pharma",
     label="Pharma Valve",
@@ -1130,6 +1235,7 @@ MANUAL_LEVER = ValveTypeConfig(
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
     BUTTERFLY_VALVE,
+    BUTTERFLY_DOUBLE_OFFSET,
     PHARMA_VALVE,
     CONTROL_VALVE,
     PNEUMATIC_RACK_PINION,
