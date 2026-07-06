@@ -7,8 +7,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 from catalog import build_category_blocks  # noqa: E402
 
 
-def _sec(key, category, subgroup):
-    return {"key": key, "category": category, "subgroup": subgroup, "row_count": 1}
+def _sec(key, category, subgroup, group=None):
+    return {"key": key, "category": category, "subgroup": subgroup,
+            "group": group, "row_count": 1}
 
 
 class TestBuildCategoryBlocks(unittest.TestCase):
@@ -45,6 +46,29 @@ class TestBuildCategoryBlocks(unittest.TestCase):
         planned = {"Valves": [("Mumbai", "Data pending")]}
         subs = build_category_blocks(sections, planned)[0]["subgroups"]
         self.assertEqual([s["name"] for s in subs], ["Pune", "Mumbai"])
+
+    def test_blank_subgroups_under_different_groups_do_not_merge(self):
+        # Pune-group families with no subgroup must NOT merge with a Mumbai-group
+        # family that also has no subgroup (keyed by (group, subgroup)).
+        sections = [
+            _sec("ball", "Valves", None, group="Pune"),
+            _sec("bf", "Valves", "Butterfly Valve", group="Pune"),
+            _sec("bf_do", "Valves", "Butterfly Valve", group="Pune"),
+            _sec("control", "Valves", None, group="Pune"),
+            _sec("pharma", "Valves", "Mumbai"),
+        ]
+        subs = build_category_blocks(sections, {})[0]["subgroups"]
+        # blocks: ("Pune","") [ball,control], ("Pune","Butterfly Valve") [bf,bf_do],
+        #         ("","Mumbai") [pharma]
+        blank_pune = [s for s in subs if s["name"] == "" and s["group"] == "Pune"]
+        self.assertEqual(len(blank_pune), 1)
+        self.assertEqual([m["key"] for m in blank_pune[0]["members"]], ["ball", "control"])
+        bfly = [s for s in subs if s["name"] == "Butterfly Valve"]
+        self.assertEqual(len(bfly), 1)
+        self.assertEqual(bfly[0]["group"], "Pune")
+        self.assertEqual([m["key"] for m in bfly[0]["members"]], ["bf", "bf_do"])
+        mumbai = [s for s in subs if s["name"] == "Mumbai"]
+        self.assertEqual([m["key"] for m in mumbai[0]["members"]], ["pharma"])
 
     def test_planned_category_absent_from_sections_is_skipped(self):
         sections = [_sec("rp", "Actuators", "Pneumatic")]

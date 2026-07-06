@@ -164,7 +164,11 @@ BALL_VALVE = ValveTypeConfig(
     key="ball",
     label="Ball Valve",
     category="Valves",
-    subgroup="Pune",
+    # Pune is a PARENT group (like "Pneumatic" in Actuators). Single-type Pune
+    # families sit directly under it (no subgroup); the two Butterfly variants
+    # share a "Butterfly Valve" subgroup so they nest instead of repeating the
+    # family name twice at the top level. See BUTTERFLY_VALVE / BUTTERFLY_DOUBLE_OFFSET.
+    group="Pune",
     file_substring="Ball Valve",
     sheet_marker="BV NEW CODEING",
     # Recommended actuators per SKU. As of 2026-05-27, the richer source is
@@ -336,9 +340,14 @@ BALL_VALVE = ValveTypeConfig(
 
 BUTTERFLY_VALVE = ValveTypeConfig(
     key="butterfly",
-    label="Butterfly Valve (Centric)",
+    # Nested under the "Butterfly Valve" subgroup (group Pune), so the menu reads
+    # Pune › Butterfly Valve › Centric / Double Offset instead of two top-level
+    # "Butterfly Valve (…)" rows. Label is just the variant; the subgroup supplies
+    # the "Butterfly Valve" prefix (and the result-panel heading shows both).
+    label="Centric",
     category="Valves",
-    subgroup="Pune",
+    group="Pune",
+    subgroup="Butterfly Valve",
     file_substring="Butterfly Valve",
     sheet_marker="BFV NEW CODEING",
     # NOTE: catalog has a "Disc Type" column (V/22) but it is empty in all
@@ -507,9 +516,12 @@ BUTTERFLY_VALVE = ValveTypeConfig(
 # 18" SKUs (126 of 1,764) have no chart row -> no actuator recommendation (blank).
 BUTTERFLY_DOUBLE_OFFSET = ValveTypeConfig(
     key="butterfly_double_offset",
-    label="Butterfly Valve (Double Offset)",
+    # Sibling of BUTTERFLY_VALVE under the "Butterfly Valve" subgroup (group Pune);
+    # label is just the variant so the menu reads Pune › Butterfly Valve › Double Offset.
+    label="Double Offset",
     category="Valves",
-    subgroup="Pune",
+    group="Pune",
+    subgroup="Butterfly Valve",
     file_substring="Butterfly Double Offset Dashboard",
     path_contains="Pune",
     sheet_marker="Butterfly Double Offset",
@@ -1053,7 +1065,7 @@ CONTROL_VALVE = ValveTypeConfig(
     key="control_valve",
     label="Control Valve",
     category="Valves",
-    subgroup="Pune",
+    group="Pune",
     file_substring="Control Valve Dashboard",
     path_contains="Pune",
     sheet_marker="Control Valve",
@@ -1703,26 +1715,30 @@ def build_category_blocks(sections, planned_subgroups=None):
     and the picker only exists when the category has at least one family.
     """
     planned_subgroups = planned_subgroups or {}
-    categories: "OrderedDict[str, OrderedDict[str, list]]" = OrderedDict()
+    # Key each block by (group, subgroup), not subgroup name alone: two families
+    # can share a blank subgroup under DIFFERENT parent groups (e.g. Ball/Control
+    # sit directly under group "Pune" with no subgroup) and must NOT merge into
+    # one block. The template still renders group headers + nested subgroups.
+    categories: "OrderedDict[str, OrderedDict[tuple, list]]" = OrderedDict()
     for sec in sections:
         cat_key = sec["category"]
         if cat_key not in categories:
             categories[cat_key] = OrderedDict()
+        grp = sec.get("group") or ""
         sub = sec.get("subgroup") or ""
-        categories[cat_key].setdefault(sub, []).append(sec)
+        categories[cat_key].setdefault((grp, sub), []).append(sec)
 
     blocks = []
-    for cat_name, subgroups in categories.items():
+    for cat_name, groups in categories.items():
         block_subgroups = [
-            # `group` (parent heading) is shared by all members of a subgroup;
-            # take it from the first member so the template can render the
-            # two-level Pneumatic › Rotary / Linear nesting.
-            {"name": name, "members": members, "placeholder": "",
-             "group": (members[0].get("group") if members else "") or ""}
-            for name, members in subgroups.items()
+            {"name": sub, "members": members, "placeholder": "", "group": grp}
+            for (grp, sub), members in groups.items()
         ]
+        # Planned (empty) subgroups are superseded once ANY loaded family uses
+        # that subgroup name, regardless of its parent group.
+        present_names = {sub for (_grp, sub) in groups.keys()}
         for sub_name, placeholder in planned_subgroups.get(cat_name, []):
-            if sub_name in subgroups:
+            if sub_name in present_names:
                 continue  # already has real members
             block_subgroups.append(
                 {"name": sub_name, "members": [], "placeholder": placeholder,

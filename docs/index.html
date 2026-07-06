@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20260705234142" />
+  <link rel="stylesheet" href="static/styles.css?v=20260706111103" />
 </head>
 <body>
   <header>
@@ -19,7 +19,7 @@
         </h1>
         <p class="tagline">73,371 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20260705234142" alt="AVCON Controls" class="brand-logo" />
+      <img src="static/avcon-logo.png?v=20260706111103" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
@@ -40,13 +40,13 @@
         
         
         
+        <div class="type-picker-group">Pune</div>
         
         
-        <div class="type-picker-subheader">Pune</div>
         
         
         
-        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="ball">
+        <button type="button" class="type-picker-option type-picker-option--nested" role="menuitem" data-valve-type="ball">
           <span class="option-icon" aria-hidden="true">
             
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
@@ -58,31 +58,7 @@
           </span>
         </button>
         
-        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="butterfly">
-          <span class="option-icon" aria-hidden="true">
-            
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-            
-          </span>
-          <span class="option-text">
-            <span class="option-title">Butterfly Valve (Centric)</span>
-            <span class="option-meta">43,200 SKUs</span>
-          </span>
-        </button>
-        
-        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="butterfly_double_offset">
-          <span class="option-icon" aria-hidden="true">
-            
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="10" rx="7.5" ry="1.5"/><ellipse cx="12" cy="14" rx="7.5" ry="1.5"/></svg>
-            
-          </span>
-          <span class="option-text">
-            <span class="option-title">Butterfly Valve (Double Offset)</span>
-            <span class="option-meta">1,764 SKUs</span>
-          </span>
-        </button>
-        
-        <button type="button" class="type-picker-option" role="menuitem" data-valve-type="control_valve">
+        <button type="button" class="type-picker-option type-picker-option--nested" role="menuitem" data-valve-type="control_valve">
           <span class="option-icon" aria-hidden="true">
             
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 7v10l7-5z"/><path d="M19 7v10l-7-5z"/><line x1="12" y1="2" x2="12" y2="6.5"/><line x1="9" y1="2" x2="15" y2="2"/></svg>
@@ -91,6 +67,39 @@
           <span class="option-text">
             <span class="option-title">Control Valve</span>
             <span class="option-meta">17,681 SKUs</span>
+          </span>
+        </button>
+        
+        
+        
+        
+        
+        
+        <div class="type-picker-subheader type-picker-subheader--nested">Butterfly Valve</div>
+        
+        
+        
+        <button type="button" class="type-picker-option type-picker-option--nested" role="menuitem" data-valve-type="butterfly">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="7.5" ry="1.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Centric</span>
+            <span class="option-meta">43,200 SKUs</span>
+          </span>
+        </button>
+        
+        <button type="button" class="type-picker-option type-picker-option--nested" role="menuitem" data-valve-type="butterfly_double_offset">
+          <span class="option-icon" aria-hidden="true">
+            
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="10" rx="7.5" ry="1.5"/><ellipse cx="12" cy="14" rx="7.5" ry="1.5"/></svg>
+            
+          </span>
+          <span class="option-text">
+            <span class="option-title">Double Offset</span>
+            <span class="option-meta">1,764 SKUs</span>
           </span>
         </button>
         
@@ -385,7 +394,7 @@
     <article class="valve-section" data-valve-type="ball" data-category="Valves" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          <span class="section-subgroup">Pune</span>
+          <span class="section-subgroup">Pune None</span>
           Ball Valve
         </h2>
         <p class="section-meta">
@@ -525,8 +534,8 @@
     <article class="valve-section" data-valve-type="butterfly" data-category="Valves" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          <span class="section-subgroup">Pune</span>
-          Butterfly Valve (Centric)
+          <span class="section-subgroup">Pune Butterfly Valve</span>
+          Centric
         </h2>
         <p class="section-meta">
           43,200 valve SKUs
@@ -656,8 +665,8 @@
     <article class="valve-section" data-valve-type="butterfly_double_offset" data-category="Valves" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          <span class="section-subgroup">Pune</span>
-          Butterfly Valve (Double Offset)
+          <span class="section-subgroup">Pune Butterfly Valve</span>
+          Double Offset
         </h2>
         <p class="section-meta">
           1,764 valve SKUs
@@ -927,7 +936,7 @@
     <article class="valve-section" data-valve-type="control_valve" data-category="Valves" hidden>
       <div class="section-head">
         <h2 class="section-title">
-          <span class="section-subgroup">Pune</span>
+          <span class="section-subgroup">Pune None</span>
           Control Valve
         </h2>
         <p class="section-meta">
@@ -2133,7 +2142,7 @@
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20260705234142"></script>
-  <script src="static/app.js?v=20260705234142"></script>
+  <script src="static/catalog-engine.js?v=20260706111103"></script>
+  <script src="static/app.js?v=20260706111103"></script>
 </body>
 </html>

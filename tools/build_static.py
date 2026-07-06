@@ -126,22 +126,24 @@ def _section_summary(key: str, catalog) -> dict:
 
 
 def _category_blocks(sections: list[dict]) -> list[dict]:
+    # Key by (group, subgroup) — see catalog.build_category_blocks for why blank
+    # subgroups under different parent groups must stay separate blocks.
     categories: "OrderedDict[str, dict]" = OrderedDict()
     for sec in sections:
         cat_key = sec["category"]
         if cat_key not in categories:
             categories[cat_key] = {"name": cat_key, "subgroups": OrderedDict()}
-        sub = sec["subgroup"] or ""
-        categories[cat_key]["subgroups"].setdefault(sub, []).append(sec)
+        grp = sec.get("group") or ""
+        sub = sec.get("subgroup") or ""
+        categories[cat_key]["subgroups"].setdefault((grp, sub), []).append(sec)
 
     out = []
     for cat in categories.values():
         out.append({
             "name": cat["name"],
             "subgroups": [
-                {"name": k, "members": v,
-                 "group": (v[0].get("group") if v else "") or ""}
-                for k, v in cat["subgroups"].items()
+                {"name": sub, "members": v, "group": grp}
+                for (grp, sub), v in cat["subgroups"].items()
             ],
         })
     return out
