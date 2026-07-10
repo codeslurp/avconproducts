@@ -162,14 +162,24 @@ class ValveTypeConfig:
 
 BALL_VALVE = ValveTypeConfig(
     key="ball",
-    label="Ball Valve",
+    # Nested under a "Ball Valve" subgroup (group Pune), so the menu reads
+    # Pune › Ball Valve › Metal / Plastic instead of "Ball Valve" and
+    # "Plastic Ball Valve" as two top-level rows. Same nesting pattern as the
+    # Butterfly variants. Label is just the variant ("Metal"); the subgroup
+    # supplies the "Ball Valve" prefix (result-panel heading shows both).
+    # key stays "ball" so existing ?type=ball deep-links keep working.
+    label="Metal",
     category="Valves",
-    # Pune is a PARENT group (like "Pneumatic" in Actuators). Single-type Pune
-    # families sit directly under it (no subgroup); the two Butterfly variants
-    # share a "Butterfly Valve" subgroup so they nest instead of repeating the
-    # family name twice at the top level. See BUTTERFLY_VALVE / BUTTERFLY_DOUBLE_OFFSET.
     group="Pune",
-    file_substring="Ball Valve",
+    subgroup="Ball Valve",
+    # file_substring is the FULL metal-master stem, NOT just "Ball Valve":
+    # find_catalog_file() picks the most-recently-modified name match, and the
+    # sibling "Ball Valve Plastic Data Sheet Structure" file is newer — a bare
+    # "Ball Valve" substring would let the plastic file hijack this metal config
+    # (its sheets carry no "BV NEW CODEING" marker → load crash). path_contains
+    # pins it to Pune for good measure.
+    file_substring="Ball Valve Data Sheet Structure NEW OG",
+    path_contains="Pune",
     sheet_marker="BV NEW CODEING",
     # Recommended actuators per SKU. As of 2026-05-27, the richer source is
     # the dashboard file's "Ball Valve Actuator combination" sheet — it carries
@@ -335,6 +345,84 @@ BALL_VALVE = ValveTypeConfig(
             columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
         ),
     ),
+)
+
+
+BALL_VALVE_PLASTIC = ValveTypeConfig(
+    key="ball_plastic",
+    # Sibling of BALL_VALVE under the "Ball Valve" subgroup (group Pune); label is
+    # just the variant so the menu reads Pune › Ball Valve › Metal / Plastic.
+    label="Plastic",
+    category="Valves",
+    group="Pune",
+    subgroup="Ball Valve",
+    # Series 2072K (U-PVC / C-PVC / PPH), 135 SKUs. Column layout is POSITIONALLY
+    # IDENTICAL to the metal master, so the cascade/detail mirror BALL_VALVE.
+    # sheet_marker "BV PLASTIC CODING" matches "2072K BV PLASTIC CODING" and any
+    # future "<series> BV PLASTIC CODING" sheet. path_contains pins to Pune.
+    file_substring="Ball Valve Plastic",
+    path_contains="Pune",
+    sheet_marker="BV PLASTIC CODING",
+    # No FOS card: BTO (c39) is empty across all 135 rows, so torque/Factor-of-
+    # Safety can't be computed — showing the card would leave it permanently blank.
+    show_bto_fos=False,
+    # Recommended actuators are baked into the sheet (unlike the metal master,
+    # which enriches them from a separate dashboard). Plastic has only Spring-
+    # Return Fail-Close (c49-51) + Fail-Open (c52-54) at 3.5/4/5.5 bar, all ACT-*
+    # (pneumatic R&P), plus one Electric column (c55), all EA-* (electric rotary).
+    # No Double-Acting columns exist. Dedup by (target_type, model) collapses a
+    # model repeated across pressures to a single chip.
+    paired_actuators=(
+        PairedActuator(model_col=49, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 3.5 bar"),
+        PairedActuator(model_col=50, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 4 bar"),
+        PairedActuator(model_col=51, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 5.5 bar"),
+        PairedActuator(model_col=52, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 3.5 bar"),
+        PairedActuator(model_col=53, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 4 bar"),
+        PairedActuator(model_col=54, target_type="pneumatic_rp", target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 5.5 bar"),
+        PairedActuator(model_col=55, target_type="electrical_rotary", target_field="model",
+                       label="Electric"),
+    ),
+    cascade=[
+        ("series",          4,  "Series"),
+        ("size",            5,  "Valve Size"),
+        ("body_material",   6,  "Body Material"),
+        ("ball_material",   7,  "Ball Material"),
+        ("seat_material",   8,  "Seat Material"),
+        ("characteristics", 9,  "Characteristics"),
+        ("end_connection", 10,  "End Connections"),
+        ("ball_type",      22,  "Ball Type"),
+    ],
+    detail_columns=[
+        (1, "Bare Valve Code"), (2, "Catalogue Code"), (3, "Make"),
+        (11, "Valve Type"), (12, "Design Standard"), (13, "Face to Face"),
+        (14, "Port Size"), (15, "No. of Ports"), (16, "Valve Kv (m³/hr)"),
+        (17, "Body Style"), (18, "Flow Direction"), (19, "End Piece Material"),
+        (20, "Type of Bonnet"), (21, "Stem Material"),
+        (23, "O-Ring"), (24, "Body Packing"),
+        (25, "Flange Dimensions"), (26, "Flange Drilling"),
+        (27, "Pressure Rating"), (28, "Operating Temp Range (°C)"),
+        (29, "Hardware"), (30, "Valve Paint"),
+        (31, "Testing Standard"), (32, "Leakage Class"),
+        (33, "Body Test Pressure (barg)"), (34, "Body Test Media"),
+        (35, "Seat Leakage Test Pressure (barg)"), (36, "Seat Leakage Test Media"),
+        (37, "Product Group"), (38, "Certification"),
+        (44, "Top PCD"), (45, "Stem Shape"), (46, "Stem Dimension"),
+        (47, "Stem Orientation"), (48, "Stem Protrusion (mm)"),
+        # Baked-in recommended actuators (also drive the chips above).
+        (49, "Spring Return Fail-Close @ 3.5 bar"),
+        (50, "Spring Return Fail-Close @ 4 bar"),
+        (51, "Spring Return Fail-Close @ 5.5 bar"),
+        (52, "Spring Return Fail-Open @ 3.5 bar"),
+        (53, "Spring Return Fail-Open @ 4 bar"),
+        (54, "Spring Return Fail-Open @ 5.5 bar"),
+        (55, "Electric Actuator"),
+    ],
 )
 
 
@@ -1252,6 +1340,7 @@ MANUAL_LEVER = ValveTypeConfig(
 
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
+    BALL_VALVE_PLASTIC,
     BUTTERFLY_VALVE,
     BUTTERFLY_DOUBLE_OFFSET,
     PHARMA_VALVE,
