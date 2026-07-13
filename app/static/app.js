@@ -60,6 +60,7 @@ class Picker {
     catch (_e) { ov = {}; }
     this.cascadeOverrides = ov;
     this.overrideKey = this.form.dataset.cascadeOverrideKey || (this.fieldKeys[0] || "");
+    this.activeOrder = this.fieldKeys;           // default order
     this.activeKeys = new Set(this.fieldKeys);   // default: all visible
 
     this.validOptions = new Map();
@@ -121,7 +122,7 @@ class Picker {
      keys from the controlling field's value; a series with an override shows
      only its listed keys, all others show every field. */
   _recomputeActiveKeys() {
-    let keys = this.fieldKeys;                      // default: all
+    let keys = this.fieldKeys;                      // default: all, base order
     if (this.overrideKey && Object.keys(this.cascadeOverrides).length) {
       const field = this.fields.find((f) => f.dataset.key === this.overrideKey);
       const val = field ? String(field.value || "").trim() : "";
@@ -129,6 +130,7 @@ class Picker {
         if (val && val.startsWith(prefix)) { keys = this.cascadeOverrides[prefix]; break; }
       }
     }
+    this.activeOrder = keys;                        // ordered list (override order)
     this.activeKeys = new Set(keys);
   }
 
@@ -138,6 +140,14 @@ class Picker {
       const rowEl = f.closest(".row");
       if (rowEl) rowEl.classList.toggle("field-hidden", !active);
       if (!active && f.value) f.value = "";        // clear hidden field's value
+    }
+    // Reorder visible rows to the override order (hidden rows stay display:none
+    // wherever they sit). No-op for the default all-fields base order.
+    const actionsRow = this.form.querySelector(".row.actions");
+    for (const key of this.activeOrder) {
+      const f = this.fields.find((x) => x.dataset.key === key);
+      const rowEl = f && f.closest(".row");
+      if (rowEl) this.form.insertBefore(rowEl, actionsRow);
     }
   }
 

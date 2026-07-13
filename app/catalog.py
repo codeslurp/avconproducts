@@ -1226,18 +1226,41 @@ CONTROL_VALVE = ValveTypeConfig(
         ("end_connection",  11, "End Connections"),
         ("face_to_face",    14, "Face to Face"),
         ("port_size",       15, "Port Size (mm)"),
+        ("valve_kv",        17, "Valve Kv (m³/hr)"),
         ("bonnet_type",     21, "Type Of Bonnet"),
         ("certification",   39, "Certification"),
     ],
-    # Per-series cascade: 5016A/5016B show only these 6 fields (user request
-    # 2026-07-12). Filtering the base cascade order to these keys already yields
-    # the requested order. Verified 0-ambiguous for both 5016A and 5016B.
+    # Per-series cascade field set + ORDER (user request 2026-07-12). The
+    # override list is the exact ordered list of visible fields; app.js reorders
+    # the dropdowns to match. All sets verified 0-ambiguous per series. 5061A/
+    # 5066A are pinned to the historical 12 fields so adding valve_kv to the base
+    # cascade (for 5012) does not leak an extra dropdown into them.
     cascade_override_key="series",
     cascade_overrides={
+        # 5016A/5016B: 6 fields.
         "5016A": ["series", "body_material", "trim_material",
                   "characteristics", "end_connection", "face_to_face"],
         "5016B": ["series", "body_material", "trim_material",
                   "characteristics", "end_connection", "face_to_face"],
+        # 5012A/5012B: 12 fields — drops Valve Size, adds Valve Kv; Flow
+        # Direction moved after Port Size / Valve Kv (this exact order).
+        "5012A": ["series", "body_material", "trim_material", "seat_material",
+                  "characteristics", "end_connection", "face_to_face",
+                  "port_size", "valve_kv", "flow_direction", "bonnet_type",
+                  "certification"],
+        "5012B": ["series", "body_material", "trim_material", "seat_material",
+                  "characteristics", "end_connection", "face_to_face",
+                  "port_size", "valve_kv", "flow_direction", "bonnet_type",
+                  "certification"],
+        # 5061A/5066A: unchanged historical 12 (base order, no Valve Kv).
+        "5061A": ["series", "size", "body_material", "trim_material",
+                  "seat_material", "characteristics", "flow_direction",
+                  "end_connection", "face_to_face", "port_size", "bonnet_type",
+                  "certification"],
+        "5066A": ["series", "size", "body_material", "trim_material",
+                  "seat_material", "characteristics", "flow_direction",
+                  "end_connection", "face_to_face", "port_size", "bonnet_type",
+                  "certification"],
     },
     detail_columns=[
         (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),

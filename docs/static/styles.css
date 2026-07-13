@@ -215,6 +215,9 @@ section h2 {
 
 /* ---------- Form rows ---------- */
 .row { margin-bottom: 14px; }
+/* Per-series cascade: a field hidden for the selected series (e.g. 5016 shows
+   only 6 of the 12 Control Valve fields). */
+.row.field-hidden { display: none; }
 .row label {
   display: block;
   font-size: 13px;
