@@ -124,31 +124,35 @@ SOURCES = [
     ("Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx", "5066A CV ", "5066A"),
 ]
 
-# R4 re-drop for 5016A/5016B (2026-07-05). AVCON shipped this file with TWO
-# tabs: a "clean" main tab that applies two standard corrections (Face-to-Face
-# DIN EN 558 -> ISA 75.08.01; Leakage Class IV -> Class VI Bubble Tight) but
-# BLANKS the Fail-Safe / spec columns, and a "working" tab that carries the same
-# corrections AND retains the Fail-Safe MSD-actuator data. We ingest the WORKING
-# tab so the MSD Fail-Safe recommendation is preserved (verified: main tab drops
-# it -> a regression). The R4 file already sits in Dashboard_V2 shape (a leading
-# name column, then near-canonical headers), so we map it BY NAME rather than by
-# position. Two differences from CANON, handled explicitly in _r4_5016_frames:
-#   • working "Fail Safe Close"/"Fail Safe Open" (both hold MSD-* models in R4)
-#     map to canonical "Fail Safe Close / A-Port Close" / "...Open / B-Port
-#     Close". In R4 BOTH slots name an MSD model (R2 held a pressure in the Open
-#     slot), so the "Normally Open" MSD card now populates for 5016 too.
-#   • R4 does NOT carry the numeric "Max Shut-off Pressure" / "Control Pressure"
-#     values (neither tab does), so those canonical slots are left blank for
-#     5016 — the only spec lost vs the R2 consolidation. Flagged in the report.
-R4_FILE = "Control Valve Data for New Structure 5016A-B_24.12.2025_R4.xlsx"
-R4_SHEET = "working"
-R4_TAGS = ("5016A", "5016B")  # split from the R4 name column (col 0)
-# CANON spec-slot names that R4's working tab does NOT provide verbatim, and how
-# to fill each from the working tab (None -> leave blank).
+# R4 re-drop for 5016A/5016B (2026-07-05), then RE-DROPPED as "R4_Updated"
+# (2026-07-12). The original R4 shipped a single "working" tab with a leading
+# name column and TWO Fail-Safe MSD columns ("Fail Safe Close"/"Fail Safe Open").
+# R4_Updated reshapes the SAME 1920 SKUs into two per-series tabs ("5016A CV "/
+# "5016B CV", no leading name column) plus a "Logic" documentation sheet.
+# Verified by cell-level diff (2026-07-12): across the 53 shared columns NOTHING
+# changed. The only substantive changes are in the Fail-Safe spec region:
+#   • Old "Fail Safe Close" (MSD models) was renamed to "A Port Close / B Port
+#     Close" — values IDENTICAL (verified equal on all 1920 rows). We map it to
+#     canonical "Fail Safe Close / A-Port Close", so the close-side MSD card is
+#     unchanged.
+#   • Old "Fail Safe Open" (MSD models) was REMOVED — the new file blanks that
+#     slot (now a generic empty "Additional Specification 2"; its MSD values
+#     appear in no new column). Per user direction (2026-07-12: "ingest as-is,
+#     trust AVCON") we leave canonical "Fail Safe Open / B-Port Close" blank.
+#     Consequence: the "Normally Open" MSD recommended-actuator card no longer
+#     populates for 5016 (it did under the original R4). This is intentional.
+#   • As before, R4 carries no numeric "Max Shut-off Pressure" / "Control
+#     Pressure" values, so those canonical slots stay blank for 5016.
+R4_FILE = "Control Valve Data for New Structure 5016A-B_24.12.2025_R4_Updated.xlsx"
+# per-series tab name -> series tag (R4_Updated has one tab per series, no
+# leading name column; the sheet name carries the series).
+R4_SHEETS = {"5016A CV ": "5016A", "5016B CV": "5016B"}
+# CANON spec-slot names that R4_Updated does NOT provide verbatim, and how to
+# fill each from the per-series tab (None -> leave blank).
 R4_SPEC_MAP = {
     "Max Shut-off Pressure": None,
-    "Fail Safe Close / A-Port Close": "Fail Safe Close",
-    "Fail Safe Open / B-Port Close": "Fail Safe Open",
+    "Fail Safe Close / A-Port Close": "A Port Close / B Port Close",
+    "Fail Safe Open / B-Port Close": None,   # removed in R4_Updated (was "Fail Safe Open")
     "Control Pressure": None,
     "Control Pressure (Fail Safe Open)": None,
 }
@@ -186,55 +190,65 @@ def _baseline_v1() -> pd.DataFrame | None:
 
 
 def _r4_5016_frames(base_codes: set[str] | None) -> tuple[list[pd.DataFrame], bool]:
-    """Build the 5016A/5016B canonical frames from the R4 working tab.
+    """Build the 5016A/5016B canonical frames from the R4_Updated per-series tabs.
 
-    Returns (frames, ok). ok is False if a canonical column is missing or the
-    expected tags aren't found — the caller aborts without writing V2, same as
-    the R2 path. Prints per-series report lines in the SOURCES-loop format."""
+    R4_Updated ships one tab per series ("5016A CV "/"5016B CV") with NO leading
+    name column (the sheet name carries the series), so we read each tab directly
+    rather than splitting a single working tab by a tag column.
+
+    Returns (frames, ok). ok is False if an expected tab or canonical column is
+    missing — the caller aborts without writing V2, same as the R2 path. Prints
+    per-series report lines in the SOURCES-loop format."""
     path = CV_DIR / R4_FILE
     if not path.is_file():
         print(f"[FAIL] 5016 R4 file not found: {path}")
         return [], False
-
-    df = pd.read_excel(path, sheet_name=R4_SHEET, header=0, dtype=object)
-    df.columns = [_norm(c) for c in df.columns]
-    name_col = df.columns[0]  # leading Power-Query name column ("5016A CV "/"5016B CV")
-    df = df[df["Bare Valve Code"].notna()]
-    df = df[df["Bare Valve Code"].astype(str).str.strip().ne("")]
-    df = df[df["Bare Valve Code"].astype(str).str.strip() != "Bare Valve Code"]
-
-    # Every canonical column must be present verbatim EXCEPT the spec slots we
-    # remap/blank via R4_SPEC_MAP. Refuse to guess if a base column is missing.
-    needed = [c for c in CANON if c not in R4_SPEC_MAP]
-    missing = [c for c in needed if c not in df.columns]
-    if missing:
-        print(f"[FAIL] 5016 R4: missing canonical columns: {missing}")
-        return [], False
-    src_missing = [s for s in R4_SPEC_MAP.values() if s and s not in df.columns]
-    if src_missing:
-        print(f"[FAIL] 5016 R4: spec-source columns absent: {src_missing}")
+    try:
+        xls = pd.ExcelFile(path)
+    except Exception as e:  # locked, corrupt, etc.
+        print(f"[FAIL] 5016 R4: cannot open {path.name}: {e}")
         return [], False
 
     frames: list[pd.DataFrame] = []
-    for tag in R4_TAGS:
-        sub = df[df[name_col].astype(str).str.strip().str.startswith(tag)]
-        if sub.empty:
-            print(f"[FAIL] 5016 R4: no rows for tag {tag!r} in name column.")
+    for sheet, tag in R4_SHEETS.items():
+        if sheet not in xls.sheet_names:
+            print(f"[FAIL] 5016 R4: expected tab {sheet!r} not found "
+                  f"(have {xls.sheet_names}).")
             return [], False
+
+        df = pd.read_excel(xls, sheet_name=sheet, header=0, dtype=object)
+        df.columns = [_norm(c) for c in df.columns]
+        df = df[df["Bare Valve Code"].notna()]
+        df = df[df["Bare Valve Code"].astype(str).str.strip().ne("")]
+        df = df[df["Bare Valve Code"].astype(str).str.strip() != "Bare Valve Code"]
+
+        # Every canonical column must be present verbatim EXCEPT the spec slots we
+        # remap/blank via R4_SPEC_MAP. Refuse to guess if a base column is missing.
+        needed = [c for c in CANON if c not in R4_SPEC_MAP]
+        missing = [c for c in needed if c not in df.columns]
+        if missing:
+            print(f"[FAIL] 5016 R4 {tag}: missing canonical columns: {missing}")
+            return [], False
+        src_missing = [s for s in R4_SPEC_MAP.values() if s and s not in df.columns]
+        if src_missing:
+            print(f"[FAIL] 5016 R4 {tag}: spec-source columns absent: {src_missing}")
+            return [], False
+
         out = pd.DataFrame()
         for c in CANON:
             if c in R4_SPEC_MAP:
                 src = R4_SPEC_MAP[c]
-                out[c] = sub[src].values if src else ""
+                out[c] = df[src].values if src else ""
             else:
-                out[c] = sub[c].values
+                out[c] = df[c].values
         out.insert(0, NAME_COL, f"{tag} CV ")
         frames.append(out)
 
         n = len(out)
         n_unique = out["Bare Valve Code"].astype(str).str.strip().nunique()
         dup_note = "" if n == n_unique else f"  ** {n - n_unique} DUPLICATE bare codes **"
-        print(f"[ok]   {tag}: rows={n:6}  unique={n_unique:6}{dup_note}  (R4 working tab)")
+        print(f"[ok]   {tag}: rows={n:6}  unique={n_unique:6}{dup_note}  "
+              f"(R4_Updated {sheet!r} tab)")
         if base_codes is not None:
             new_codes = set(out["Bare Valve Code"].astype(str).str.strip())
             old_codes = {c for c in base_codes if c.startswith(tag)}
@@ -244,8 +258,9 @@ def _r4_5016_frames(base_codes: set[str] | None) -> tuple[list[pd.DataFrame], bo
                 f"        vs V1: old={len(old_codes):6} new={len(new_codes):6} "
                 f"added={len(added):4} removed={len(removed):4}"
             )
-    print("        note: R4 blanks Max Shut-off / Control Pressure for 5016 "
-          "(not in drop); Fail-Safe MSD data + ISA/Class-VI fixes retained.")
+    print("        note: R4_Updated keeps Fail-Safe-Close MSD (renamed 'A Port "
+          "Close / B Port Close'); Fail-Safe-Open MSD REMOVED by AVCON; "
+          "Max Shut-off / Control Pressure blank for 5016.")
     return frames, True
 
 
