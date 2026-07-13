@@ -1686,6 +1686,21 @@ revert them when editing nearby code.
    `tools/consolidate_control_valve.py`. Do NOT drop these overrides/labels when
    editing nearby code.
 
+8. **"Not Applicable" for sparse cascade fields (all families, 2026-07-13).**
+   Any cascade dropdown whose currently-matching rows include a BLANK in that
+   field offers a `CASCADE_NULL_OPTION = "Not Applicable"` choice; selecting it
+   filters to the blank-valued rows. This exists because the picker force-selects
+   a field's sole non-blank value, which otherwise makes blank-valued SKUs
+   unreachable (e.g. control-valve 5012AE0581 has blank Certification and shares
+   every other field with the IBR 5012AE0E71 → was force-matched to IBR). The
+   rule is GENERAL (not per-field/opt-in): implemented in `catalog.py`
+   `options()` (append the sentinel when blanks present) + `_filter()` (a pick ==
+   sentinel matches blank cells), mirrored verbatim in
+   `docs/static/catalog-engine.js`. The sentinel string MUST be identical in both
+   files. Today it affects control-valve Certification (~4,320 SKUs) and pharma
+   Series (~557); 15 of 18 families have no sparse cascade field. Keep the two
+   engines in sync.
+
 ---
 
 **End of document.** Anything not captured here, consult the source:
