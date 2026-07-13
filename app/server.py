@@ -66,6 +66,8 @@ def _section_summary(key: str, cat) -> dict:
         "source_file": cat.file_path.name,
         "row_count": len(cat.rows),
         "cascade": cat.cascade(),
+        "cascade_overrides": {k: list(v) for k, v in cfg.cascade_overrides.items()},
+        "cascade_override_key": cfg.cascade_override_key,
         "primary_label": cfg.primary_label,
         "secondary_label": cfg.secondary_label,
         "show_bto_fos": cfg.show_bto_fos,

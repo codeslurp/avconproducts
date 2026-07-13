@@ -86,6 +86,7 @@ def _serialize_catalog(key: str, catalog) -> dict:
             "target_type": pa.target_type,
             "target_by_prefix": [list(t) for t in pa.target_type_by_prefix] or None,
             "require_prefix": pa.require_prefix,
+            "series_labels": dict(pa.series_labels),
         })
 
     return {
@@ -100,6 +101,8 @@ def _serialize_catalog(key: str, catalog) -> dict:
         "show_bto_fos": cfg.show_bto_fos,
         "bto_col": cfg.bto_col if cfg.show_bto_fos else None,
         "cascade": [{"key": k, "col": c, "label": lab} for k, c, lab in cfg.cascade],
+        "cascade_overrides": {k: list(v) for k, v in cfg.cascade_overrides.items()},
+        "cascade_override_key": cfg.cascade_override_key,
         "detail_columns": [{"col": c, "label": lab} for c, lab in cfg.detail_columns],
         "paired_actuators": paired,
         "columns_used": used,
@@ -119,6 +122,8 @@ def _section_summary(key: str, catalog) -> dict:
         "source_file": catalog.file_path.name,
         "row_count": len(catalog.rows),
         "cascade": [{"key": k, "label": lab} for k, _, lab in cfg.cascade],
+        "cascade_overrides": {k: list(v) for k, v in cfg.cascade_overrides.items()},
+        "cascade_override_key": cfg.cascade_override_key,
         "primary_label": cfg.primary_label,
         "secondary_label": cfg.secondary_label,
         "show_bto_fos": cfg.show_bto_fos,

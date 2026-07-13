@@ -174,7 +174,9 @@
       <main>
         <section class="form-panel">
           <h2>Selection</h2>
-          <form class="picker" autocomplete="off">
+          <form class="picker" autocomplete="off"
+                data-cascade-overrides='{{ section.cascade_overrides | tojson }}'
+                data-cascade-override-key='{{ section.cascade_override_key or "" }}'>
             {% for field in section.cascade %}
             <div class="row" data-field="{{ field.key }}">
               <label for="f-{{ section.key }}-{{ field.key }}">{{ field.label }}</label>
