@@ -52,6 +52,20 @@ class PairedActuator:
     # "Fail Safe" columns hold MSD-* models OR a pressure/0). Default None keeps
     # the historical behaviour (every non-empty cell becomes a card).
     require_prefix: str | None = None
+    # Optional per-series card-label overrides. Maps a Series-value PREFIX
+    # (e.g. "5016A") to the label to show instead of `label`. Used so 5016
+    # shows "A Port Close"/"B Port Close" while other series keep the generic
+    # Fail-Safe labels. Prefix match against the row's Series (col 5).
+    series_labels: dict = field(default_factory=dict)
+
+    def label_for(self, series_value: str | None) -> str:
+        """Per-series card label: first matching prefix in series_labels, else label."""
+        if series_value:
+            sv = str(series_value).strip()
+            for prefix, lab in self.series_labels.items():
+                if sv.startswith(prefix):
+                    return lab
+        return self.label
 
     def __post_init__(self) -> None:
         if bool(self.target_type) == bool(self.target_type_by_prefix):
@@ -158,6 +172,15 @@ class ValveTypeConfig:
 
     # Optional secondary files that ADD rows (SKUs missing from the main file).
     extra_row_sources: tuple[ExtraRowSource, ...] = ()
+
+    # Optional per-series cascade field-visibility overrides. Maps a value of
+    # the `cascade_override_key` field (matched by PREFIX) to the ordered list
+    # of cascade keys that stay visible for that value. Fields not listed are
+    # hidden and skipped in resolution. Empty = same fields for every series.
+    cascade_overrides: dict = field(default_factory=dict)
+    # Which cascade key's value selects the override; defaults to the first
+    # cascade key (e.g. Series) when cascade_overrides is set.
+    cascade_override_key: str | None = None
 
 
 BALL_VALVE = ValveTypeConfig(
@@ -1206,6 +1229,16 @@ CONTROL_VALVE = ValveTypeConfig(
         ("bonnet_type",     21, "Type Of Bonnet"),
         ("certification",   39, "Certification"),
     ],
+    # Per-series cascade: 5016A/5016B show only these 6 fields (user request
+    # 2026-07-12). Filtering the base cascade order to these keys already yields
+    # the requested order. Verified 0-ambiguous for both 5016A and 5016B.
+    cascade_override_key="series",
+    cascade_overrides={
+        "5016A": ["series", "body_material", "trim_material",
+                  "characteristics", "end_connection", "face_to_face"],
+        "5016B": ["series", "body_material", "trim_material",
+                  "characteristics", "end_connection", "face_to_face"],
+    },
     detail_columns=[
         (2, "Bare Valve Code"), (3, "Catalogue Code"), (4, "Make"),
         (5, "Series"), (6, "Valve Size"), (7, "Body Material"),
@@ -1251,10 +1284,12 @@ CONTROL_VALVE = ValveTypeConfig(
         PairedActuator(
             model_col=46, target_field="model", target_type="pneumatic_msd",
             require_prefix="MSD-", label="Fail-Safe Close (Normally Closed)",
+            series_labels={"5016A": "A Port Close", "5016B": "A Port Close"},
         ),
         PairedActuator(
             model_col=47, target_field="model", target_type="pneumatic_msd",
             require_prefix="MSD-", label="Fail-Safe Open (Normally Open)",
+            series_labels={"5016A": "B Port Close", "5016B": "B Port Close"},
         ),
     ),
 )
