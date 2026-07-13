@@ -53,6 +53,15 @@ class Picker {
     this.fields = Array.from(this.form.querySelectorAll("select, input[list]"));
     this.fieldKeys = this.fields.map((f) => f.dataset.key);
 
+    // Per-series cascade overrides (e.g. Control Valve 5016 -> 6 fields). Keyed
+    // on the value of `overrideKey` (matched by prefix). Empty => all fields.
+    let ov = {};
+    try { ov = JSON.parse(this.form.dataset.cascadeOverrides || "{}"); }
+    catch (_e) { ov = {}; }
+    this.cascadeOverrides = ov;
+    this.overrideKey = this.form.dataset.cascadeOverrideKey || (this.fieldKeys[0] || "");
+    this.activeKeys = new Set(this.fieldKeys);   // default: all visible
+
     this.validOptions = new Map();
 
     this.statusEl = sectionEl.querySelector(".status");
@@ -84,6 +93,8 @@ class Picker {
     }
     this.resetBtn.addEventListener("click", async () => {
       for (const f of this.fields) f.value = "";
+      this._recomputeActiveKeys();
+      this._applyVisibility();
       await this.refreshOptions();
       await this.refreshResolution();
     });
@@ -94,6 +105,7 @@ class Picker {
   _currentPicks() {
     const picks = {};
     for (const f of this.fields) {
+      if (!this.activeKeys.has(f.dataset.key)) continue;
       const val = f.value;
       if (!val) continue;
       if (this._isTypeahead(f)) {
@@ -103,6 +115,30 @@ class Picker {
       picks[f.dataset.key] = val;
     }
     return picks;
+  }
+
+  /* Per-series field visibility. Recompute the set of active (visible) field
+     keys from the controlling field's value; a series with an override shows
+     only its listed keys, all others show every field. */
+  _recomputeActiveKeys() {
+    let keys = this.fieldKeys;                      // default: all
+    if (this.overrideKey && Object.keys(this.cascadeOverrides).length) {
+      const field = this.fields.find((f) => f.dataset.key === this.overrideKey);
+      const val = field ? String(field.value || "").trim() : "";
+      for (const prefix of Object.keys(this.cascadeOverrides)) {
+        if (val && val.startsWith(prefix)) { keys = this.cascadeOverrides[prefix]; break; }
+      }
+    }
+    this.activeKeys = new Set(keys);
+  }
+
+  _applyVisibility() {
+    for (const f of this.fields) {
+      const active = this.activeKeys.has(f.dataset.key);
+      const rowEl = f.closest(".row");
+      if (rowEl) rowEl.classList.toggle("field-hidden", !active);
+      if (!active && f.value) f.value = "";        // clear hidden field's value
+    }
   }
 
   _fillField(field, options, prevValue) {
@@ -148,6 +184,7 @@ class Picker {
     }
     for (const f of this.fields) {
       const k = f.dataset.key;
+      if (!this.activeKeys.has(k)) continue;
       if (k in picks) continue;
       this._fillField(f, opts[k] || [], f.value);
     }
@@ -159,6 +196,7 @@ class Picker {
     // (e.g. "No. of Springs" on a Double Acting actuator). Treat it as
     // implicitly satisfied so the resolution can complete.
     const requiredKeys = this.fieldKeys.filter((k) => {
+      if (!this.activeKeys.has(k)) return false;
       if (k in picks) return true;
       const opts = this.validOptions.get(k) || [];
       return opts.length > 0;
@@ -342,6 +380,10 @@ class Picker {
     for (let i = changedIdx + 1; i < this.fields.length; i++) {
       this.fields[i].value = "";
     }
+    if (key === this.overrideKey) {
+      this._recomputeActiveKeys();
+      this._applyVisibility();
+    }
     await this.refreshOptions();
     await this.refreshResolution();
   }
@@ -351,11 +393,17 @@ class Picker {
     for (let i = changedIdx + 1; i < this.fields.length; i++) {
       this.fields[i].value = "";
     }
+    if (ev.target.dataset.key === this.overrideKey) {
+      this._recomputeActiveKeys();
+      this._applyVisibility();
+    }
     await this.refreshOptions();
     await this.refreshResolution();
   }
 
   async init() {
+    this._recomputeActiveKeys();
+    this._applyVisibility();
     await this.refreshOptions();
     await this.refreshResolution();
   }
