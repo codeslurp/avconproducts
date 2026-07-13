@@ -154,10 +154,20 @@ UPDATED_DROPS = [
         "spec_map": {
             "Max Shut-off Pressure": None,
             "Fail Safe Close / A-Port Close": "A Port Close / B Port Close",
-            "Fail Safe Open / B-Port Close": None,   # removed by AVCON
+            "Fail Safe Open / B-Port Close": None,   # filled via `enrich` below
             "Control Pressure": None,
             "Control Pressure (Fail Safe Open)": None,
         },
+        # Restore the B-Port (Open) MSD column AVCON blanked in R4_Updated, from
+        # the original R4 working tab, joined by Bare Valve Code. Distinct from
+        # A-Port on ~50% of SKUs. (User direction 2026-07-12: two actuator cards.)
+        "enrich": [{
+            "canonical": "Fail Safe Open / B-Port Close",
+            "from_file": "Control Valve Data for New Structure 5016A-B_24.12.2025_R4.xlsx",
+            "from_sheet": "working",
+            "from_col": "Fail Safe Open",
+            "key_col": "Bare Valve Code",
+        }],
     },
     {
         "file": "Control Valve Data for New Structure_5012A-B-15.06.2026_R2_Updated.xlsx",
@@ -202,6 +212,41 @@ def _baseline_v1() -> pd.DataFrame | None:
     df = df[df["Bare Valve Code"].astype(str).str.strip().ne("")]
     df = df[df["Bare Valve Code"].astype(str).str.strip() != "Bare Valve Code"]
     return df
+
+
+def _enrich_column(out: pd.DataFrame, spec: dict, tag: str) -> tuple[pd.DataFrame, bool]:
+    """Fill out[spec['canonical']] from another workbook, joined by Bare Valve
+    Code. Returns (out, ok). ok is False (with a printed [FAIL]) if the source
+    file/sheet/column is missing or any out-row key fails to join."""
+    src_path = CV_DIR / spec["from_file"]
+    if not src_path.is_file():
+        print(f"[FAIL] {tag} enrich: source file not found: {src_path}")
+        return out, False
+    try:
+        src = pd.read_excel(src_path, sheet_name=spec["from_sheet"], header=0, dtype=object)
+    except Exception as e:
+        print(f"[FAIL] {tag} enrich: cannot read {src_path.name}::{spec['from_sheet']}: {e}")
+        return out, False
+    src.columns = [_norm(c) for c in src.columns]
+    for need in (spec["key_col"], spec["from_col"]):
+        if need not in src.columns:
+            print(f"[FAIL] {tag} enrich: column {need!r} absent in {spec['from_file']}")
+            return out, False
+    lut = {
+        _norm(k): v
+        for k, v in zip(src[spec["key_col"]], src[spec["from_col"]])
+        if _norm(k) not in ("", "Bare Valve Code")
+    }
+    keys = out[spec["key_col"]].map(_norm)
+    missing = [k for k in keys if k not in lut]
+    if missing:
+        print(f"[FAIL] {tag} enrich: {len(missing)} key(s) not in source "
+              f"(e.g. {missing[:3]}) for {spec['canonical']!r}")
+        return out, False
+    out[spec["canonical"]] = keys.map(lut).values
+    print(f"       {tag} enrich: filled {spec['canonical']!r} from "
+          f"{spec['from_file']}::{spec['from_sheet']} ({len(out)} rows)")
+    return out, True
 
 
 def _updated_drop_frames(base_codes: set[str] | None) -> tuple[list[pd.DataFrame], bool]:
@@ -260,6 +305,13 @@ def _updated_drop_frames(base_codes: set[str] | None) -> tuple[list[pd.DataFrame
                 else:
                     out[c] = df[c].values
             out.insert(0, NAME_COL, f"{tag} CV ")
+
+            # Optional cross-file enrichment (e.g. restore a column AVCON dropped).
+            for espec in drop.get("enrich", []):
+                out, eok = _enrich_column(out, espec, tag)
+                if not eok:
+                    return [], False
+
             frames.append(out)
 
             n = len(out)
@@ -276,8 +328,9 @@ def _updated_drop_frames(base_codes: set[str] | None) -> tuple[list[pd.DataFrame
                     f"        vs V1: old={len(old_codes):6} new={len(new_codes):6} "
                     f"added={len(added):4} removed={len(removed):4}"
                 )
-    print("        note: updated-format drops carry only Fail-Safe Close/Open MSD "
-          "columns; Max Shut-off / Control Pressure are blank (dropped by AVCON).")
+    print("        note: updated-format drops carry Fail-Safe Close/Open MSD "
+          "columns (5016 B-Port restored from original R4); Max Shut-off / "
+          "Control Pressure blank.")
     return frames, True
 
 
