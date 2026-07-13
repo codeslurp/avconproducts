@@ -167,6 +167,22 @@ class CatalogEngine {
     //     generic alternatives) dedupes by code: one chip per distinct code.
     const seenModels = new Set();   // `${tt}|${model}`
     const seenSlots = new Set();    // `${tt}|${model}|${label}`
+    // Per-series actuator labels (mirror of catalog.py Catalog.resolve): look up
+    // the row's controlling-field value (e.g. Series) so 5016 shows "A Port
+    // Close"/"B Port Close" while other series keep the generic labels.
+    const ovKey = cat.cascade_override_key ||
+                  (cat.cascade[0] && cat.cascade[0].key) || null;
+    const ovCol = ovKey ? cat.keyToCol.get(ovKey) : null;
+    const rowSeries = ovCol != null ? this._cell(cat, row, ovCol) : null;
+    const labelFor = (pa) => {
+      if (rowSeries && pa.series_labels) {
+        const sv = String(rowSeries).trim();
+        for (const prefix of Object.keys(pa.series_labels)) {
+          if (sv.startsWith(prefix)) return pa.series_labels[prefix];
+        }
+      }
+      return pa.label;
+    };
     const paired = [];
     for (const pa of cat.paired_actuators || []) {
       const raw = this._cell(cat, row, pa.model_col);
@@ -189,7 +205,7 @@ class CatalogEngine {
         model,
         target_type,
         target_field: pa.target_field,
-        label: pa.label,
+        label: labelFor(pa),
       });
     }
     if (paired.length) {

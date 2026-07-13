@@ -1761,6 +1761,18 @@ class Catalog:
         #     genuinely new alternatives (e.g. ACT-063SR07).
         seen_models = set()  # (target_type, model) shown so far
         seen_slots = set()   # (target_type, model, label) — exact DA pressure-slot twins
+        # Per-series actuator labels: look up the row's controlling-field value
+        # (e.g. Series) so 5016 shows "A Port Close"/"B Port Close".
+        _ov_key = self.config.cascade_override_key or (
+            self.config.cascade[0][0] if self.config.cascade else None
+        )
+        _ov_col = None
+        if _ov_key:
+            for _k, _col, _lab in self.config.cascade:
+                if _k == _ov_key:
+                    _ov_col = _col
+                    break
+        _row_series = row.get(f"c{_ov_col}") if _ov_col else None
         for p in self.config.paired_actuators:
             paired_val = row.get(f"c{p.model_col}")
             if paired_val in (None, ""):
@@ -1787,7 +1799,7 @@ class Catalog:
                 "model": model,
                 "target_type": target_type,
                 "target_field": p.target_field,
-                "label": p.label,
+                "label": p.label_for(_row_series),
             })
         if paired_list:
             detail["paired_actuators"] = paired_list
