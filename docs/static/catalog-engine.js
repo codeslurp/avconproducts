@@ -54,6 +54,14 @@ function normalizePairedModel(model) {
   return model;
 }
 
+// Sentinel option offered for any cascade field with blank rows among matches —
+// MUST match catalog.py CASCADE_NULL_OPTION verbatim. Filters to blank-valued rows.
+const CASCADE_NULL_OPTION = "Not Applicable";
+
+function isBlankCell(v) {
+  return v === null || v === undefined || (typeof v === "string" && v.trim() === "");
+}
+
 function resolvePairedTargetType(paired, model) {
   if (paired.target_by_prefix && paired.target_by_prefix.length) {
     for (const [prefix, tt] of paired.target_by_prefix) {
@@ -96,11 +104,15 @@ class CatalogEngine {
     for (const [k, v] of Object.entries(picks)) {
       const col = cat.keyToCol.get(k);
       if (col === undefined) continue;
-      constraints.push([cat.colIndex.get(col), String(v)]);
+      constraints.push([cat.colIndex.get(col), String(v), v === CASCADE_NULL_OPTION]);
     }
     return cat.rows.filter((row) => {
-      for (const [idx, want] of constraints) {
-        if (String(row[idx]) !== want) return false;
+      for (const [idx, want, wantBlank] of constraints) {
+        if (wantBlank) {                       // "None" pick -> match blanks only
+          if (!isBlankCell(row[idx])) return false;
+        } else if (String(row[idx]) !== want) {
+          return false;
+        }
       }
       return true;
     });
@@ -114,15 +126,20 @@ class CatalogEngine {
       if (picks && f.key in picks) continue;
       const idx = cat.colIndex.get(f.col);
       const vals = new Set();
+      let hasBlank = false;
       for (const row of matched) {
         const v = row[idx];
-        if (v !== null && v !== undefined) vals.add(v);
+        if (isBlankCell(v)) hasBlank = true;
+        else vals.add(v);
       }
-      out[f.key] = Array.from(vals).sort((a, b) => {
+      const opts = Array.from(vals).sort((a, b) => {
         const sa = String(a), sb = String(b);
         if (sa.length !== sb.length) return sa.length - sb.length;
         return sa < sb ? -1 : sa > sb ? 1 : 0;
       });
+      // Any field with blank rows among matches -> offer "Not Applicable".
+      if (hasBlank) opts.push(CASCADE_NULL_OPTION);
+      out[f.key] = opts;
     }
     return out;
   }

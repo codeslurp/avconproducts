@@ -121,6 +121,19 @@ class ExtraRowSource:
     key_pattern: str | None = None               # only add rows whose key matches
 
 
+# Sentinel option offered for a "nullable" cascade field (see
+# ValveTypeConfig.nullable_cascade_keys) when some matching rows have a blank in
+# that field. Selecting it filters to the blank-valued rows — so a SKU with no
+# value for that attribute (e.g. a control valve with no Certification) is
+# reachable instead of being force-matched to the sole non-blank value. Must be
+# a string no real datum equals; mirrored verbatim in docs/static/catalog-engine.js.
+CASCADE_NULL_OPTION = "Not Applicable"
+
+
+def _is_blank_cell(v) -> bool:
+    return v is None or (isinstance(v, str) and v.strip() == "")
+
+
 @dataclass(frozen=True)
 class ValveTypeConfig:
     key: str                            # URL/JSON identifier, e.g. "ball"
@@ -1729,7 +1742,12 @@ class Catalog:
                 col = self._key_to_col.get(key)
                 if col is None:
                     continue
-                if str(row.get(f"c{col}")) != str(val):
+                cell = row.get(f"c{col}")
+                if val == CASCADE_NULL_OPTION:
+                    if not _is_blank_cell(cell):   # "None" pick -> match blanks only
+                        ok = False
+                        break
+                elif str(cell) != str(val):
                     ok = False
                     break
             if ok:
@@ -1742,9 +1760,15 @@ class Catalog:
         for key, col, _ in self.config.cascade:
             if key in picks:
                 continue
-            vals = {row.get(f"c{col}") for row in matched}
-            vals.discard(None)
-            out[key] = sorted(vals, key=lambda v: (len(str(v)), str(v)))
+            raw = [row.get(f"c{col}") for row in matched]
+            vals = {v for v in raw if not _is_blank_cell(v)}
+            opts = sorted(vals, key=lambda v: (len(str(v)), str(v)))
+            # Any cascade field with blank rows among matches offers a
+            # "Not Applicable" option so blank-valued SKUs stay selectable
+            # (instead of the picker force-matching the sole non-blank value).
+            if any(_is_blank_cell(v) for v in raw):
+                opts.append(CASCADE_NULL_OPTION)
+            out[key] = opts
         return out
 
     def resolve(self, picks: dict[str, Any]) -> dict[str, Any] | None:
