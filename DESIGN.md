@@ -1655,6 +1655,36 @@ revert them when editing nearby code.
    `catalog-engine.js` (hand-maintained — keep in sync with catalog.py). The dev
    tree (`OneDrive/.../Product Code Finder`) and deploy tree (`repos/avconproducts`)
    are separate copies; sync changed source files between them.
+   (Note: `repos/avconproducts` is now the single source of truth; the OneDrive
+   tree is data-drop only.)
+
+7. **Per-series cascade + actuator labels (Control Valve, 2026-07-12).** The
+   Control Valve picker shows a DIFFERENT set/order of dropdowns per Series,
+   driven by `CONTROL_VALVE.cascade_overrides` (in `app/catalog.py`), keyed on
+   the Series value by prefix (`cascade_override_key="series"`). The base
+   `cascade` is the superset (13 fields incl. `valve_kv` col 17). Locked-in sets:
+   - **5016A/5016B** → 6 fields: Series, Body Material, Trim Material,
+     Characteristics, End Connections, Face to Face.
+   - **5012A/5012B** → 12 fields: Series, Body, Trim, Seat, Characteristics,
+     End Connections, Face to Face, Port Size, **Valve Kv**, Flow Direction,
+     Type of Bonnet, Certification (drops Valve Size; Flow Direction moved late).
+   - **5061A/5066A** → the historical 12 (base order, no Valve Kv) — pinned so
+     adding `valve_kv` to the base for 5012 doesn't leak a dropdown into them.
+   Every set is verified **0-ambiguous** per series (re-verify on any change).
+   `app.js` hides non-listed fields (`.row.field-hidden`) AND reorders the
+   visible rows to the override order; the override list order IS the display
+   order. Serialized to `control_valve.json` as `cascade_overrides` /
+   `cascade_override_key` (both `_section_summary` builders + the `<form
+   class="picker">` `data-cascade-*` attributes feed it).
+   Recommended-actuator card labels are ALSO per-series via
+   `PairedActuator.series_labels` (prefix-matched on the row's Series) +
+   `label_for()`, mirrored in `catalog.py resolve()` AND
+   `docs/static/catalog-engine.js`: **5016** cols 46/47 show "A Port Close" /
+   "B Port Close"; other series keep "Fail-Safe Close (Normally Closed)" /
+   "Fail-Safe Open (Normally Open)". 5016's B-Port MSD column (blanked by AVCON
+   in R4_Updated) is restored from the original R4 file via an `enrich` step in
+   `tools/consolidate_control_valve.py`. Do NOT drop these overrides/labels when
+   editing nearby code.
 
 ---
 
