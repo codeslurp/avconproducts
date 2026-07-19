@@ -472,101 +472,75 @@ BUTTERFLY_VALVE = ValveTypeConfig(
     category="Valves",
     group="Pune",
     subgroup="Butterfly Valve",
-    file_substring="Butterfly Valve",
-    sheet_marker="BFV NEW CODEING",
-    # NOTE: catalog has a "Disc Type" column (V/22) but it is empty in all
-    # 43,200 rows, so it's omitted from the cascade — adding it would dead-end
-    # every selection. Re-add if/when the catalog starts populating that column.
-    # Unlike ball valves, the butterfly MASTER file has "Additional Specification"
-    # data at cols 49-53 (NOT actuator data). The actuator pairings live only in
-    # the per-series files (cols 49-59), so we enrich them into NEW master cols
-    # 100-110 to avoid clobbering the master's existing data.
-    # Coverage caveat: only 3 of 6 master sheets (4020B/4022B/4023B) have matching
-    # per-series files today — 4020M/4022M/4023M "BON" variants will get NO
-    # actuator recommendation until per-series files are produced for them.
+    # R3 drop (2026-07-19): single pre-consolidated Sheet1 with 46,412 SKUs across
+    # all 6 families (4020B/4022B/4023B + M bonnet variants). Actuator models are
+    # baked directly into cols 49-59 (no per-series enrichment needed).
+    # NOTE: Disc Type (c22) is blank for ~93 % of rows — kept out of the cascade
+    # to avoid dead-ending most paths.
+    file_substring="Butterfly Valve Centric R3",
+    sheet_marker="Sheet1",
     paired_actuators=(
-        # Per-series files populate up to 11 actuator positions per SKU
-        # (cols 100-110 after enrichment). Surface all of them; dedup happens
-        # at resolve time so identical models across positions collapse to one
-        # card. Movement-type labels distinguish Double Acting from Spring
-        # Return Fail-Close from Spring Return Fail-Open.
-        # Pneumatic — mixed routing: ACT-* → R&P, SYA-* → Scotch Yoke.
-        # Bare prefixes (no trailing dash) catch no-dash format-drift in source.
-        PairedActuator(
-            model_col=100, target_field="model",
-            label="Pneumatic — Double Acting",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=101, target_field="model",
-            label="Pneumatic — Double Acting (alt 1)",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=102, target_field="model",
-            label="Pneumatic — Double Acting (alt 2)",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=103, target_field="model",
-            label="Pneumatic — Spring Return Fail-Close",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=104, target_field="model",
-            label="Pneumatic — Spring Return Fail-Close (alt 1)",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=105, target_field="model",
-            label="Pneumatic — Spring Return Fail-Close (alt 2)",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=106, target_field="model",
-            label="Pneumatic — Spring Return Fail-Open",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=107, target_field="model",
-            label="Pneumatic — Spring Return Fail-Open (alt 1)",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        PairedActuator(
-            model_col=108, target_field="model",
-            label="Pneumatic — Spring Return Fail-Open (alt 2)",
-            target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy")),
-        ),
-        # Electric — single-target (all values are EA-* or QM-*, both in
-        # electrical_rotary catalog). Plain "Electric" label so each chip
-        # shows only the model code (no sub-text — user picks freely).
-        PairedActuator(
-            model_col=109, target_type="electrical_rotary", target_field="model",
-            label="Electric",
-        ),
-        PairedActuator(
-            model_col=110, target_type="electrical_rotary", target_field="model",
-            label="Electric",
-        ),
+        # Cols 49-57: pneumatic actuators (DA×3, FC×3, FO×3) @ 3.5/4/5.5 bar.
+        # Routing: ACT-* → Rack & Pinion, SYA-* → Scotch Yoke.
+        PairedActuator(model_col=49, target_field="model",
+                       label="Pneumatic — Double Acting @ 3.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=50, target_field="model",
+                       label="Pneumatic — Double Acting @ 4 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=51, target_field="model",
+                       label="Pneumatic — Double Acting @ 5.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=52, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 3.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=53, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 4 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=54, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Close @ 5.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=55, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 3.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=56, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 4 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        PairedActuator(model_col=57, target_field="model",
+                       label="Pneumatic — Spring Return Fail-Open @ 5.5 bar",
+                       target_type_by_prefix=(("ACT", "pneumatic_rp"), ("SYA", "pneumatic_sy"))),
+        # Cols 58-59: electric actuator models (EA-* → electrical_rotary).
+        # "(D)" = low torque / direct mount variant; "(E)" = larger variant.
+        PairedActuator(model_col=58, target_type="electrical_rotary", target_field="model",
+                       label="Electric (D)"),
+        PairedActuator(model_col=59, target_type="electrical_rotary", target_field="model",
+                       label="Electric (E)"),
     ),
+    # Cascade follows AVCON Centric selection sequence (2026-07-19):
+    # Series encodes body family + size (e.g. 4022B25 = Wafer, 1"). Valve Size
+    # is omitted as a separate step because it is redundant with Series.
     cascade=[
         ("series",          4,  "Series"),
-        ("size",            5,  "Valve Size"),
         ("body_material",   6,  "Body Material"),
         ("disc_material",   7,  "Disc Material"),
         ("seat_material",   8,  "Seat Material"),
-        ("characteristics", 9,  "Characteristics"),
-        ("end_connection", 10,  "End Connections"),
+        ("pressure_rating", 27, "Pressure Rating"),
+        ("end_connection",  10, "End Connections"),
+        ("face_to_face",    13, "Face to Face"),
+        ("stem_material",   21, "Stem Material"),
+        ("flange_drilling", 26, "Flange Drilling"),
     ],
     detail_columns=[
         (1, "Bare Valve Code"), (2, "Catalogue Code"), (3, "Make"),
-        (11, "Valve Type"), (12, "Design Standard"), (13, "Face to Face"),
+        (5, "Valve Size"),
+        (9, "Characteristics"),
+        (11, "Valve Type"), (12, "Design Standard"),
         (14, "Port Size"), (15, "No. of Ports"), (16, "Valve Kv (m³/hr)"),
         (17, "Body Style"), (18, "Flow Direction"), (19, "Bonnet Material"),
-        (20, "Type of Bonnet"), (21, "Stem Material"),
+        (20, "Type of Bonnet"),
         (23, "Gland Packing"), (24, "Body Packing"),
-        (25, "Flange Dimensions"), (26, "Flange Drilling"),
-        (27, "Pressure Rating"), (28, "Operating Temp Range (°C)"),
+        (25, "Flange Dimensions"),
+        (28, "Operating Temp Range (°C)"),
         (29, "Hardware"), (30, "Valve Paint"),
         (31, "Testing Standard"), (32, "Leakage Class"),
         (33, "Body Test Pressure (barg)"), (34, "Body Test Media"),
@@ -575,57 +549,17 @@ BUTTERFLY_VALVE = ValveTypeConfig(
         (39, "BTO"), (40, "ETO"), (41, "BTC"), (42, "ETC"), (43, "Run"),
         (44, "Top PCD"), (45, "Stem Shape"), (46, "Stem Dimension"),
         (47, "Stem Orientation"), (48, "Stem Protrusion (mm)"),
-        (49, "Additional Specification 1"), (50, "Additional Specification 2"),
-        (51, "Additional Specification 3"), (52, "Additional Specification 4"),
-        (53, "Additional Specification 5"), (54, "Bare Valve Weight (kg)"),
-        # Merged from the 3 per-series .xlsx files via Bare Valve Code lookup.
-        # Stored at c100+ to keep clear of master columns.
-        (100, "Double Acting Actuator 1"), (101, "Double Acting Actuator 2"),
-        (102, "Double Acting Actuator 3"),
-        (103, "Single Acting Fail-Safe Close 1"),
-        (104, "Single Acting Fail-Safe Close 2"),
-        (105, "Single Acting Fail-Safe Close 3"),
-        (106, "Single Acting Fail-Safe Open 1"),
-        (107, "Single Acting Fail-Safe Open 2"),
-        (108, "Single Acting Fail-Safe Open 3"),
-        (109, "Electric Actuator 1"), (110, "Electric Actuator 2"),
+        # Actuator models baked in per-SKU (R3 layout: cols 49-59).
+        (49, "Double Acting @ 3.5 bar"), (50, "Double Acting @ 4 bar"),
+        (51, "Double Acting @ 5.5 bar"),
+        (52, "Spring Return Fail-Close @ 3.5 bar"),
+        (53, "Spring Return Fail-Close @ 4 bar"),
+        (54, "Spring Return Fail-Close @ 5.5 bar"),
+        (55, "Spring Return Fail-Open @ 3.5 bar"),
+        (56, "Spring Return Fail-Open @ 4 bar"),
+        (57, "Spring Return Fail-Open @ 5.5 bar"),
+        (58, "Elect. Actuator Model (D)"), (59, "Elect. Actuator Model (E)"),
     ],
-    # Each per-series file maps its actuator cols 49-59 into master cols 100-110.
-    enrichment_sources=(
-        EnrichmentSource(
-            file_substring="4020B BFV NEW CODEING",
-            sheet_marker="4020B BFV NEW CODEING",
-            source_key_col=1, master_key_col=1,
-            columns=(
-                (49, 100), (50, 101), (51, 102),
-                (52, 103), (53, 104), (54, 105),
-                (55, 106), (56, 107), (57, 108),
-                (58, 109), (59, 110),
-            ),
-        ),
-        EnrichmentSource(
-            file_substring="4022B BFV NEW CODEING",
-            sheet_marker="4022B BFV NEW CODEING",
-            source_key_col=1, master_key_col=1,
-            columns=(
-                (49, 100), (50, 101), (51, 102),
-                (52, 103), (53, 104), (54, 105),
-                (55, 106), (56, 107), (57, 108),
-                (58, 109), (59, 110),
-            ),
-        ),
-        EnrichmentSource(
-            file_substring="4023B BFV NEW CODEING",
-            sheet_marker="4023B BFV NEW CODEING",
-            source_key_col=1, master_key_col=1,
-            columns=(
-                (49, 100), (50, 101), (51, 102),
-                (52, 103), (53, 104), (54, 105),
-                (55, 106), (56, 107), (57, 108),
-                (58, 109), (59, 110),
-            ),
-        ),
-    ),
 )
 
 
