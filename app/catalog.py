@@ -1184,13 +1184,14 @@ CONTROL_VALVE = ValveTypeConfig(
     # cascade (for 5012) does not leak an extra dropdown into them.
     cascade_override_key="series",
     cascade_overrides={
-        # 5016A/5016B: 11 fields — matches 5061/5066 pattern; no certification (empty).
+        # 5016A/5016B: 13 fields. valve_kv 100% populated; certification 0% (shows
+        # "Not Applicable" only — included for consistency with other series).
         "5016A": ["series", "size", "body_material", "trim_material", "seat_material",
                   "characteristics", "flow_direction", "end_connection", "face_to_face",
-                  "port_size", "bonnet_type"],
+                  "port_size", "valve_kv", "bonnet_type", "certification"],
         "5016B": ["series", "size", "body_material", "trim_material", "seat_material",
                   "characteristics", "flow_direction", "end_connection", "face_to_face",
-                  "port_size", "bonnet_type"],
+                  "port_size", "valve_kv", "bonnet_type", "certification"],
         # 5012A/5012B: 12 fields — drops Valve Size, adds Valve Kv; Flow
         # Direction moved after Port Size / Valve Kv (this exact order).
         "5012A": ["series", "body_material", "trim_material", "seat_material",
