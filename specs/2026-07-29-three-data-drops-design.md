@@ -194,11 +194,17 @@ pending_note: str | None = None
 
 For this type: `"Torque, actuator sizing, and design standard pending — R03 data."`
 
-It must be added to `_serialize_catalog` in `tools/build_static.py`, which
-enumerates payload fields explicitly (`tools/build_static.py:92-111`) and will
-not pass a new field through on its own. The result panel renders it as a single
-line where the FOS card would otherwise sit. When R04 populates the columns, the
-note is removed and the columns are added back — no structural change.
+The note is rendered from the template's `section` object, so it must be added
+to **both** `_section_summary` functions — `app/server.py:58-74` (Flask) and
+`tools/build_static.py:116-123` (static build). Both enumerate their fields
+explicitly and will not pass a new field through on their own.
+
+It does *not* need to go into `_serialize_catalog`: that payload feeds the JS
+resolve engine, and the note is static per type, rendered once into the HTML.
+
+The result panel renders it as a single line where the FOS card would otherwise
+sit. When R04 populates the columns, the note is removed and the columns are
+added back — no structural change.
 
 ### Icon
 
