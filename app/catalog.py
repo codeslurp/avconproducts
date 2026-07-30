@@ -468,6 +468,63 @@ BALL_VALVE_PLASTIC = ValveTypeConfig(
 )
 
 
+# 2094F TMBV — Trunnion Mounted, soft seated. Third sibling under the "Ball
+# Valve" subgroup, so the menu reads Pune › Ball Valve › Metal / Plastic /
+# Trunnion Mounted. Ships from its OWN workbook: the series is absent from the
+# metal master (.xlsm holds 2030F/2060F/2070F/2090F only), and its columns
+# 49-58 carry Additional-Specification/cost headers where the master has the
+# nine actuator columns. file_substring is unambiguous — the master is matched
+# by "NEW OG" and the plastic file by "Ball Valve Plastic".
+#
+# R03 populates columns 1-36 and 38 ONLY. Product Group (37), the torque block
+# (39-42), Run (43), Top PCD (44) and the stem block (45-48) are empty in all
+# 168 rows, hence show_bto_fos=False and no paired_actuators. Column 12
+# (Design Standard) is withheld as corrupt — see
+# docs/engineering-followups/2026-07-29-2094f-trunnion-data-gaps.md.
+BALL_VALVE_TRUNNION = ValveTypeConfig(
+    key="ball_trunnion",
+    label="Trunnion Mounted",
+    category="Valves",
+    group="Pune",
+    subgroup="Ball Valve",
+    file_substring="Ball Valve Data Sheet Structure 2094F TMBV",
+    path_contains="Pune",
+    sheet_marker="2094F TMBV NEW CODEING",
+    show_bto_fos=False,
+    pending_note="Torque, actuator sizing, and design standard pending — R03 data.",
+    # Same eight fields as the metal master. Verified 0 ambiguous across all 168
+    # rows: the data factorizes as 4 series × 3 body × 7 seat × 2 end connection,
+    # with size determined by series. Ball Material, Characteristics and Ball
+    # Type are single-valued in R03 and auto-fill (see app.js Picker.setFieldValue);
+    # they are kept for parity and to stay correct when R04 adds variety.
+    cascade=[
+        ("series",          4,  "Series"),
+        ("size",            5,  "Valve Size"),
+        ("body_material",   6,  "Body Material"),
+        ("ball_material",   7,  "Ball Material"),
+        ("seat_material",   8,  "Seat Material"),
+        ("characteristics", 9,  "Characteristics"),
+        ("end_connection", 10,  "End Connections"),
+        ("ball_type",      22,  "Ball Type"),
+    ],
+    detail_columns=[
+        (1, "Bare Valve Code"), (2, "Catalogue Code"), (3, "Make"),
+        (11, "Valve Type"), (13, "Face to Face"),
+        (14, "Port Size"), (15, "No. of Ports"), (16, "Valve Kv (m³/hr)"),
+        (17, "Body Style"), (18, "Flow Direction"), (19, "End Piece Material"),
+        (20, "Type of Bonnet"), (21, "Stem Material"),
+        (23, "Gland Packing"), (24, "Body Packing"),
+        (25, "Flange Dimensions"), (26, "Flange Drilling"),
+        (27, "Pressure Rating"), (28, "Operating Temp Range (°C)"),
+        (29, "Hardware"), (30, "Valve Paint"),
+        (31, "Testing Standard"), (32, "Leakage Class"),
+        (33, "Body Test Pressure (barg)"), (34, "Body Test Media"),
+        (35, "Seat Leakage Test Pressure (barg)"), (36, "Seat Leakage Test Media"),
+        (38, "Certification"),
+    ],
+)
+
+
 BUTTERFLY_VALVE = ValveTypeConfig(
     key="butterfly",
     # Nested under the "Butterfly Valve" subgroup (group Pune), so the menu reads
@@ -1369,6 +1426,7 @@ MANUAL_LEVER = ValveTypeConfig(
 VALVE_TYPES: list[ValveTypeConfig] = [
     BALL_VALVE,
     BALL_VALVE_PLASTIC,
+    BALL_VALVE_TRUNNION,
     BUTTERFLY_VALVE,
     BUTTERFLY_DOUBLE_OFFSET,
     PHARMA_VALVE,
