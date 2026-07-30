@@ -1323,6 +1323,20 @@ MANUAL_GEARBOX = ValveTypeConfig(
         (5, "Valve Side PCD"), (6, "Painting"), (7, "Torque (Nm)"),
         (8, "Handwheel Material"),
     ],
+    # Shakti gear boxes (18 rows, MGS*/SE-*) dropped 2026-07-29 into
+    # data/Accessories/. Schema-identical to the master (same 14 headers), so
+    # columns map 1:1. path_contains is REQUIRED: the bare file_substring also
+    # matches this catalog's OWN file ("MHG Manual Gear Box Data for New
+    # Structure_R1.xlsx"), and picking that would add zero rows silently.
+    extra_row_sources=(
+        ExtraRowSource(
+            file_substring="Gear Box Data for New Structure",
+            sheet_marker="MHG",
+            path_contains="Accessories",
+            key_col=1, master_key_col=1,
+            column_map=((1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9)),
+        ),
+    ),
 )
 
 # MHL manual handwheel lever — a MANUAL actuator. Only 2 rows ("Sheet1"); the
