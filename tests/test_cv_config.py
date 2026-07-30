@@ -8,15 +8,17 @@ from catalog import CONTROL_VALVE, PairedActuator  # noqa: E402
 
 
 class TestControlValveOverrides(unittest.TestCase):
-    def test_5016_override_lists_six_fields(self):
+    def test_5016_override_lists_thirteen_fields(self):
         ov = CONTROL_VALVE.cascade_overrides
         self.assertIn("5016A", ov)
         self.assertIn("5016B", ov)
-        self.assertEqual(
-            ov["5016A"],
-            ["series", "body_material", "trim_material",
-             "characteristics", "end_connection", "face_to_face"],
-        )
+        expected = [
+            "series", "size", "body_material", "trim_material", "seat_material",
+            "characteristics", "flow_direction", "end_connection", "face_to_face",
+            "port_size", "valve_kv", "bonnet_type", "certification",
+        ]
+        self.assertEqual(ov["5016A"], expected)
+        self.assertEqual(ov["5016B"], expected)
 
     def test_override_key_is_series(self):
         self.assertEqual(CONTROL_VALVE.cascade_override_key, "series")

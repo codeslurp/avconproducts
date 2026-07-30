@@ -29,8 +29,10 @@ class TestSerialize(unittest.TestCase):
         self.assertEqual(d["cascade_override_key"], "series")
         self.assertEqual(
             d["cascade_overrides"]["5016A"],
-            ["series", "body_material", "trim_material",
-             "characteristics", "end_connection", "face_to_face"],
+            ["series", "size", "body_material", "trim_material",
+             "seat_material", "characteristics", "flow_direction",
+             "end_connection", "face_to_face", "port_size", "valve_kv",
+             "bonnet_type", "certification"],
         )
 
     def test_paired_has_series_labels(self):
