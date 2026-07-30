@@ -188,18 +188,20 @@ for f, sheet, want in checks:
 Expected: three `OK` lines. Any `MISMATCH` means the copy is wrong or the drop
 file changed — stop and re-check before continuing.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Confirm there is nothing to commit**
+
+`/data/` is gitignored (`.gitignore:5-7` — "~33 MB, too large for git"), and no
+`.xlsx`/`.xlsm` file is tracked anywhere in the repo. The source workbooks are a
+local, on-disk input; what reaches git is the generated `docs/data/*.json`
+bundle, committed in Task 8.
 
 ```bash
-git add data/
-git commit -m "data: add 2026-07-29 drops (MOR Shakti, Gear Box Shakti, 2094F TMBV R03)
-
-- Manual Override _R1_Updated: 13 Shakti MRS* rows (third vendor)
-- Gear Box _R1: 18 Shakti MGS* rows
-- 2094F TMBV_R03: 168 trunnion-mounted ball valve SKUs
-
-Data only; no loader wiring yet."
+git status --porcelain
 ```
+
+Expected: no `data/` entries. If `git add data/` was attempted it will have been
+refused — that is correct behaviour, not a problem to work around. **Do not**
+use `git add -f`.
 
 ---
 
