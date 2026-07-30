@@ -71,3 +71,28 @@ The same vendor is spelled `Q-tork` in
 respective dropdowns. Not corrected in code.
 
 **Requested fix:** pick one spelling and apply it in both datasheets.
+
+## 5. Solenoid Valve: one code used for two different products (pre-existing)
+
+Source: `data/Accessories/Solenoid Valve.xlsx` (sheet `Sheet1`).
+
+`SR432A3RWK02` appears on two rows that are **not** the same product:
+
+| Col | Row A | Row B |
+| --- | --- | --- |
+| 3 `SERIES` | `R432E06/AD/S4/BN/BSP` | `R432E06/AD/S4/BN/NPT` |
+| 11 `End Connection` | BSP Screwed (Female) | NPT Screwed (Female) |
+
+All other columns match. The sheet therefore has **74 rows but 73 distinct
+codes**.
+
+This is **not** introduced by the 2026-07-29 revision — the same collision is
+present in `Solenoid Valve_Updated2.xlsx`. Found while diffing the two files.
+
+**Effect in the app:** both rows are listed, so a user picking by code cannot
+distinguish the BSP variant from the NPT one; the accessory list shows what
+looks like a duplicate entry.
+
+**Requested fix:** assign a distinct code to one of the two end-connection
+variants — the same remedy applied to the `EA-21/D` vs `EA-21/E` collisions in
+`2026-06-02-rotary-actuator-code-issues.md`.
