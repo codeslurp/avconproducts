@@ -78,7 +78,10 @@ EXTRA_ACCESSORY_SOURCES = [
     # Each is skipped from the consolidated load via `dedicated_families`.
     # (Tube & Fittings deferred — source row count under review.)
     {"file_substring": "Gland Data",      "sheet": "Gland Data",   "family": "Gland",   "code_col": 1},
-    {"file_substring": "Manual Override", "sheet": "MOR",          "family": "MOR",     "code_col": 1},
+    # merge_all: the two MOR files hold DISJOINT vendor ranges, not successive
+    # revisions — R1 = 13 Q-Tork (MRQ*) + 10 Transtork (MRT*), R1_Updated = 13
+    # Shakti (MRS*), zero overlap. Newest-wins would silently drop 23 SKUs.
+    {"file_substring": "Manual Override", "sheet": "MOR",          "family": "MOR",     "code_col": 1, "merge_all": True},
     {"file_substring": "Plug Data",       "sheet": "Plug Data",    "family": "Plug",    "code_col": 1},
 ]
 
@@ -224,7 +227,18 @@ def _extra_filenames(acc_dir: Path) -> set[str]:
 
 
 def _load_extra_family(acc_dir: Path, src: dict) -> list[dict[str, Any]]:
-    """Load one single-family accessory file into [{code, family, attrs}]."""
+    """Load one accessory family from its dedicated file(s).
+
+    Default: the most-recently-modified match wins — a later export supersedes
+    an earlier one for the same family.
+
+    With `merge_all: True`: EVERY match is read, oldest first, and rows are
+    merged on `code`. Used where separate files hold DISJOINT vendor ranges of
+    one family rather than successive revisions of the same range — MOR ships
+    as Q-Tork + Transtork (R1, 23 rows) plus Shakti (R1_Updated, 13 rows) with
+    zero code overlap. Newest-wins on a genuine duplicate code preserves
+    supersede semantics, and every override is logged rather than silent.
+    """
     cands = [
         p for p in acc_dir.rglob("*.xls*")
         if src["file_substring"] in p.name and not p.name.startswith("~$")
@@ -232,7 +246,30 @@ def _load_extra_family(acc_dir: Path, src: dict) -> list[dict[str, Any]]:
     ]
     if not cands:
         return []
-    path = sorted(cands, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+    if not src.get("merge_all"):
+        newest = sorted(cands, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+        return _read_family_file(newest, src)
+
+    merged: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
+    for path in sorted(cands, key=lambda p: p.stat().st_mtime):
+        for row in _read_family_file(path, src):
+            if row["code"] in merged:
+                print(
+                    f"[valve-selector] Accessories: {src['family']} code "
+                    f"{row['code']} overridden by newer {path.name}.",
+                    flush=True,
+                )
+            merged[row["code"]] = row
+    print(
+        f"[valve-selector] Accessories: merged {len(merged)} {src['family']} "
+        f"rows from {len(cands)} file(s).",
+        flush=True,
+    )
+    return list(merged.values())
+
+
+def _read_family_file(path: Path, src: dict) -> list[dict[str, Any]]:
+    """Read ONE single-family accessory workbook into [{code, family, attrs}]."""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
