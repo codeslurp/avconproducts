@@ -71,6 +71,7 @@ def _section_summary(key: str, cat) -> dict:
         "primary_label": cfg.primary_label,
         "secondary_label": cfg.secondary_label,
         "show_bto_fos": cfg.show_bto_fos,
+        "pending_note": cfg.pending_note,
     }
 
 

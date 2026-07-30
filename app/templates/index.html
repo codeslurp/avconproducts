@@ -225,6 +225,10 @@
             {% endif %}
           </div>
 
+          {% if section.pending_note %}
+          <p class="pending-note">{{ section.pending_note }}</p>
+          {% endif %}
+
           <div class="alt-note" hidden></div>
 
           <!-- Populated by JS only when the resolve response includes a

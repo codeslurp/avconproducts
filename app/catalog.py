@@ -173,6 +173,12 @@ class ValveTypeConfig:
     show_bto_fos: bool = True
     bto_col: int = 39                   # only used if show_bto_fos
 
+    # Optional one-line notice rendered in the result panel, for types that ship
+    # with data the source hasn't supplied yet. Used INSTEAD of blank cards: the
+    # relevant columns are left out of detail_columns and this explains why.
+    # Remove it (and restore the columns) when the source revision lands.
+    pending_note: str | None = None
+
     # Optional pairings: each entry in the tuple becomes its own
     # "Catalog-recommended actuator" card in the result panel, with a button
     # that jumps into that catalog's picker. Ball valves declare TWO: a

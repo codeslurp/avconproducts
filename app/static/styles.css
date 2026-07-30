@@ -1868,3 +1868,12 @@ footer small { font-family: var(--c-font-sans); }
   border-radius: 6px;
 }
 .acc-notice[hidden] { display: none; }
+
+/* One-line notice for catalogs shipped with known-absent source data
+   (see ValveTypeConfig.pending_note). Sits where the FOS card would be. */
+.pending-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.75;
+}
