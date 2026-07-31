@@ -36,7 +36,20 @@ including on 5012A — so they are not a gap introduced by this drop.
 5043A/5044A/5045A/5046A in R2, in named columns as per the 5012 R2_Updated
 format.
 
-## 2. 5066A ships every product twice under two bare codes (pre-existing)
+## 2. RESOLVED — 5066A duplication, fixed same day
+
+**Status: fixed 2026-07-30** by the re-drop
+`Control Valve Data for New Structure 5066A 3W BELLOW SEAL.xlsx` (no R suffix),
+now live. 5066A is 320 rows / 320 distinct products / one code each, verified 0
+duplicate groups. With this, the **whole control valve catalog is 0 ambiguous**
+for the first time — the invariant was violated by 320 rows until now.
+
+The original report is kept below for the record, followed by two consequences
+of the fix that still need attention (items 3 and 4).
+
+### Original report
+
+
 
 `5066A` (3-way bellow seal) has **640 rows but only 320 distinct products**.
 Every product appears twice, under two different bare valve codes that are
@@ -70,3 +83,56 @@ canonical, or what attribute was meant to distinguish them. Pinned at exactly
 **Requested fix:** either (a) supply the attribute that distinguishes the two
 variants so the cascade can reach both, or (b) withdraw the duplicate code
 block if it was an accidental duplication in the R2 export.
+
+*Pune chose (b), and compacted the code space at the same time. See below.*
+
+## 3. 5066A lost all four spec columns in the de-duplicated re-drop
+
+The fix in item 2 also blanked every spec column that `_R2` populated on all
+640 rows:
+
+| Canonical column | `_R2` | de-duplicated re-drop |
+| --- | --- | --- |
+| Max Shut-off Pressure | `19 bar` — 640/640 | **0/320** |
+| Fail Safe Close / A-Port Close | `MSD-200 D` — 640/640 | **0/320** |
+| Fail Safe Open / B-Port Close | `MSD-200 D` — 640/640 | **0/320** |
+| Control Pressure | `2.1 bar` — 640/640 | **0/320** |
+
+**Effect in the app:** 5066A no longer shows recommended actuator cards, the
+same state as 5043A-5046A (item 1). Everything else works.
+
+The spec data was **not** carried over from `_R2`. There is an existing
+mechanism for exactly that (the `enrich` step that restores 5016's B-Port
+column), but it joins on bare valve code, and item 4 makes that unsafe here: it
+would attach an actuator sized for the old valve to a different valve.
+
+**Requested fix:** re-issue 5066A with the Max Shut-off, Fail Safe A/B Port
+Close and Control Pressure columns populated, alongside the de-duplicated codes.
+
+## 4. 160 of the 320 retained 5066A codes now mean a different valve
+
+Compacting the code space reassigned products to codes. Half the retained codes
+describe a different valve than they did under `_R2`.
+
+Worked example — `5066AD0006`:
+
+| | `_R2` | re-drop |
+| --- | --- | --- |
+| Characteristics | On-Off | **Linear** |
+
+The product `5066AD0006` now denotes was previously carried by `_R2` codes
+`5066AD0011` and `5066AD0016`.
+
+Columns that changed on those 160 rows: Characteristics, End Connections, Face
+to Face, Flow Direction, Flange Dimensions, Flange Drilling, Pressure Rating,
+Body Test Pressure. The Catalogue code changed on **all 320** (it gains an
+`/MTM/` segment).
+
+**Commercial impact — for Sales, not engineering:** any quotation or order
+already raised against a 5066A bare code may no longer describe the valve that
+code now resolves to. Codes issued before 2026-07-30 should be re-checked
+against the old `_R2` definitions, which remain on disk at
+`data/Valve/Pune/Control Valve Data Set/Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx`.
+
+**Requested confirmation:** that the renumbering was intentional and that
+previously-issued 5066A codes have been reconciled.

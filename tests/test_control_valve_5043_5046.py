@@ -24,7 +24,10 @@ from catalog import (  # noqa: E402
 DATA = Path(__file__).resolve().parent.parent / "data"
 
 NEW_SERIES = {"5043A": 440, "5044A": 320, "5045A": 80, "5046A": 200}
-PRE_EXISTING_TOTAL = 17681
+
+# 17,681 before the 5043-5046 drop; +1,040 for it; -320 when the 5066A
+# de-duplicated re-drop (2026-07-30) replaced 640 rows with 320.
+EXPECTED_TOTAL = 18401
 
 
 def _catalog() -> Catalog:
@@ -43,9 +46,7 @@ class TestNewSeries(unittest.TestCase):
             cls.by_family[str(r.get("c5"))[:5]].append(r)
 
     def test_total_row_count(self):
-        self.assertEqual(
-            len(self.cat.rows), PRE_EXISTING_TOTAL + sum(NEW_SERIES.values())
-        )
+        self.assertEqual(len(self.cat.rows), EXPECTED_TOTAL)
 
     def test_each_new_series_row_count(self):
         for fam, expected in NEW_SERIES.items():
@@ -112,23 +113,20 @@ class TestPreExistingSeriesUnchanged(unittest.TestCase):
     def test_existing_series_row_counts(self):
         expected = {
             "5012A": 10801, "5012B": 2160, "5016A": 1280,
-            "5016B": 640, "5061A": 2160, "5066A": 640,
+            "5016B": 640, "5061A": 2160, "5066A": 320,
         }
         for fam, n in expected.items():
             self.assertEqual(len(self.by_family[fam]), n, fam)
 
-    def test_5066a_duplicate_codes_are_unchanged(self):
-        """PRE-EXISTING defect, present before the 5043-5046 drop and live today.
+    def test_5066a_duplication_is_fixed(self):
+        """5066A shipped 640 rows that were only 320 distinct products — each
+        product under two bare codes identical in all 58 other columns, so half
+        the code space was unreachable. Reported to Pune and fixed by the
+        de-duplicated re-drop of 2026-07-30, which compacted the code space to
+        320 rows / 320 products / one code each.
 
-        5066A ships 640 rows that are only 320 distinct products: every product
-        appears under two bare codes (offset +5, e.g. 5066AD0001 / 5066AD0006)
-        and is identical in EVERY other column. Half the series is therefore
-        unreachable in the picker. Verified identical before and after this
-        drop by diffing the committed docs/data/control_valve.json.
-
-        Pinned at exactly 320 so a future drop that fixes or worsens it fails
-        loudly. See docs/engineering-followups/
-        2026-07-30-control-valve-5043-5046-data-gaps.md
+        Asserts the fix holds: no two 5066A rows may be identical once the bare
+        code is ignored.
         """
         rows = self.by_family["5066A"]
         groups = collections.defaultdict(list)
@@ -136,9 +134,32 @@ class TestPreExistingSeriesUnchanged(unittest.TestCase):
             groups[tuple(
                 str(r.get(f"c{i}")) for i in range(1, 60) if i != 2
             )].append(str(r.get("c2")))
-        dupes = [v for v in groups.values() if len(v) > 1]
-        self.assertEqual(len(dupes), 320)
-        self.assertTrue(all(len(v) == 2 for v in dupes))
+        dupes = {k: v for k, v in groups.items() if len(v) > 1}
+        self.assertEqual(len(rows), 320)
+        self.assertEqual(dupes, {}, f"5066A duplication is back: {list(dupes.values())[:3]}")
+
+    def test_whole_catalog_is_unambiguous(self):
+        """The project invariant: every SKU must be reachable. Each series uses
+        its cascade_overrides field list if it has one, else the base cascade.
+
+        This was VIOLATED by 320 rows until 2026-07-30 (the 5066A duplication
+        above). It now holds catalog-wide — keep it that way.
+        """
+        cols = {k: c for k, c, _ in CONTROL_VALVE.cascade}
+        by_series = collections.defaultdict(list)
+        for r in self.cat.rows:
+            by_series[str(r.get("c5"))].append(r)
+        offenders = {}
+        for series, rows in by_series.items():
+            keys = (CONTROL_VALVE.cascade_overrides.get(series[:5])
+                    or [k for k, _c, _l in CONTROL_VALVE.cascade])
+            counts = collections.Counter(
+                tuple(str(r.get(f"c{cols[k]}")) for k in keys) for r in rows
+            )
+            ambiguous = sum(v - 1 for v in counts.values() if v > 1)
+            if ambiguous:
+                offenders[series] = ambiguous
+        self.assertEqual(offenders, {}, f"ambiguous series: {offenders}")
 
 
 if __name__ == "__main__":

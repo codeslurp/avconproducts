@@ -118,9 +118,12 @@ CANON = [
 # spec slots. 5016A/5016B (R4_Updated, 2026-07-12) and 5012A/5012B (R2_Updated,
 # 2026-07-12) were superseded by "updated-format" re-drops and are now ingested
 # via UPDATED_DROPS below (mapped BY NAME); they are NO LONGER read from source_R2.
+# 5066A moved OFF this path on 2026-07-30: its de-duplicated re-drop uses the
+# updated format (unnamed spec slots), which breaks the positional SPEC anchors.
+# It is now ingested via UPDATED_DROPS below. The _R2 file is left on disk as the
+# historical record of the codes it superseded.
 SOURCES = [
     ("Control Valve Data for New Structure_5061A-01.01.26_R2.xlsx", "5061A CV ", "5061A"),
-    ("Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx", "5066A CV ", "5066A"),
 ]
 
 # "Updated-format" re-drops (2026-07-12). Starting with the 5016 R4_Updated and
@@ -200,6 +203,41 @@ UPDATED_DROPS = [
     # No type-level pending_note is set: the other six series DO carry this data,
     # so a note on the Control Valve type would misdescribe them. Recorded in
     # docs/engineering-followups/2026-07-30-control-valve-5043-5046-data-gaps.md.
+    # 5066A de-duplicated re-drop (2026-07-30), replacing the _R2 file that was
+    # read via SOURCES. Fixes the defect reported in
+    # docs/engineering-followups/2026-07-30-control-valve-5043-5046-data-gaps.md:
+    # _R2 shipped 640 rows that were only 320 distinct products, each under two
+    # bare codes identical in all 58 other columns.
+    #
+    # AVCON fixed it by COMPACTING the code space: 320 rows, 320 distinct
+    # products, one code each — verified 0 duplicate groups. The consequence is
+    # that 160 of the 320 retained codes now describe a DIFFERENT product than
+    # they did under _R2 (e.g. 5066AD0006 was On-Off, is now Linear; that product
+    # was previously carried by _R2 codes 5066AD0011/0016). Changed on those 160
+    # rows: Characteristics, End Connections, Face to Face, Flow Direction,
+    # Flange Dimensions, Flange Drilling, Pressure Rating, Body Test Pressure.
+    # The Catalogue code changed on all 320 (gains a /MTM/ segment).
+    #
+    # spec_map is all-None because this drop blanks all four spec columns that
+    # _R2 populated 640/640 (Max Shut-off 19 bar, Fail Safe A/B Port Close
+    # MSD-200 D, Control Pressure 2.1 bar). 5066A therefore loses its actuator
+    # cards until a revision restores them.
+    #
+    # NO `enrich` from _R2. It would join on bare code, and because 160 codes
+    # were remapped it would attach an actuator sized for the OLD valve to a
+    # DIFFERENT valve — confidently wrong sizing instead of an honest gap.
+    # (User decision 2026-07-30: adopt as-is, request the specs back.)
+    {
+        "file": "Control Valve Data for New Structure 5066A 3W BELLOW SEAL.xlsx",
+        "sheets": {"5066A CV ": "5066A"},   # trailing space is AVCON's
+        "spec_map": {
+            "Max Shut-off Pressure": None,
+            "Fail Safe Close / A-Port Close": None,
+            "Fail Safe Open / B-Port Close": None,
+            "Control Pressure": None,
+            "Control Pressure (Fail Safe Open)": None,
+        },
+    },
     {
         "file": "Control Valve Data for New Structure_5043A 5044A 5045A 5046A _R1- 14.07.2026.xlsx",
         "sheets": {
