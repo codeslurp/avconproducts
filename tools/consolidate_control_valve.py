@@ -180,6 +180,42 @@ UPDATED_DROPS = [
             "Control Pressure (Fail Safe Open)": None,  # dropped in R2_Updated
         },
     },
+    # 5043A/5044A/5045A/5046A R1 (drop 2026-07-30, file dated 14.07.2026) — four
+    # NEW Globe Type / Metal Seated series, 1,040 SKUs (440+320+80+200), all
+    # bare codes unique and disjoint from the existing six series.
+    #
+    # Same updated-format shape as the 5016/5012 re-drops: one tab per series
+    # plus a "Logic" sheet, 58 columns, no leading Power-Query name column. All
+    # 53 non-spec canonical columns are present VERBATIM in every tab (verified
+    # 2026-07-30), so only the five spec slots need mapping.
+    #
+    # spec_map is entirely None: this drop ships the spec region as unnamed
+    # "Additional Specification 1-5", and slots 1-10 are empty in all 1,040 rows.
+    # Consequences, both handled without new code:
+    #   • No Fail-Safe Close/Open MSD models -> the two paired-actuator cards
+    #     (catalog.py cols 46/47) resolve empty and app.js hides the section.
+    #   • Thrust (KN), Torque (Nm), Mounting PCD, Stem Diameter and Product Group
+    #     are also empty in all rows; they render as "—" inside the collapsed
+    #     "All attributes" table. Stroke (mm) IS populated.
+    # No type-level pending_note is set: the other six series DO carry this data,
+    # so a note on the Control Valve type would misdescribe them. Recorded in
+    # docs/engineering-followups/2026-07-30-control-valve-5043-5046-data-gaps.md.
+    {
+        "file": "Control Valve Data for New Structure_5043A 5044A 5045A 5046A _R1- 14.07.2026.xlsx",
+        "sheets": {
+            "5043A CV ": "5043A",   # trailing space in the tab name is AVCON's
+            "5044A CV": "5044A",
+            "5045A CV": "5045A",
+            "5046A CV": "5046A",
+        },
+        "spec_map": {
+            "Max Shut-off Pressure": None,
+            "Fail Safe Close / A-Port Close": None,
+            "Fail Safe Open / B-Port Close": None,
+            "Control Pressure": None,
+            "Control Pressure (Fail Safe Open)": None,
+        },
+    },
 ]
 
 NAME_COL = "Control Valve"  # position-0 padding (engine ignores its content)
