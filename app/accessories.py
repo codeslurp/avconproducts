@@ -376,6 +376,36 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
     if headers and headers[0]:
         headers[0] = "Family"
 
+    # PASS 1: collect each family's OWN header row.
+    #
+    # The sheet stacks ~14 families, each preceded by a header row (its Code
+    # column literally reads "Code"). Those rows used to be discarded as garbage
+    # and every family was then labelled with row 1 — which is just ALR's schema.
+    # That mislabelled every other family, with a different effective offset each
+    # (LSB showed "Make = SB202L2" for what is a Model of LSB; Volume Booster
+    # showed "Make = SS316" for a Material of Construction; and so on).
+    #
+    # Two passes rather than one so a family whose data precedes its header row
+    # would still be labelled correctly. Row 1 doubles as ALR's header, so it is
+    # registered here too. Values are untouched — labels only.
+    family_headers: dict[str, list[str]] = {}
+
+    def _register_header(raw_row) -> None:
+        fam_raw = _norm(raw_row[FAMILY_COL - 1])
+        if not fam_raw:
+            return
+        family_headers[_clean_family(fam_raw)] = [
+            str(_norm(h) or "").strip() for h in raw_row
+        ]
+
+    _register_header(raw_rows[0])
+    for raw in raw_rows[1:]:
+        if not raw:
+            continue
+        if str(_norm(raw[CODE_COL - 1]) or "").strip().lower() == "code":
+            _register_header(raw)
+
+    # PASS 2: build the rows.
     rows: list[dict[str, Any]] = []
     families_seen: "OrderedDict[str, int]" = OrderedDict()
     skipped_header = 0
@@ -413,6 +443,10 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
             skipped_dedicated += 1
             continue
         # Build attributes dict — pair headers with values, drop empty cells.
+        # Labels come from THIS family's own header row (see pass 1); the sheet-
+        # wide row-1 headers are only a fallback for a family that somehow has
+        # none of its own.
+        fam_hdrs = family_headers.get(family, headers)
         attrs = []
         for i, val in enumerate(raw):
             v = _norm(val)
@@ -420,7 +454,9 @@ def load_accessories(data_dir: Path) -> dict[str, Any]:
                 continue  # family + code are top-level fields
             if v is None or v == "":
                 continue
-            label = headers[i] if i < len(headers) else f"Col {i + 1}"
+            label = fam_hdrs[i] if i < len(fam_hdrs) and fam_hdrs[i] else (
+                headers[i] if i < len(headers) else f"Col {i + 1}"
+            )
             attrs.append({"label": label, "value": str(v)})
 
         rows.append({
