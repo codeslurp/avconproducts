@@ -76,13 +76,23 @@ EXTRA_ACCESSORY_SOURCES = [
     # Migrated 2026-06-07 from the consolidated Dashboard sheet to dedicated
     # "New Structure" single-family files (cleaner per-family column schemas).
     # Each is skipped from the consolidated load via `dedicated_families`.
-    # (Tube & Fittings deferred — source row count under review.)
     {"file_substring": "Gland Data",      "sheet": "Gland Data",   "family": "Gland",   "code_col": 1},
     # merge_all: the two MOR files hold DISJOINT vendor ranges, not successive
     # revisions — R1 = 13 Q-Tork (MRQ*) + 10 Transtork (MRT*), R1_Updated = 13
     # Shakti (MRS*), zero overlap. Newest-wins would silently drop 23 SKUs.
     {"file_substring": "Manual Override", "sheet": "MOR",          "family": "MOR",     "code_col": 1, "merge_all": True},
     {"file_substring": "Plug Data",       "sheet": "Plug Data",    "family": "Plug",    "code_col": 1},
+    # Tube & Fittings, migrated 2026-08-02 — the deferral note said "source row
+    # count under review"; cell-diffed and resolved: the dedicated file and the
+    # consolidated sheet hold the SAME 6 codes with the SAME values. The only
+    # difference is the label, and the dedicated file has it right — the
+    # consolidated sheet's shared header row calls the material "Model"
+    # (e.g. "Model = SS304"), where it is a Material of Construction.
+    # file_substring is "Fitting Data", NOT "Tube Fitting": the filename has a
+    # DOUBLE space ("Tube  Fitting Data for New Structure_R1.xlsx"), so a
+    # single-spaced substring would silently fail to match and the family would
+    # quietly fall back to the consolidated sheet.
+    {"file_substring": "Fitting Data",    "sheet": "FITTING Data", "family": "FITTING", "code_col": 1},
 ]
 
 
