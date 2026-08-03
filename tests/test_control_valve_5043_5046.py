@@ -25,9 +25,10 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 
 NEW_SERIES = {"5043A": 440, "5044A": 320, "5045A": 80, "5046A": 200}
 
-# 17,681 before the 5043-5046 drop; +1,040 for it; -320 when the 5066A
-# de-duplicated re-drop (2026-07-30) replaced 640 rows with 320.
-EXPECTED_TOTAL = 18401
+# 17,681 before the 5043-5046 drop; +1,040 for it. 5066A dipped to 320 on the
+# interim 2026-07-30 fix, then returned to 640 with R3 (2026-08-02), which
+# supplied the missing Face-to-Face attribute instead of deleting rows.
+EXPECTED_TOTAL = 18721
 
 
 def _catalog() -> Catalog:
@@ -113,7 +114,7 @@ class TestPreExistingSeriesUnchanged(unittest.TestCase):
     def test_existing_series_row_counts(self):
         expected = {
             "5012A": 10801, "5012B": 2160, "5016A": 1280,
-            "5016B": 640, "5061A": 2160, "5066A": 320,
+            "5016B": 640, "5061A": 2160, "5066A": 640,
         }
         for fam, n in expected.items():
             self.assertEqual(len(self.by_family[fam]), n, fam)
@@ -121,12 +122,16 @@ class TestPreExistingSeriesUnchanged(unittest.TestCase):
     def test_5066a_duplication_is_fixed(self):
         """5066A shipped 640 rows that were only 320 distinct products — each
         product under two bare codes identical in all 58 other columns, so half
-        the code space was unreachable. Reported to Pune and fixed by the
-        de-duplicated re-drop of 2026-07-30, which compacted the code space to
-        320 rows / 320 products / one code each.
+        the code space was unreachable.
 
-        Asserts the fix holds: no two 5066A rows may be identical once the bare
-        code is ignored.
+        Reported to Pune and fixed twice. The interim file (2026-07-30) deleted
+        320 rows, which also dropped 320 real products and remapped 160 codes.
+        R3 (2026-08-02) is the correct fix: it keeps all 640 codes and supplies
+        the attribute that was actually missing — Face to Face differs on 320
+        rows (e.g. 5066AD0001 "DIN EN 558 SERIES-1 #150" vs 5066AD0006
+        "ISA 75.08.01 #150"). They were never duplicates.
+
+        Asserts the fix holds: 640 rows, none identical once the code is ignored.
         """
         rows = self.by_family["5066A"]
         groups = collections.defaultdict(list)
@@ -135,8 +140,27 @@ class TestPreExistingSeriesUnchanged(unittest.TestCase):
                 str(r.get(f"c{i}")) for i in range(1, 60) if i != 2
             )].append(str(r.get("c2")))
         dupes = {k: v for k, v in groups.items() if len(v) > 1}
-        self.assertEqual(len(rows), 320)
+        self.assertEqual(len(rows), 640)
         self.assertEqual(dupes, {}, f"5066A duplication is back: {list(dupes.values())[:3]}")
+
+    def test_5066a_spec_columns_restored_from_r2(self):
+        """R3 ships the spec region blank, so the four values are restored from
+        _R2 by `enrich`, joined on bare valve code (see UPDATED_DROPS in
+        tools/consolidate_control_valve.py). Safe because R3 and _R2 share an
+        identical 640-code set and identical product identity per code apart
+        from Face to Face — each code gets back what AVCON published for it.
+
+        Guards against a future drop silently losing them again.
+        """
+        rows = self.by_family["5066A"]
+        for col, label in (
+            (45, "Max Shut-off Pressure"),
+            (46, "Fail Safe Close / A-Port Close"),
+            (47, "Fail Safe Open / B-Port Close"),
+            (48, "Control Pressure"),
+        ):
+            filled = sum(1 for r in rows if r.get(f"c{col}") not in (None, ""))
+            self.assertEqual(filled, 640, f"{label} (c{col}) only {filled}/640")
 
     def test_whole_catalog_is_unambiguous(self):
         """The project invariant: every SKU must be reachable. Each series uses

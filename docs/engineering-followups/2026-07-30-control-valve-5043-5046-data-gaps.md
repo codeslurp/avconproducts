@@ -36,16 +36,34 @@ including on 5012A — so they are not a gap introduced by this drop.
 5043A/5044A/5045A/5046A in R2, in named columns as per the 5012 R2_Updated
 format.
 
-## 2. RESOLVED — 5066A duplication, fixed same day
+## 2. RESOLVED — 5066A duplication, fixed properly by R3
 
-**Status: fixed 2026-07-30** by the re-drop
-`Control Valve Data for New Structure 5066A 3W BELLOW SEAL.xlsx` (no R suffix),
-now live. 5066A is 320 rows / 320 distinct products / one code each, verified 0
-duplicate groups. With this, the **whole control valve catalog is 0 ambiguous**
-for the first time — the invariant was violated by 320 rows until now.
+**Status: fixed 2026-08-02** by
+`Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R3.xlsx`, now live.
 
-The original report is kept below for the record, followed by two consequences
-of the fix that still need attention (items 3 and 4).
+It took two attempts, and the difference matters:
+
+| | Rows | Distinct products | Verdict |
+| --- | --- | --- | --- |
+| `_R2` | 640 | 320 | the defect |
+| interim (no suffix), 2026-07-30 | 320 | 320 | **wrong** — deleted 320 real products, remapped 160 codes |
+| **`_R3`, 2026-08-02** | **640** | **640** | **correct** |
+
+R3 supplies the attribute that was actually missing rather than deleting rows:
+**Face to Face** differs on exactly 320 rows — `5066AD0001` is
+`DIN EN 558 SERIES-1 #150`, `5066AD0006` is `ISA 75.08.01 #150`. They were never
+duplicates; `_R2` mislabelled their face-to-face standard. Face to Face is a
+cascade field and is in 5066A's `cascade_overrides`, which is exactly why the
+640 now resolve unambiguously.
+
+R3 vs `_R2` changes ONLY Face to Face (320 rows) and the four spec columns
+(blanked, restored — see item 3). No code changes meaning, so **item 4 below is
+void**: the quote-reconciliation concern was an artefact of the interim file and
+no longer applies.
+
+The **whole control valve catalog is now 0 ambiguous**, at the full 18,721 SKUs.
+
+The original report is kept below for the record.
 
 ### Original report
 
@@ -86,9 +104,32 @@ block if it was an accidental duplication in the R2 export.
 
 *Pune chose (b), and compacted the code space at the same time. See below.*
 
-## 3. 5066A lost all four spec columns in the de-duplicated re-drop
+## 3. RESOLVED (restored locally) — 5066A spec columns
 
-The fix in item 2 also blanked every spec column that `_R2` populated on all
+**Status: restored 2026-08-02**, but the underlying request to Pune stands.
+
+`_R3` still ships the spec region blank. Rather than lose the data, all four
+columns are now restored from `_R2` by the `enrich` step in
+`tools/consolidate_control_valve.py`, joined on bare valve code — the same
+mechanism that restores 5016's B-Port column. All four report 640/640 filled
+(`19 bar`, `MSD-200 D`, `MSD-200 D`, `2.1 bar`), so 5066A keeps its actuator
+cards.
+
+This is safe because `_R3` and `_R2` share an identical 640-code set and
+identical product identity per code apart from Face to Face: each code gets back
+exactly what AVCON published for **that code**, and because `_R2` gave both
+members of every former pair the same actuator, the Face-to-Face correction
+cannot change which actuator was assigned. (It would **not** have been safe
+against the interim file, where 160 codes had been remapped.)
+
+Guarded by `test_5066a_spec_columns_restored_from_r2`.
+
+**Still requested:** ship these four columns populated in the next 5066A
+revision, so the app stops depending on a back-fill from a superseded file.
+
+### Original report
+
+The interim fix blanked every spec column that `_R2` populated on all
 640 rows:
 
 | Canonical column | `_R2` | de-duplicated re-drop |
@@ -109,7 +150,16 @@ would attach an actuator sized for the old valve to a different valve.
 **Requested fix:** re-issue 5066A with the Max Shut-off, Fail Safe A/B Port
 Close and Control Pressure columns populated, alongside the de-duplicated codes.
 
-## 4. 160 of the 320 retained 5066A codes now mean a different valve
+## 4. VOID — 160 remapped 5066A codes
+
+**Status: no longer applicable as of 2026-08-02.** This was caused by the
+interim 320-row file, which was live for roughly two days. `_R3` keeps every
+code's `_R2` product identity (only Face to Face changed), so no code means a
+different valve and **no quote reconciliation is needed**.
+
+Kept below for the record only.
+
+### Original report
 
 Compacting the code space reassigned products to codes. Half the retained codes
 describe a different valve than they did under `_R2`.

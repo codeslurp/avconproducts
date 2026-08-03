@@ -203,40 +203,72 @@ UPDATED_DROPS = [
     # No type-level pending_note is set: the other six series DO carry this data,
     # so a note on the Control Valve type would misdescribe them. Recorded in
     # docs/engineering-followups/2026-07-30-control-valve-5043-5046-data-gaps.md.
-    # 5066A de-duplicated re-drop (2026-07-30), replacing the _R2 file that was
-    # read via SOURCES. Fixes the defect reported in
-    # docs/engineering-followups/2026-07-30-control-valve-5043-5046-data-gaps.md:
-    # _R2 shipped 640 rows that were only 320 distinct products, each under two
-    # bare codes identical in all 58 other columns.
+    # 5066A R3 (2026-08-02) — the CORRECT fix for the duplication reported in
+    # docs/engineering-followups/2026-07-30-control-valve-5043-5046-data-gaps.md.
     #
-    # AVCON fixed it by COMPACTING the code space: 320 rows, 320 distinct
-    # products, one code each — verified 0 duplicate groups. The consequence is
-    # that 160 of the 320 retained codes now describe a DIFFERENT product than
-    # they did under _R2 (e.g. 5066AD0006 was On-Off, is now Linear; that product
-    # was previously carried by _R2 codes 5066AD0011/0016). Changed on those 160
-    # rows: Characteristics, End Connections, Face to Face, Flow Direction,
-    # Flange Dimensions, Flange Drilling, Pressure Rating, Body Test Pressure.
-    # The Catalogue code changed on all 320 (gains a /MTM/ segment).
+    # History, so the two superseded files on disk are not mistaken for options:
+    #   • _R2            640 rows but only 320 distinct products — every product
+    #                    under two codes, identical in all 58 other columns.
+    #   • (no suffix)    an interim fix shipped 2026-07-30 and briefly deployed:
+    #                    it COMPACTED to 320 rows, which dropped 320 real
+    #                    products AND remapped 160 codes to different valves.
+    #                    Superseded; do not use.
+    #   • _R3            640 rows, all 640 DISTINCT. AVCON supplied the missing
+    #                    distinguishing attribute instead of deleting rows:
+    #                    Face to Face differs on exactly 320 rows (e.g.
+    #                    5066AD0001 = "DIN EN 558 SERIES-1 #150" vs 5066AD0006 =
+    #                    "ISA 75.08.01 #150"). The former "duplicates" were
+    #                    always different valves; _R2 mislabelled their standard.
     #
-    # spec_map is all-None because this drop blanks all four spec columns that
-    # _R2 populated 640/640 (Max Shut-off 19 bar, Fail Safe A/B Port Close
-    # MSD-200 D, Control Pressure 2.1 bar). 5066A therefore loses its actuator
-    # cards until a revision restores them.
+    # R3 vs _R2 changes ONLY: Face to Face (320 rows) + the four spec columns
+    # blanked (640 rows). The code -> product mapping is otherwise untouched, so
+    # unlike the interim file no code changes meaning and no quote is invalidated.
     #
-    # NO `enrich` from _R2. It would join on bare code, and because 160 codes
-    # were remapped it would attach an actuator sized for the OLD valve to a
-    # DIFFERENT valve — confidently wrong sizing instead of an honest gap.
-    # (User decision 2026-07-30: adopt as-is, request the specs back.)
+    # Face to Face is a cascade field (and is in 5066A's cascade_overrides), which
+    # is precisely why the 640 now resolve unambiguously.
+    #
+    # spec_map stays all-None (R3 ships the spec region unnamed and empty); the
+    # four values are restored from _R2 by `enrich` below.
     {
-        "file": "Control Valve Data for New Structure 5066A 3W BELLOW SEAL.xlsx",
+        "file": "Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R3.xlsx",
         "sheets": {"5066A CV ": "5066A"},   # trailing space is AVCON's
         "spec_map": {
             "Max Shut-off Pressure": None,
             "Fail Safe Close / A-Port Close": None,
             "Fail Safe Open / B-Port Close": None,
             "Control Pressure": None,
-            "Control Pressure (Fail Safe Open)": None,
+            "Control Pressure (Fail Safe Open)": None,  # no _R2 equivalent
         },
+        # Restore the four spec columns R3 blanked, from _R2, joined by bare
+        # code — the same mechanism that restores 5016's B-Port column.
+        #
+        # Safe here (unlike against the interim file, where 160 codes had been
+        # remapped): R3 and _R2 share an identical 640-code set and identical
+        # product identity per code apart from Face to Face. Each code therefore
+        # gets back exactly the value AVCON published for THAT code. Nothing is
+        # inferred — and because _R2 gave both members of every former pair the
+        # same actuator (MSD-200 D), the Face-to-Face correction cannot change
+        # which actuator AVCON assigned. _enrich_column is strict: it aborts the
+        # whole run if any key fails to join.
+        # (User decision 2026-08-02.)
+        "enrich": [
+            {"canonical": "Max Shut-off Pressure",
+             "from_file": "source_R2/Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx",
+             "from_sheet": "5066A CV ", "from_col": "Max.Shutt off Pressure",
+             "key_col": "Bare Valve Code"},
+            {"canonical": "Fail Safe Close / A-Port Close",
+             "from_file": "source_R2/Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx",
+             "from_sheet": "5066A CV ", "from_col": "Fail Safe A Port Close",
+             "key_col": "Bare Valve Code"},
+            {"canonical": "Fail Safe Open / B-Port Close",
+             "from_file": "source_R2/Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx",
+             "from_sheet": "5066A CV ", "from_col": "Fail Safe B Port Close",
+             "key_col": "Bare Valve Code"},
+            {"canonical": "Control Pressure",
+             "from_file": "source_R2/Control Valve Data for New Structure 5066A 3W BELLOW SEAL_R2.xlsx",
+             "from_sheet": "5066A CV ", "from_col": "Control Pressure",
+             "key_col": "Bare Valve Code"},
+        ],
     },
     {
         "file": "Control Valve Data for New Structure_5043A 5044A 5045A 5046A _R1- 14.07.2026.xlsx",

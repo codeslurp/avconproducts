@@ -38,10 +38,11 @@ class TestCv5016BPortRestore(unittest.TestCase):
 
     def test_total_rows(self):
         # 17,681 through the 5016/5012 R*_Updated era; +1,040 on 2026-07-30 when
-        # 5043A/5044A/5045A/5046A were added (440+320+80+200); -320 the same day
-        # when the de-duplicated 5066A re-drop replaced 640 rows with 320. See
+        # 5043A/5044A/5045A/5046A were added (440+320+80+200). 5066A briefly went
+        # to 320 on an interim fix, then back to 640 on R3 (2026-08-02), which
+        # differentiated the former duplicates instead of deleting them. See
         # tests/test_control_valve_5043_5046.py for the per-series breakdown.
-        self.assertEqual(len(self.df), 18401)
+        self.assertEqual(len(self.df), 18721)
 
     def test_new_series_did_not_disturb_5016(self):
         self.assertEqual(len(self._series("5016")), 1920)
