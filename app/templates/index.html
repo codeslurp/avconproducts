@@ -12,6 +12,7 @@
 <body>
   <header>
     <div class="brand">
+      <img src="{{ url_for('static', filename='avcon-logo.png') }}" alt="AVCON Controls" class="brand-logo" />
       <div class="brand-text">
         <h1>
           <span class="title-line">Valve&ndash;Actuator&ndash;Accessory</span>
@@ -19,9 +20,34 @@
         </h1>
         <p class="tagline">{{ "{:,}".format(total_skus) }} AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="{{ url_for('static', filename='avcon-logo.png') }}" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
+
+  <nav class="wizard-bar" id="wizard-bar" aria-label="Product code steps">
+    <ol class="wizard-steps">
+      <li class="wizard-step is-on" data-step="1">
+        <span class="wizard-n">1</span>
+        <span class="wizard-t">Valve</span>
+        <span class="wizard-s" id="wizard-sub-1">Choose type</span>
+      </li>
+      <li class="wizard-step" data-step="2">
+        <span class="wizard-n">2</span>
+        <span class="wizard-t">Actuator</span>
+        <span class="wizard-s" id="wizard-sub-2">Optional</span>
+      </li>
+      <li class="wizard-step" data-step="3">
+        <span class="wizard-n">3</span>
+        <span class="wizard-t">Accessories</span>
+        <span class="wizard-s" id="wizard-sub-3">Optional</span>
+      </li>
+      <li class="wizard-step" data-step="4">
+        <span class="wizard-n">4</span>
+        <span class="wizard-t">Product code</span>
+        <span class="wizard-s">Copy &amp; share</span>
+      </li>
+    </ol>
+    <div class="wizard-progress" aria-hidden="true"><i id="wizard-progress-fill"></i></div>
+  </nav>
 
   <!-- One picker widget per category. Independent selections. -->
   <div class="picker-row">
@@ -145,7 +171,7 @@
     </button>
   </div>
 
-  <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
+  <p class="empty-prompt" id="empty-prompt">Start with step 1 — pick a valve type.</p>
 
   {#
     Layout: a 4-cell grid. Top row holds Valves (left) and Actuators (right)
@@ -282,7 +308,8 @@
        least one selection (valve / actuator / accessory) has resolved.
        Populated by SummaryPanel + AccessorySummary in app.js on the custom
        `valve-selector:resolved` and `accessories:selected-changed` events. #}
-    <div class="workspace-summary" id="workspace-summary" hidden>
+    <div class="workspace-summary" id="workspace-summary">
+      <p class="running-empty" id="running-empty">Your match will appear here as you pick.</p>
       <h2 class="summary-title">Your Product Code is</h2>
 
       {# Combined product code: Valve Catalogue - Actuator code - Accessory code(s),
@@ -320,6 +347,11 @@
     </div>
 
   </div>{# /.workspace #}
+
+  <div class="wizard-nav" id="wizard-nav">
+    <button type="button" class="wizard-back" id="wizard-back">Back</button>
+    <button type="button" class="wizard-next" id="wizard-next">Next · Actuator →</button>
+  </div>
 
   <footer>
     <small>Local-only tool · no data leaves this machine</small>

@@ -7,11 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="static/styles.css?v=20261014154952" />
+  <link rel="stylesheet" href="static/styles.css?v=20261014164509" />
 </head>
 <body>
   <header>
     <div class="brand">
+      <img src="static/avcon-logo.png?v=20261014164509" alt="AVCON Controls" class="brand-logo" />
       <div class="brand-text">
         <h1>
           <span class="title-line">Valve&ndash;Actuator&ndash;Accessory</span>
@@ -19,9 +20,34 @@
         </h1>
         <p class="tagline">77,948 AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
-      <img src="static/avcon-logo.png?v=20261014154952" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
+
+  <nav class="wizard-bar" id="wizard-bar" aria-label="Product code steps">
+    <ol class="wizard-steps">
+      <li class="wizard-step is-on" data-step="1">
+        <span class="wizard-n">1</span>
+        <span class="wizard-t">Valve</span>
+        <span class="wizard-s" id="wizard-sub-1">Choose type</span>
+      </li>
+      <li class="wizard-step" data-step="2">
+        <span class="wizard-n">2</span>
+        <span class="wizard-t">Actuator</span>
+        <span class="wizard-s" id="wizard-sub-2">Optional</span>
+      </li>
+      <li class="wizard-step" data-step="3">
+        <span class="wizard-n">3</span>
+        <span class="wizard-t">Accessories</span>
+        <span class="wizard-s" id="wizard-sub-3">Optional</span>
+      </li>
+      <li class="wizard-step" data-step="4">
+        <span class="wizard-n">4</span>
+        <span class="wizard-t">Product code</span>
+        <span class="wizard-s">Copy &amp; share</span>
+      </li>
+    </ol>
+    <div class="wizard-progress" aria-hidden="true"><i id="wizard-progress-fill"></i></div>
+  </nav>
 
   <!-- One picker widget per category. Independent selections. -->
   <div class="picker-row">
@@ -409,7 +435,7 @@
     </button>
   </div>
 
-  <p class="empty-prompt" id="empty-prompt">Pick a type from the menus above to start.</p>
+  <p class="empty-prompt" id="empty-prompt">Start with step 1 — pick a valve type.</p>
 
   
   <div class="workspace">
@@ -2503,7 +2529,8 @@
     
 
     
-    <div class="workspace-summary" id="workspace-summary" hidden>
+    <div class="workspace-summary" id="workspace-summary">
+      <p class="running-empty" id="running-empty">Your match will appear here as you pick.</p>
       <h2 class="summary-title">Your Product Code is</h2>
 
       
@@ -2540,11 +2567,16 @@
 
   </div>
 
+  <div class="wizard-nav" id="wizard-nav">
+    <button type="button" class="wizard-back" id="wizard-back">Back</button>
+    <button type="button" class="wizard-next" id="wizard-next">Next · Actuator →</button>
+  </div>
+
   <footer>
     <small>Local-only tool · no data leaves this machine</small>
   </footer>
 
-  <script src="static/catalog-engine.js?v=20261014154952"></script>
-  <script src="static/app.js?v=20261014154952"></script>
+  <script src="static/catalog-engine.js?v=20261014164509"></script>
+  <script src="static/app.js?v=20261014164509"></script>
 </body>
 </html>

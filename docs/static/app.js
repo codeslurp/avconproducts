@@ -528,6 +528,7 @@ class TypePicker {
     for (const sec of this.sections) sec.hidden = true;
     this.labelEl.textContent = this.initialLabel;
     this.root.classList.remove("has-selection");
+    if (window.Wizard) window.Wizard._syncSubs();
   }
 
   select(type) {
@@ -559,6 +560,7 @@ class TypePicker {
     this.labelEl.textContent = chosenLabel;
     this.root.classList.add("has-selection");
     this.close();
+    if (window.Wizard) window.Wizard._syncSubs();
 
     const prompt = document.getElementById("empty-prompt");
     if (prompt) prompt.hidden = true;
@@ -609,6 +611,7 @@ async function viewMatchingActuator(targetType, targetField, value) {
   const picker = Picker.instances.get(targetType);
   if (picker) await picker.setFieldValue(targetField, value);
 
+  if (window.Wizard) window.Wizard.go(2);
   targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -684,12 +687,19 @@ class SummaryPanel {
 
   _refreshVisibility() {
     const anyCardVisible = Array.from(this.cards.values()).some(c => !c.cardEl.hidden);
-    this.root.hidden = !anyCardVisible;
+    this.root.hidden = false;
+    const empty = document.getElementById("running-empty");
+    if (empty) empty.hidden = anyCardVisible;
+    const title = this.root.querySelector(".summary-title");
+    if (title) title.hidden = !anyCardVisible;
   }
 }
 
 const summaryRoot = document.getElementById("workspace-summary");
-if (summaryRoot) new SummaryPanel(summaryRoot);
+if (summaryRoot) {
+  const summaryPanel = new SummaryPanel(summaryRoot);
+  summaryPanel._refreshVisibility();
+}
 
 
 /* Listens for the accessory selection broadcast and renders the
@@ -882,6 +892,7 @@ class AccessoryPicker {
     this.searchInput.focus();
   }
   close() {
+    if (document.body.dataset.step === "3") return;
     this.menu.hidden = true;
     this.root.classList.remove("open");
     this.trigger.setAttribute("aria-expanded", "false");
@@ -1176,7 +1187,82 @@ function globalReset() {
   const prompt = document.getElementById("empty-prompt");
   if (prompt) prompt.hidden = false;
   if (accPicker) accPicker.clearAll();
+  if (window.Wizard) window.Wizard.go(1);
 }
 
 const globalResetBtn = document.getElementById("global-reset");
 if (globalResetBtn) globalResetBtn.addEventListener("click", globalReset);
+
+/* ---------- Guided stepper ----------
+   Shows one category at a time: Valve → Actuator → Accessories → Code.
+   Catalog pickers, cascade, and summary keep working; this only shows/hides. */
+const Wizard = {
+  step: 1,
+  labels: {
+    1: "Next · Actuator →",
+    2: "Next · Accessories →",
+    3: "Next · Product code →",
+    4: "Start over",
+  },
+  go(n) {
+    this.step = Math.max(1, Math.min(4, n));
+    document.body.dataset.step = String(this.step);
+    const fill = document.getElementById("wizard-progress-fill");
+    if (fill) fill.style.width = `${this.step * 25}%`;
+    document.querySelectorAll(".wizard-step").forEach((el) => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle("is-on", s === this.step);
+      el.classList.toggle("is-done", s < this.step);
+    });
+    const back = document.getElementById("wizard-back");
+    const next = document.getElementById("wizard-next");
+    if (back) back.disabled = this.step === 1;
+    if (next) next.textContent = this.labels[this.step];
+    this._syncSubs();
+    if (this.step === 3 && accPicker) accPicker.open();
+    if (this.step !== 3 && accPicker && accPicker.menu && !accPicker.menu.hidden) {
+      // Allow close() now that we left step 3.
+      const prev = document.body.dataset.step;
+      document.body.dataset.step = "0";
+      accPicker.close();
+      document.body.dataset.step = prev;
+    }
+  },
+  _syncSubs() {
+    const valvePicker = TypePicker.instances.find((p) => p.category === "Valves");
+    const actPicker = TypePicker.instances.find((p) => p.category === "Actuators");
+    const sub1 = document.getElementById("wizard-sub-1");
+    const sub2 = document.getElementById("wizard-sub-2");
+    const sub3 = document.getElementById("wizard-sub-3");
+    if (sub1 && valvePicker) {
+      sub1.textContent = valvePicker.root.classList.contains("has-selection")
+        ? valvePicker.labelEl.textContent : "Choose type";
+    }
+    if (sub2 && actPicker) {
+      sub2.textContent = actPicker.root.classList.contains("has-selection")
+        ? actPicker.labelEl.textContent : "Optional";
+    }
+    if (sub3) {
+      const n = accPicker && accPicker.selected ? accPicker.selected.size : 0;
+      sub3.textContent = n ? `${n} selected` : "Optional";
+    }
+  },
+  next() {
+    if (this.step === 4) { globalReset(); return; }
+    this.go(this.step + 1);
+  },
+  back() { this.go(this.step - 1); },
+};
+window.Wizard = Wizard;
+
+document.querySelectorAll(".wizard-step").forEach((el) => {
+  el.addEventListener("click", () => Wizard.go(Number(el.dataset.step)));
+});
+const wizardBack = document.getElementById("wizard-back");
+const wizardNext = document.getElementById("wizard-next");
+if (wizardBack) wizardBack.addEventListener("click", () => Wizard.back());
+if (wizardNext) wizardNext.addEventListener("click", () => Wizard.next());
+document.addEventListener("valve-selector:resolved", () => Wizard._syncSubs());
+document.addEventListener("valve-selector:cleared", () => Wizard._syncSubs());
+document.addEventListener("accessories:selected-changed", () => Wizard._syncSubs());
+Wizard.go(1);

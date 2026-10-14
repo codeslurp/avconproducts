@@ -128,9 +128,6 @@ header {
   height: 52px;
   width: auto;
   flex-shrink: 0;
-  /* Push the logo to the right edge of the header so the title/tagline sit
-     on the left, separated by white space. Makes the header less cluttered. */
-  margin-left: auto;
 }
 .brand-text {
   min-width: 0;
@@ -1876,4 +1873,186 @@ footer small { font-family: var(--c-font-sans); }
   font-size: 0.85rem;
   font-style: italic;
   opacity: 0.75;
+}
+
+/* ---------- Guided stepper (Option B) ---------- */
+.wizard-bar {
+  max-width: var(--c-content);
+  margin: 18px auto 0;
+  padding: 0 var(--c-gutter);
+}
+.wizard-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--c-shadow-sm);
+}
+.wizard-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+  padding: 14px 16px;
+  border-right: 1px solid var(--c-border);
+  cursor: pointer;
+  background: var(--c-surface);
+}
+.wizard-step:last-child { border-right: none; }
+.wizard-step.is-on { background: var(--c-accent-soft); }
+.wizard-step.is-done .wizard-n {
+  background: var(--c-accent);
+  color: #fff;
+}
+.wizard-n {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--c-surface-2);
+  color: var(--c-text-muted);
+}
+.wizard-step.is-on .wizard-n {
+  background: var(--c-accent);
+  color: #fff;
+}
+.wizard-t {
+  font-weight: 600;
+  color: var(--c-text);
+  font-size: 14px;
+}
+.wizard-s {
+  flex: 1 1 100%;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  padding-left: 32px;
+}
+.wizard-progress {
+  height: 3px;
+  background: var(--c-surface-2);
+  border-radius: 2px;
+  margin: 10px 2px 0;
+  overflow: hidden;
+}
+.wizard-progress i {
+  display: block;
+  height: 100%;
+  width: 25%;
+  background: var(--c-accent);
+  transition: width var(--c-transition);
+}
+.wizard-nav {
+  max-width: var(--c-content);
+  margin: 0 auto 32px;
+  padding: 0 var(--c-gutter);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wizard-back, .wizard-next {
+  padding: 10px 18px;
+  border-radius: var(--c-radius-md);
+  font-family: var(--c-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--c-transition);
+}
+.wizard-back {
+  background: var(--c-surface);
+  color: var(--c-text-soft);
+  border: 1px solid var(--c-border-strong);
+}
+.wizard-back:hover { background: var(--c-surface-2); }
+.wizard-back:disabled { opacity: 0.4; cursor: not-allowed; }
+.wizard-next {
+  background: var(--c-accent);
+  color: #fff;
+  border: 1px solid var(--c-accent);
+  margin-left: auto;
+}
+.wizard-next:hover { background: var(--c-accent-hover); }
+.running-empty {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+
+body[data-step="1"] .workspace-col--actuators,
+body[data-step="1"] .type-picker[data-category="Actuators"],
+body[data-step="1"] .acc-picker,
+body[data-step="2"] .workspace-col--valves,
+body[data-step="2"] .type-picker[data-category="Valves"],
+body[data-step="2"] .acc-picker,
+body[data-step="3"] .workspace-col--valves,
+body[data-step="3"] .workspace-col--actuators,
+body[data-step="3"] .type-picker[data-category="Valves"],
+body[data-step="3"] .type-picker[data-category="Actuators"],
+body[data-step="4"] .workspace-col,
+body[data-step="4"] .pr-pickers,
+body[data-step="4"] .empty-prompt {
+  display: none !important;
+}
+
+body[data-step="1"] .workspace,
+body[data-step="2"] .workspace {
+  grid-template-columns: 1.25fr 0.75fr;
+}
+body[data-step="1"] .workspace {
+  grid-template-areas: "valves summary";
+}
+body[data-step="2"] .workspace {
+  grid-template-areas: "actuators summary";
+}
+body[data-step="3"] .workspace {
+  grid-template-columns: 1fr;
+  grid-template-areas: "summary";
+}
+body[data-step="3"] .acc-picker {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: block !important;
+}
+body[data-step="3"] .acc-menu {
+  position: static;
+  min-width: 0;
+  width: 100%;
+  margin-top: 10px;
+  box-shadow: var(--c-shadow-sm);
+}
+body[data-step="4"] .workspace {
+  grid-template-columns: 1fr;
+  grid-template-areas: "summary";
+}
+body[data-step="4"] .workspace-summary {
+  padding: 28px 32px;
+}
+body[data-step="4"] .summary-combined-code { font-size: 26px; }
+.wizard-nav {
+  position: sticky;
+  bottom: 0;
+  background: var(--c-bg);
+  padding-top: 12px;
+  padding-bottom: 16px;
+  z-index: 5;
+}
+
+@media (max-width: 860px) {
+  .wizard-steps { grid-template-columns: 1fr 1fr; }
+  .wizard-step { border-bottom: 1px solid var(--c-border); }
+  body[data-step="1"] .workspace,
+  body[data-step="2"] .workspace {
+    grid-template-columns: 1fr;
+    grid-template-areas: "valves" "actuators" "summary";
+  }
 }
