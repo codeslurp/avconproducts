@@ -2097,4 +2097,8 @@ body[data-step="4"] .summary-combined-code { font-size: 26px; }
     grid-template-columns: 1fr;
     grid-template-areas: "valves" "actuators" "summary";
   }
+  body[data-step="1"] .picker,
+  body[data-step="2"] .picker {
+    grid-template-columns: 1fr;
+  }
 }
