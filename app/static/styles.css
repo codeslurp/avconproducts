@@ -167,10 +167,11 @@ header .tagline {
 }
 
 @media (max-width: 720px) {
-  /* On phones: logo CENTERED at the top, then title/tagline left-aligned below
-     (so the title still lines up with the pickers/columns). */
-  .brand { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .brand-logo { order: -1; align-self: center; margin: 0 0 2px; }
+  /* Keep name on the left, logo on the right — same as desktop. */
+  .brand { flex-direction: row; align-items: center; gap: 12px; }
+  .brand-logo { order: 0; align-self: center; margin-left: auto; height: 40px; }
+  header h1 { font-size: 18px; }
+  header .tagline { font-size: 11px; }
 }
 header code {
   background: var(--c-surface-3);
