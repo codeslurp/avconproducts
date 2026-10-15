@@ -2007,13 +2007,54 @@ body[data-step="4"] .empty-prompt {
 
 body[data-step="1"] .workspace,
 body[data-step="2"] .workspace {
-  grid-template-columns: 1.25fr 0.75fr;
+  grid-template-columns: 1fr;
 }
 body[data-step="1"] .workspace {
-  grid-template-areas: "valves summary";
+  grid-template-areas: "valves" "summary";
 }
 body[data-step="2"] .workspace {
-  grid-template-areas: "actuators summary";
+  grid-template-areas: "actuators" "summary";
+}
+/* Don't park an empty match card in a wasted right column. */
+body[data-step="1"] .workspace-summary:has(#running-empty:not([hidden])),
+body[data-step="2"] .workspace-summary:has(#running-empty:not([hidden])) {
+  display: none;
+}
+/* Form fields in columns; match panel uses the leftover width. */
+body[data-step="1"] .workspace-col .valve-section main,
+body[data-step="2"] .workspace-col .valve-section main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+body[data-step="1"] .picker,
+body[data-step="2"] .picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+body[data-step="1"] .picker .row,
+body[data-step="2"] .picker .row {
+  margin-bottom: 0;
+}
+body[data-step="1"] .picker .row.actions,
+body[data-step="2"] .picker .row.actions {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding-top: 12px;
+}
+@media (min-width: 1280px) {
+  body[data-step="1"] .picker,
+  body[data-step="2"] .picker {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+@media (max-width: 1024px) {
+  body[data-step="1"] .workspace-col .valve-section main,
+  body[data-step="2"] .workspace-col .valve-section main {
+    grid-template-columns: 1fr;
+  }
 }
 body[data-step="3"] .workspace {
   grid-template-columns: 1fr;
