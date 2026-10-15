@@ -12,7 +12,6 @@
 <body>
   <header>
     <div class="brand">
-      <img src="{{ url_for('static', filename='avcon-logo.png') }}" alt="AVCON Controls" class="brand-logo" />
       <div class="brand-text">
         <h1>
           <span class="title-line">Valve&ndash;Actuator&ndash;Accessory</span>
@@ -20,6 +19,7 @@
         </h1>
         <p class="tagline">{{ "{:,}".format(total_skus) }} AVCON SKUs. Infinite Specs. One Click.</p>
       </div>
+      <img src="{{ url_for('static', filename='avcon-logo.png') }}" alt="AVCON Controls" class="brand-logo" />
     </div>
   </header>
 
