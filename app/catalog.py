@@ -287,6 +287,10 @@ BALL_VALVE = ValveTypeConfig(
                        label="Electric"),
         PairedActuator(model_col=121, target_type="electrical_rotary", target_field="model",
                        label="Electric"),
+        PairedActuator(model_col=122, target_type="pneumatic_ha", target_field="model",
+                       label="Linear (5-6 bar)"),
+        PairedActuator(model_col=123, target_type="manual_handwheel", target_field="model",
+                       label="Manual"),
     ),
     cascade=[
         ("series",          4,  "Series"),
@@ -346,14 +350,15 @@ BALL_VALVE = ValveTypeConfig(
         (118, "Single Acting Fail-Safe Open (alt 2)"),
         (119, "Single Acting Fail-Safe Open (alt 3)"),
         (120, "Electric Actuator (alt 1)"), (121, "Electric Actuator (alt 2)"),
+        (122, "Linear Actuator (5-6 Bar)"), (123, "Manual Actuator"),
     ],
     # Enrichment sources, merged in after the main load:
-    #  1. The dashboard's "Ball Valve Actuator combination" sheet -> cols 100-110
-    #     (9 pneumatic at 3.5/4/5.5 bar + 2 electric), pressure-labelled.
-    #  2. The 4 per-series files -> NEW cols 111-121 (clear of 100-110). These
-    #     carry the COMPLETE alternative actuator set; the union (deduped at
-    #     resolve time) recovers models the dashboard's fixed pressure slots drop
-    #     (verified: 10 models across 140 SKUs).
+    #  1. Dashboard "Ball Valve Actuator combination" -> cols 100-110.
+    #  2. 2030F/2060F/2090F _Updated (2026-10-18) are themselves pressure-
+    #     labelled (3.5/4/5.5 bar + NC/NO). They OVERWRITE 100-110 for those
+    #     series so Fail-Close @ 4 bar is no longer a leftover 0. Electric
+    #     moved to source cols 59-60 (58=Linear empty, 61=Manual empty).
+    #  3. 2070F was not in the drop — keep the old 49-59 -> 111-121 alt map.
     enrichment_sources=(
         EnrichmentSource(
             file_substring="Valve_Code_Selector_Dashboard",
@@ -366,15 +371,28 @@ BALL_VALVE = ValveTypeConfig(
                 (58, 109), (59, 110),
             ),
         ),
+        # 2026-10-18 layout: 49-57 pressure slots, 58 Linear, 59-60 Electric, 61 Manual.
         EnrichmentSource(
             file_substring="2030F BV NEW CODEING", sheet_marker="2030F BV NEW CODEING",
             source_key_col=1, master_key_col=1,
-            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+            columns=(
+                (49, 100), (50, 101), (51, 102),
+                (52, 103), (53, 104), (54, 105),
+                (55, 106), (56, 107), (57, 108),
+                (59, 109), (60, 110),
+                (58, 122), (61, 123),
+            ),
         ),
         EnrichmentSource(
             file_substring="2060F BV NEW CODEING", sheet_marker="2060F BV NEW CODEING",
             source_key_col=1, master_key_col=1,
-            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+            columns=(
+                (49, 100), (50, 101), (51, 102),
+                (52, 103), (53, 104), (54, 105),
+                (55, 106), (56, 107), (57, 108),
+                (59, 109), (60, 110),
+                (58, 122), (61, 123),
+            ),
         ),
         EnrichmentSource(
             file_substring="2070F BV NEW CODEING", sheet_marker="2070F BV NEW CODEING",
@@ -384,7 +402,13 @@ BALL_VALVE = ValveTypeConfig(
         EnrichmentSource(
             file_substring="2090F BV NEW CODEING", sheet_marker="2090F BV NEW CODEING",
             source_key_col=1, master_key_col=1,
-            columns=((49,111),(50,112),(51,113),(52,114),(53,115),(54,116),(55,117),(56,118),(57,119),(58,120),(59,121)),
+            columns=(
+                (49, 100), (50, 101), (51, 102),
+                (52, 103), (53, 104), (54, 105),
+                (55, 106), (56, 107), (57, 108),
+                (59, 109), (60, 110),
+                (58, 122), (61, 123),
+            ),
         ),
     ),
 )
@@ -1842,7 +1866,7 @@ class Catalog:
             model = _normalize_paired_model(str(paired_val).strip())
             # `#N/A` is an Excel error string from broken VLOOKUP cells in the
             # source — treat as no recommendation (see 2026-05-27 report).
-            if model in ("", "#N/A"):
+            if model in ("", "#N/A", "0"):
                 continue
             # Dual-use column guard: skip values that aren't actuator models
             # (e.g. control valve Fail-Safe cells holding a pressure or 0).
