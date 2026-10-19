@@ -43,6 +43,26 @@ class TestBallSeriesUpdated(unittest.TestCase):
         src = find_catalog_file(DATA, "2070F BV NEW CODEING")
         self.assertNotIn("_Updated", src.name)
 
+    def test_2090fc0002_shows_three_fsc_and_fso_pressures(self):
+        row = self.by_code["2090FC0002"]
+        picks = {}
+        for key, col, _lab in BALL_VALVE.cascade:
+            val = row.get(f"c{col}")
+            if val not in (None, ""):
+                picks[key] = val
+        res = self.cat.resolve(picks)
+        paired = res["paired_actuators"]
+        fsc = [p for p in paired if "Fail-Close" in p["label"]]
+        fso = [p for p in paired if "Fail-Open" in p["label"]]
+        self.assertEqual(len(fsc), 3, [p["label"] for p in fsc])
+        self.assertEqual(len(fso), 3, [p["label"] for p in fso])
+        self.assertEqual(
+            {p["model"] for p in fsc},
+            {"ACT-063SR06", "ACT-050SR10"},
+        )
+        self.assertTrue(any("@ 4 bar" in p["label"] for p in fsc))
+        self.assertTrue(any("@ 4 bar" in p["label"] for p in fso))
+
 
 if __name__ == "__main__":
     unittest.main()

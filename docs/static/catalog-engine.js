@@ -177,11 +177,9 @@ class CatalogEngine {
     // "empty" placeholders, which over-listed chips and showed code-less slots
     // on GitHub Pages while the Flask app stayed correct (2026-06-03 fix).
     // Dedup rule (mirrors catalog.py Catalog.resolve, user's choice 2026-06-04):
-    //   * DOUBLE-ACTING pressure slots (label has BOTH "Double Acting" and "@")
-    //     show every pressure even when the same code repeats (ACT-050D at
-    //     3.5/4/5.5 bar -> 3 chips).
-    //   * EVERYTHING ELSE (Spring-Return at any pressure, Electric, Linear,
-    //     generic alternatives) dedupes by code: one chip per distinct code.
+    //   * Pressure-labelled slots (label contains "@") — DA, Fail-Close,
+    //     Fail-Open — show every pressure even when the same code repeats.
+    //   * Everything else (Electric, Linear, unlabelled alts) dedupes by code.
     const seenModels = new Set();   // `${tt}|${model}`
     const seenSlots = new Set();    // `${tt}|${model}|${label}`
     // Per-series actuator labels (mirror of catalog.py Catalog.resolve): look up
@@ -205,12 +203,12 @@ class CatalogEngine {
       const raw = this._cell(cat, row, pa.model_col);
       if (raw === null || raw === undefined || raw === "") continue;
       const model = normalizePairedModel(String(raw).trim());
-      if (model === "" || model === "#N/A") continue;
+      if (model === "" || model === "#N/A" || model === "0") continue;
       // Dual-use column guard (mirrors catalog.py): skip non-model values
       // (e.g. control valve Fail-Safe cells holding a pressure or 0).
       if (pa.require_prefix && !model.startsWith(pa.require_prefix)) continue;
       const target_type = resolvePairedTargetType(pa, model);
-      if (pa.label.includes("Double Acting") && pa.label.includes("@")) {  // DA pressure slot
+      if (pa.label.includes("@")) {  // pressure slot (DA / Fail-Close / Fail-Open)
         const slot = `${target_type}|${model}|${pa.label}`;
         if (seenSlots.has(slot)) continue;
         seenSlots.add(slot);

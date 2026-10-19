@@ -1835,16 +1835,12 @@ class Catalog:
             except (TypeError, ValueError):
                 detail["fos"] = None
         paired_list = []
-        # Dedup rule (user's choice 2026-06-04):
-        #   * DOUBLE-ACTING pressure slots (label has BOTH "Double Acting" and
-        #     "@ … bar", e.g. Ball's DA @3.5/@4/@5.5) show every pressure even
-        #     when the SAME model repeats — so a valve whose DA actuator is
-        #     ACT-050D at all three pressures shows THREE chips.
-        #   * EVERYTHING ELSE (Spring-Return at any pressure, Electric, Linear,
-        #     and the generic "alternative" columns) dedupes by code: one chip
-        #     per distinct (target_type, model). This keeps Spring-Return from
-        #     repeating the same code across pressures, while still surfacing
-        #     genuinely new alternatives (e.g. ACT-063SR07).
+        # Dedup rule:
+        #   * Pressure-labelled slots (label contains "@ … bar") — DA, Fail-Close
+        #     and Fail-Open — show every pressure even when the SAME model
+        #     repeats, matching the 3.5/4/5.5 columns in the series files.
+        #   * Everything else (Electric, Linear, unlabelled alts) dedupes by
+        #     (target_type, model).
         seen_models = set()  # (target_type, model) shown so far
         seen_slots = set()   # (target_type, model, label) — exact DA pressure-slot twins
         # Per-series actuator labels: look up the row's controlling-field value
@@ -1873,7 +1869,7 @@ class Catalog:
             if p.require_prefix and not model.startswith(p.require_prefix):
                 continue
             target_type = p.resolve_target_type(model)
-            if "Double Acting" in p.label and "@" in p.label:   # DA pressure slot — keep each pressure
+            if "@" in p.label:   # pressure slot (DA / Fail-Close / Fail-Open)
                 slot = (target_type, model, p.label)
                 if slot in seen_slots:
                     continue

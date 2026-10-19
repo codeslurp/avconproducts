@@ -31,6 +31,7 @@ have parked Linear (empty) on the Electric slot.
 
 - **2060F / 2090F:** `#N/A` on a block of rows (84 / 112) — skipped at resolve.
 - **Linear and Manual columns are blank** on every row of all three files.
-- Fail-Close still **dedupes by model**, so a SKU whose 3.5 and 4 bar slots
-  name the same `ACT-*` still shows two chips, not three. That is the 2026-06-04
-  rule, not a missed column.
+
+Pressure slots (DA / Fail-Close / Fail-Open @ 3.5/4/5.5 bar) now each get a
+chip even when the model repeats — same as Double Acting. Example
+`2090FC0002`: FSC 3.5 and 4 bar are both `ACT-063SR06`, but both chips show.
